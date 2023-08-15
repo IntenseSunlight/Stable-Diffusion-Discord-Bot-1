@@ -1,6 +1,6 @@
-from transformers import AutoTokenizer, GPT2Tokenizer, GPT2LMHeadModel
+import os
+import sys
 from PIL import Image, PngImagePlugin
-from prompts import make_prompt, make_orientation
 from datetime import datetime
 import requests
 import discord
@@ -8,9 +8,10 @@ import string
 import random
 import base64
 import io
-import os
-import sys
 from dotenv import load_dotenv
+
+from utils.prompts import GeneratePrompt 
+from utils.orientation import Orientation 
 
 DEFAULT_SD_UPSCALER = "4x_NMKD-Siax_200k"
 
@@ -81,9 +82,6 @@ except requests.ConnectionError as e:
 bot = discord.Bot()
 print (f"{current_time_str()}: Bot is running")
 characters = string.ascii_letters + string.digits
-tokenizer = GPT2Tokenizer.from_pretrained('distilgpt2')
-tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-model = GPT2LMHeadModel.from_pretrained('FredZhang7/distilgpt2-stable-diffusion-v2')
 
 # keep track of total requests, make this file outside of git control
 if os.path.exists('current_requests.txt'):
@@ -215,8 +213,8 @@ async def imagegen(prompt, style, orientation, original_negativeprompt, seed, va
     total_requests = total_requests + 1
     global webui_url
     global variation_strength
-    width, height = make_orientation(orientation)
-    prompt, negativeprompt = make_prompt(prompt, style, original_negativeprompt)
+    width, height = Orientation.make_orientation(orientation)
+    prompt, negativeprompt = GeneratePrompt.make_prompt(prompt, style, original_negativeprompt)
     if variation:
         var_strength = variation_strength
     else:
@@ -283,19 +281,6 @@ async def upscale(image):
         file.write(str(total_requests))
     return file_path
   
-async def generate_prompt():
-    # This generates a random prompt using a finetuned gpt 2. Uses the transformers library.
-    prompt_beginnings = ["landscape of", "a beautiful", "digital concept art", "a", "abstract", "highly detailed", "landscape", "fantasy", "isometric", "Greg Rutkowski", "makoto shinkai", "undergrowth, lush", "volumetric lighting", "4k", "by", "dreamlike", "surreal", "lust city", "By Brad Rigney", "vivid colors"]
-    prompt = random.choice(prompt_beginnings)  
-    temperature = 0.9  
-    top_k = 50              
-    max_length = 50        
-    repitition_penalty = 1.15
-    num_return_sequences=1  
-    input_ids = tokenizer(prompt, return_tensors='pt').input_ids
-    output = model.generate(input_ids, do_sample=True, temperature=temperature, top_k=top_k, max_length=max_length, num_return_sequences=num_return_sequences, repetition_penalty=repitition_penalty, early_stopping=True)
-    return str(tokenizer.decode(output[0], skip_special_tokens=True) + ", colorful, sharp focus")
-    
 # Command for the 2 random images
 @bot.command(name=generate_random_command, description="Generates 2 random images")
 async def generate_random(
@@ -307,8 +292,8 @@ async def generate_random(
         await ctx.respond("This command cannot be used in direct messages.")
         return
     await ctx.respond("Generating 2 random images...", ephemeral=True, delete_after=4)  
-    prompt = await generate_prompt()
-    prompt2 = await generate_prompt()
+    prompt = GeneratePrompt.random_prompt() 
+    prompt2 = GeneratePrompt.random_prompt() 
     style = "No Style Preset"
     seed = random_seed()
     seed2 = random_seed()
@@ -321,7 +306,16 @@ async def generate_random(
         title_prompt2 = title_prompt2[:150] + "..."
     embed = discord.Embed(
             title="Generated 2 random images using these settings:",
-            description=f"Prompt (Left): `{title_prompt}`\nPrompt (Right): `{title_prompt2}`\nOrientation: `{orientation}`\nSeed (Left): `{seed}`\nSeed (Right): `{seed2}`\nNegative Prompt: `{negative_prompt}`\nTotal generated images: `{total_requests}`\n\nWant to generate your own image? Type your prompt and style after `/{generate_command}`!",
+            description=(
+                f"Prompt (Left): `{title_prompt}`\n"
+                f"Prompt (Right): `{title_prompt2}`\n"
+                f"Orientation: `{orientation}`\n"
+                f"Seed (Left): `{seed}`\n"
+                f"Seed (Right): `{seed2}`\n"
+                f"Negative Prompt: `{negative_prompt}`\n"
+                f"Total generated images: `{total_requests}`\n\n"
+                f"Want to generate your own image? Type your prompt and style after `/{generate_command}`!"
+            ),
             color=discord.Colour.blurple(),
         )
     generated_image, image_id = await imagegen(prompt, style, orientation, negative_prompt, seed)
@@ -341,8 +335,8 @@ async def generate_random(
 async def generate(
   ctx: discord.ApplicationContext,
   prompt: discord.Option(str, description='What do you want to generate?'),
-  style: discord.Option(str, choices=['Cinematic', 'Low Poly', 'Anime', 'Oilpainting', 'Cute', 'Comic', 'Steampunk', 'Vintage', 'Natural', 'Cyberpunk', 'Watercolor', 'Apocalyptic', 'Fantasy', 'No Style Preset'], description='In which style should the image be?'),
-  orientation: discord.Option(str, choices=['Square', 'Portrait', 'Landscape'], default='Square', description='In which orientation should the image be?'),
+  style: discord.Option(str, choices=GeneratePrompt.get_style_presets(), description='In which style should the image be?'),
+  orientation: discord.Option(str, choices=Orientation.get_orientation_presets(), default=Orientation.SQUARE, description='In which orientation should the image be?'),
   negative_prompt: discord.Option(str, description='What do you want to avoid?', default='')
 ):
     global total_requests
