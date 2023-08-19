@@ -55,7 +55,10 @@ try:
     if res.status_code == 200:
         print(f"{current_time_str()}: Connected to SD host on URL: {webui_url}")
     else:
-        print(f"{current_time_str()}: Did not receive correct response from SD host: {webui_url}\nResponse code={res.status_code}")
+        print(
+            f"{current_time_str()}: Did not receive correct response from SD host: {webui_url}\n"
+            f"Response code={res.status_code}"
+        )
         sys.exit(1) 
 except requests.ConnectionError as e:
     print(f"{current_time_str()}: Failed to connect to SD host; possibly incorrect URL:\n", e) 
@@ -72,7 +75,10 @@ try:
             print(f"{current_time_str()}: Specified upscaler model '{upscaler_model}' not found, using '{DEFAULT_SD_UPSCALER}'")
             upscaler_model = DEFAULT_SD_UPSCALER
     else:
-        print(f"{current_time_str()}: Did not receive correct response from SD host: {webui_url}\nResponse code={res.status_code}")
+        print(
+            f"{current_time_str()}: Did not receive correct response from SD host: {webui_url}\n"
+            f"Response code={res.status_code}"
+        )
         sys.exit(1) 
 except requests.ConnectionError as e:
     print(f"{current_time_str()}: Failed to connect to SD host; possibly incorrect URL:\n", e) 
@@ -104,7 +110,14 @@ class UpscaleOnlyView(discord.ui.View):
         upscaled_image = await upscale(self.filename)
         with open(upscaled_image, 'rb') as f:
             image_bytes = f.read()
-        message = await interaction.followup.send(f"Upscaled This Generation:", file=discord.File(io.BytesIO(image_bytes), f'upscaled.png'))
+
+        message = await interaction.followup.send(
+            f"Upscaled This Generation:", 
+            file=discord.File(
+                io.BytesIO(image_bytes), 
+                f'upscaled.png'
+            )
+        )
 
 # The upscale L and upscale R button after retrying
 class UpscaleOnlyView2(discord.ui.View):
@@ -119,7 +132,14 @@ class UpscaleOnlyView2(discord.ui.View):
         upscaled_image = await upscale(self.filename)
         with open(upscaled_image, 'rb') as f:
             image_bytes = f.read()
-        message = await interaction.followup.send(f"Upscaled This Generation:", file=discord.File(io.BytesIO(image_bytes), f'upscaled.png'))
+
+        message = await interaction.followup.send(
+            f"Upscaled This Generation:", 
+            file=discord.File(
+                io.BytesIO(image_bytes), 
+                f'upscaled.png'
+            )
+        )
                                                                                                   
     @discord.ui.button(label="Upscale R", style=discord.ButtonStyle.primary, emoji="🖼️") 
     async def button_upscale3(self, button, interaction):
@@ -127,7 +147,14 @@ class UpscaleOnlyView2(discord.ui.View):
         upscaled_image = await upscale(self.filename2)
         with open(upscaled_image, 'rb') as f:
             image_bytes = f.read()
-        message = await interaction.followup.send(f"Upscaled This Generation:", file=discord.File(io.BytesIO(image_bytes), f'upscaled.png'))
+
+        message = await interaction.followup.send(
+            f"Upscaled This Generation:", 
+            file=discord.File(
+                io.BytesIO(image_bytes), 
+                f'upscaled.png'
+            )
+        )
 
 # The main button rows, contains Upscale L/R, Variation L/R and Retry
 # Variation generates almost the same image again using same settings / seed. In addition, this uses an variation strengt.
@@ -152,7 +179,14 @@ class MyView(discord.ui.View):
         upscaled_image = await upscale("GeneratedImages/" + self.image_id + ".png")
         with open(upscaled_image, 'rb') as f:
             image_bytes = f.read()
-        message = await interaction.followup.send(f"Upscaled This Generation:", file=discord.File(io.BytesIO(image_bytes), f'{self.prompt}-{self.style}-upscaled.png'))
+
+        message = await interaction.followup.send(
+            f"Upscaled This Generation:", 
+            file=discord.File(
+                io.BytesIO(image_bytes), 
+                f'{self.prompt}-{self.style}-upscaled.png'
+            )
+        )
         
     @discord.ui.button(label="Upscale R", row=0, style=discord.ButtonStyle.primary, emoji="🖼️") 
     async def button_upscale2(self, button, interaction):
@@ -160,7 +194,14 @@ class MyView(discord.ui.View):
         upscaled_image = await upscale("GeneratedImages/" + self.image_id1 + ".png")
         with open(upscaled_image, 'rb') as f:
             image_bytes = f.read()
-        message = await interaction.followup.send(f"Upscaled This Generation:", file=discord.File(io.BytesIO(image_bytes), f'{self.prompt}-{self.style}-upscaled.png'))
+
+        message = await interaction.followup.send(
+            f"Upscaled This Generation:", 
+            file=discord.File(
+                io.BytesIO(image_bytes), 
+                f'{self.prompt}-{self.style}-upscaled.png'
+            )
+        )
         
     @discord.ui.button(label="Variation L", row=1, style=discord.ButtonStyle.primary, emoji="🌱") 
     async def button_variation(self, button, interaction):
@@ -168,6 +209,7 @@ class MyView(discord.ui.View):
         variation_image, image_id = await imagegen(self.prompt, self.style, self.orientation, self.negative_prompt, self.seed, variation=True)
         with open(variation_image, 'rb') as f:
             image_bytes = f.read()
+
         message = await interaction.followup.send(
             f"Varied This Generation:", 
             file=discord.File(
@@ -183,6 +225,7 @@ class MyView(discord.ui.View):
         variation_image, image_id = await imagegen(self.prompt, self.style, self.orientation, self.negative_prompt, self.seed1, variation=True)
         with open(variation_image, 'rb') as f:
             image_bytes = f.read()
+
         message = await interaction.followup.send(
             f"Varied This Generation:", 
             file=discord.File(
@@ -219,6 +262,7 @@ async def imagegen(prompt, style, orientation, original_negativeprompt, seed, va
         var_strength = variation_strength
     else:
         var_strength = 0
+
     payload = {
         "prompt": prompt,
         'negative_prompt': negativeprompt,
@@ -250,6 +294,7 @@ async def imagegen(prompt, style, orientation, original_negativeprompt, seed, va
         print (f"{current_time_str()}: Generated Image {total_requests}:", file_path)
         with open('current_requests.txt', 'w') as file:
             file.write(str(total_requests))
+
         return file_path, image_id
 
 # Sends the upscale request to A1111
@@ -259,14 +304,15 @@ async def upscale(image):
     total_requests = total_requests + 1
     with open(image, 'rb') as image_file:
         image_b64 = base64.b64encode(image_file.read()).decode()
+        
     upscale_payload = {
-      "upscaling_resize": 4,
-      "upscaling_crop": True,
-      "gfpgan_visibility": 0.6,
-      "codeformer_visibility": 0,
-      "codeformer_weight": 0,
-      "upscaler_1": upscaler_model, 
-      "image": image_b64
+        "upscaling_resize": 4,
+        "upscaling_crop": True,
+        "gfpgan_visibility": 0.6,
+        "codeformer_visibility": 0,
+        "codeformer_weight": 0,
+        "upscaler_1": upscaler_model, 
+        "image": image_b64
     }
     response_upscaled = requests.post(url=f'{webui_url}/sdapi/v1/extra-single-image', json=upscale_payload)
     r_u = response_upscaled.json()
@@ -279,6 +325,7 @@ async def upscale(image):
     print (f"{current_time_str()}: Upscaled Image {total_requests}:", file_path)
     with open('current_requests.txt', 'w') as file:
         file.write(str(total_requests))
+
     return file_path
   
 # Command for the 2 random images
@@ -291,6 +338,7 @@ async def generate_random(
     if ctx.guild is None:
         await ctx.respond("This command cannot be used in direct messages.")
         return
+
     await ctx.respond("Generating 2 random images...", ephemeral=True, delete_after=4)  
     prompt = GeneratePrompt.random_prompt() 
     prompt2 = GeneratePrompt.random_prompt() 
@@ -301,9 +349,11 @@ async def generate_random(
     title_prompt = prompt
     if len(title_prompt) > 150:
         title_prompt = title_prompt[:150] + "..."
+
     title_prompt2 = prompt2
     if len(title_prompt2) > 150:
         title_prompt2 = title_prompt2[:150] + "..."
+
     embed = discord.Embed(
             title="Generated 2 random images using these settings:",
             description=(
@@ -318,6 +368,7 @@ async def generate_random(
             ),
             color=discord.Colour.blurple(),
         )
+
     generated_image, image_id = await imagegen(prompt, style, orientation, negative_prompt, seed)
     generated_image2, image_id2 = await imagegen(prompt2, style, orientation, negative_prompt, seed2)
     generated_images = [
@@ -326,33 +377,59 @@ async def generate_random(
     ]
     if len(prompt) > 100:
         prompt = prompt[:100]
-    message = await ctx.respond(f"<@{ctx.author.id}>'s Random Generations:", files=generated_images, view=MyView(prompt, style, orientation, negative_prompt, seed, generated_image, image_id, seed2, generated_image2, image_id2), embed=embed)
+
+    message = await ctx.respond(
+        f"<@{ctx.author.id}>'s Random Generations:", 
+        files=generated_images, 
+        view=MyView(
+            prompt, style, orientation, negative_prompt, seed, 
+            generated_image, image_id, seed2, generated_image2, image_id2
+        ), 
+        embed=embed
+    )
     await message.add_reaction('👍')
     await message.add_reaction('👎')
 
 # Command for the normal 2 image generation
 @bot.command(name=generate_command, description="Generates 2 image")
 async def generate(
-  ctx: discord.ApplicationContext,
-  prompt: discord.Option(str, description='What do you want to generate?'),
-  style: discord.Option(str, choices=GeneratePrompt.get_style_presets(), description='In which style should the image be?'),
-  orientation: discord.Option(str, choices=Orientation.get_orientation_presets(), default=Orientation.SQUARE, description='In which orientation should the image be?'),
-  negative_prompt: discord.Option(str, description='What do you want to avoid?', default='')
+    ctx: discord.ApplicationContext,
+    prompt: discord.Option(str, description='What do you want to generate?'),
+    style: discord.Option(
+        str, 
+        choices=GeneratePrompt.get_style_presets(), 
+        description='In which style should the image be?'
+    ),
+    orientation: discord.Option(
+        str, 
+        choices=Orientation.get_orientation_presets(), 
+        default=Orientation.SQUARE, 
+        description='In which orientation should the image be?'
+    ),
+    negative_prompt: discord.Option(
+        str, 
+        description='What do you want to avoid?', 
+        default=''
+    )
 ):
     global total_requests
     if ctx.guild is None:
         await ctx.respond("This command cannot be used in direct messages.")
         return
+
     seed = random_seed()
     seed2 = random_seed()
     banned_words = ["nude", "naked", "nsfw", "porn"] # The most professional nsfw filter lol
     if not negative_prompt:
         negative_prompt = "Default"
+
     for word in banned_words:
         prompt = prompt.replace(word, "clothes :)")
+
     title_prompt = prompt
     if len(title_prompt) > 150:
         title_prompt = title_prompt[:150] + "..."
+
     embed = discord.Embed(
         title="Prompt: " + title_prompt,
         description = (
@@ -375,7 +452,16 @@ async def generate(
     ]
     if len(prompt) > 100:
         prompt = prompt[:100]
-    message = await ctx.respond(f"<@{ctx.author.id}>'s Generations:", files=generated_images, view=MyView(prompt, style, orientation, negative_prompt, seed, generated_image, image_id, seed2, generated_image2, image_id2), embed=embed)
+
+    message = await ctx.respond(
+        f"<@{ctx.author.id}>'s Generations:", 
+        files=generated_images, 
+        view=MyView(
+            prompt, style, orientation, negative_prompt, seed, 
+            generated_image, image_id, seed2, generated_image2, image_id2
+        ), 
+        embed=embed
+    )
     await message.add_reaction('👍')
     await message.add_reaction('👎')
 
