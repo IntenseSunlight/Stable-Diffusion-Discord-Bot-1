@@ -355,7 +355,15 @@ async def generate(
         title_prompt = title_prompt[:150] + "..."
     embed = discord.Embed(
         title="Prompt: " + title_prompt,
-        description=f"Style: `{style}`\nOrientation: `{orientation}`\nSeed (Left): `{seed}`\nSeed (Right): `{seed2}`\nNegative Prompt: `{negative_prompt}`\nTotal generated images: `{total_requests}`\n\nWant to generate your own image? Type your prompt and style after `/{generate_command}`!",
+        description = (
+            f"Style: `{style}`\n"
+            f"Orientation: `{orientation}`\n"
+            f"Seed (Left): `{seed}`\n"
+            f"Seed (Right): `{seed2}`\n"
+            f"Negative Prompt: `{negative_prompt}`\n"
+            f"Total generated images: `{total_requests}`\n\n"
+            f"Want to generate your own image? Type your prompt and style after `/{generate_command}`!"
+        ),
         color=discord.Colour.blurple(),
     )
     await ctx.respond("Generating 2 images...", ephemeral=True, delete_after=3)  
