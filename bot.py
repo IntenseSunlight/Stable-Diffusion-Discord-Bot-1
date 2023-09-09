@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 
 from utils.prompts import GeneratePrompt 
 from utils.orientation import Orientation 
+from utils.helpers import random_seed, current_time_str
+from utils.helpers import Constants 
 
 DEFAULT_SD_UPSCALER = "4x_NMKD-Siax_200k"
 
@@ -34,12 +36,6 @@ generate_random_command = os.environ.get('BOT_GENERATE_RANDOM_COMMAND', 'generat
 # Apply Settings:
 webui_url = f"http://{host}:{port}"   # URL/Port of the A1111 webui
 
-# helper functions
-def random_seed():
-    return random.randint(0, 1_000_000_000_000)
-
-def current_time_str():
-    return datetime.now().strftime('%x %X')
 
 # clean screen
 os.system('clear')
@@ -87,7 +83,7 @@ except requests.ConnectionError as e:
 # Initialize
 bot = discord.Bot()
 print (f"{current_time_str()}: Bot is running")
-characters = string.ascii_letters + string.digits
+
 
 # keep track of total requests, make this file outside of git control
 if os.path.exists('current_requests.txt'):
@@ -252,10 +248,6 @@ class MyView(discord.ui.View):
         
 # This is the function the generate the image and send the request to A1111.
 async def imagegen(prompt, style, orientation, original_negativeprompt, seed, variation=False):
-    global total_requests
-    total_requests = total_requests + 1
-    global webui_url
-    global variation_strength
     width, height = Orientation.make_orientation(orientation)
     prompt, negativeprompt = GeneratePrompt.make_prompt(prompt, style, original_negativeprompt)
     if variation:
@@ -276,6 +268,7 @@ async def imagegen(prompt, style, orientation, original_negativeprompt, seed, va
         'restore_faces': True,
         'subseed_strength': var_strength
     }
+    
     response = requests.post(url=f'{webui_url}/sdapi/v1/txt2img', json=payload)
     r = response.json()  
     for i in r['images']:
