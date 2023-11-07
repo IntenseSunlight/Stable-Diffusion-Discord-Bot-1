@@ -1,3 +1,4 @@
+import os
 from typing_extensions import Self
 
 # Singleton class to keep track of the number of requests
