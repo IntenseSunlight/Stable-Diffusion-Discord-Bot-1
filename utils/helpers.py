@@ -5,10 +5,6 @@ import random
 import string
 from datetime import datetime
 
-# Constants
-class Constants:
-    characters = string.ascii_letters + string.digits
-
 
 # return a random seed
 def random_seed():
@@ -17,5 +13,8 @@ def random_seed():
 # return the current time as a string
 def current_time_str():
     return datetime.now().strftime('%x %X')
+
+def get_base_dir():
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 

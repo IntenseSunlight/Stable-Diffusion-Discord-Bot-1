@@ -126,4 +126,6 @@ class GeneratePrompt:
         num_return_sequences=1  
         input_ids = tokenizer(prompt, return_tensors='pt').input_ids
         output = model.generate(input_ids, do_sample=True, temperature=temperature, top_k=top_k, max_length=max_length, num_return_sequences=num_return_sequences, repetition_penalty=repitition_penalty, early_stopping=True)
-        return str(tokenizer.decode(output[0], skip_special_tokens=True) + ", colorful, sharp focus")
+        prompt = str(tokenizer.decode(output[0], skip_special_tokens=True) + ", colorful, sharp focus")
+        negativeprompt = "monochrome, nsfw, nude, borders, low quality, low resolution, greyscale"
+        return prompt, negativeprompt

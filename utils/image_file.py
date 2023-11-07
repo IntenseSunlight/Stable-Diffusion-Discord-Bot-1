@@ -40,6 +40,10 @@ class ImageFile:
             ''.join(random.choices(Constants.characters, k=24)) + "." + extension
         )
 
+    def create_file_name(self, extension: str=Constants.default_image_type) -> str:
+        self.image_filename = self._random_filename(extension)
+        return self.image_filename
+
     def from_b64(self, image_b64: str):
         self.image_object = io.BytesIO(base64.b64decode(image_b64))
 
@@ -47,7 +51,7 @@ class ImageFile:
         self.image_object = io.BytesIO(image_bytes)
 
     def to_b64(self):
-        return base64.b64encode(self.image_object.getvalue()).decode('utf-8')
+        return base64.b64encode(self.image_object).decode('utf-8')
 
     def load(self, filename: str=None):
         if filename is None:
@@ -60,7 +64,7 @@ class ImageFile:
         assert os.path.exists(filename), "File does not exist"
         
         with open(filename, 'rb') as f:
-            self.image_object = io.BytesIO(f.read())
+            self.image_object = f.read()
 
     def save(self, filename: str=None, extension: str=Constants.default_image_type):
         self.image_type = extension or self.image_type

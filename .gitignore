@@ -4,4 +4,5 @@ GeneratedImages/*.png
 *.pyc
 .env.deploy
 .env.development
+.vscode/launch.json
 current_requests.txt
