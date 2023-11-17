@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from PIL import Image, PngImagePlugin
 
 from utils.constants import Constants
-from utils.prompts import GeneratePrompt 
+from utils.prompts import GeneratePrompt, PromptConstants
 from utils.orientation import Orientation 
 from utils.image_count import ImageCount
 from utils.image_file import ImageFile
@@ -92,41 +92,36 @@ class UpscaleOnlyView(discord.ui.View):
 
 # The upscale L and upscale R button after retrying
 class UpscaleOnlyView2(discord.ui.View):
-    def __init__(self, filename, filename2, **kwargs):
+    def __init__(self, image1: ImageFile, image2: ImageFile, sd_api=sd_api, **kwargs):
         super().__init__(**kwargs)
-        self.filename = filename
-        self.filename2 = filename2
+        self.image1 = image1 
+        self.image2 = image2 
+        self.sd_api = sd_api
 
     @discord.ui.button(label="Upscale L", style=discord.ButtonStyle.primary, emoji="🖼️") 
     async def button_upscale2(self, button, interaction):
         await interaction.response.send_message(f"Upscaling the image...", ephemeral=True, delete_after=3)
-        upscaled_image = await upscale(self.filename)
-        with open(upscaled_image, 'rb') as f:
-            image_bytes = f.read()
-
-        message = await interaction.followup.send(
+        upscaled_image = self.sd_api.upscale_image(self.image1)
+        await interaction.followup.send(
             f"Upscaled This Generation:", 
             file=discord.File(
-                io.BytesIO(image_bytes), 
-                f'upscaled.png'
+                upscaled_image.image_object,
+                'upscaled.png'
             )
         )
                                                                                                   
     @discord.ui.button(label="Upscale R", style=discord.ButtonStyle.primary, emoji="🖼️") 
     async def button_upscale3(self, button, interaction):
         await interaction.response.send_message(f"Upscaling the image...", ephemeral=True, delete_after=3)
-        upscaled_image = await upscale(self.filename2)
-        with open(upscaled_image, 'rb') as f:
-            image_bytes = f.read()
-
-        message = await interaction.followup.send(
+        upscaled_image = self.sd_api.upscale_image(self.image2)
+        await interaction.followup.send(
             f"Upscaled This Generation:", 
             file=discord.File(
-                io.BytesIO(image_bytes), 
-                f'upscaled.png'
+                upscaled_image.image_object,
+                'upscaled.png'
             )
         )
-
+ 
 # The main button rows, contains Upscale L/R, Variation L/R and Retry
 # Variation generates almost the same image again using same settings / seed. In addition, this uses an variation strengt.
 # We have to refernce all the settings like you see below to generate the correct image again - or we need a reference to the filename to upscale it.
@@ -146,10 +141,12 @@ class GenerateView(discord.ui.View):
         **kwargs
     ):
         super().__init__(**kwargs)
-        self.prompt = prompt
-        self.style = style
+        self.use_prompt = GeneratePrompt(
+            input_prompt=prompt, 
+            input_negativeprompt=negative_prompt, 
+            style=style
+        ) 
         self.orientation = orientation
-        self.negative_prompt = negative_prompt
         self.seed1 = seed1
         self.image1 = image1
         self.seed2 = seed2
@@ -188,8 +185,8 @@ class GenerateView(discord.ui.View):
         await interaction.response.send_message(f"Creating a variation of the image...", ephemeral=True, delete_after=4)  
         width, height = Orientation.make_orientation(self.orientation)
         variation_image, _ = sd_api.generate_image(
-            prompt=self.prompt, 
-            negativeprompt=self.negative_prompt, 
+            prompt=self.use_prompt.prompt, 
+            negativeprompt=self.use_prompt.negativeprompt, 
             seed=self.seed1, 
             variation_strength=self.variation_strength, 
             width=width,
@@ -210,8 +207,8 @@ class GenerateView(discord.ui.View):
         await interaction.response.send_message(f"Creating a variation of the image...", ephemeral=True, delete_after=4)  
         width, height = Orientation.make_orientation(self.orientation)
         variation_image, image_id = self.sd_api.generate_image(
-            prompt=self.prompt, 
-            negativeprompt=self.negative_prompt, 
+            prompt=self.use_prompt.prompt, 
+            negativeprompt=self.use_prompt.negativeprompt, 
             seed=self.seed2,
             variation_strength=self.variation_strength,
             width=width,    
@@ -231,28 +228,28 @@ class GenerateView(discord.ui.View):
     async def button_retry(self, button, interaction):
         await interaction.response.send_message(f"Regenerating the image using the same settings...", ephemeral=True, delete_after=4)
         width, height = Orientation.make_orientation(self.orientation) 
-        retried_image, image_id = self.sd_api.generate_image(
-            prompt=self.prompt, 
-            negativeprompt=self.negative_prompt,
+        retried_image1, _ = self.sd_api.generate_image(
+            prompt=self.use_prompt.prompt, 
+            negativeprompt=self.use_prompt.negativeprompt,
             seed=random_seed(),
             width=width,
             height=height
         )
-        retried_image2, image_id2 = self.sd_api.generate_image(
-            prompt=self.prompt, 
-            negativeprompt=self.negative_prompt, 
+        retried_image2, _ = self.sd_api.generate_image(
+            prompt=self.use_prompt.prompt, 
+            negativeprompt=self.use_prompt.negativeprompt, 
             seed=random_seed(),
             width=width,
             height=height
         )
         retried_images = [
-            discord.File(retried_image.image_filename),
+            discord.File(retried_image1.image_filename),
             discord.File(retried_image2.image_filename),
         ]
         await interaction.followup.send(
             f"Retried These Generations:", 
             files=retried_images, 
-            view=UpscaleOnlyView2(f"GeneratedImages/{image_id}.png", f"GeneratedImages/{image_id2}.png")
+            view=UpscaleOnlyView2(retried_image1, retried_image2, sd_api=sd_api)
         )
         
 # Sends the upscale request to A1111
@@ -278,8 +275,8 @@ async def generate_random(
         return
 
     await ctx.respond("Generating 2 random images...", ephemeral=True, delete_after=4)  
-    prompt1, negative_prompt = GeneratePrompt.random_prompt() 
-    prompt2, _ = GeneratePrompt.random_prompt() 
+    prompt1, negative_prompt = GeneratePrompt().make_random_prompt() 
+    prompt2, _ = GeneratePrompt().make_random_prompt() 
     seed1 = random_seed()
     seed2 = random_seed()
     width, height = Orientation.make_orientation(orientation)   
@@ -334,7 +331,7 @@ async def generate_random(
         view=GenerateView(
             prompt=prompt1,
             negative_prompt=negative_prompt,
-            style=GeneratePrompt.NO_STYLE_PRESET,
+            style=PromptConstants.NO_STYLE_PRESET,
             orientation=orientation,
             seed1=seed1,
             seed2=seed1,
@@ -354,7 +351,7 @@ async def generate(
     prompt: discord.Option(str, description='What do you want to generate?'),
     style: discord.Option(
         str, 
-        choices=GeneratePrompt.get_style_presets(), 
+        choices=PromptConstants.get_style_presets(), 
         description='In which style should the image be?'
     ),
     orientation: discord.Option(
@@ -401,11 +398,15 @@ async def generate(
     )
     await ctx.respond("Generating 2 images...", ephemeral=True, delete_after=3)  
     width, height = Orientation.make_orientation(orientation) 
-    use_prompt, use_negative_prompt = GeneratePrompt.make_prompt(prompt, style, negative_prompt)
+    final_prompt = GeneratePrompt(
+        input_prompt=prompt, 
+        input_negativeprompt=negative_prompt,
+        style=style
+    )
 
     generated_image1, _ = sd_api.generate_image(
-        prompt=use_prompt,
-        negativeprompt=use_negative_prompt,
+        prompt=final_prompt.prompt,
+        negativeprompt=final_prompt.negativeprompt,
         seed=seed1,
         variation_strength=variation_strength,
         width=width,
@@ -414,8 +415,8 @@ async def generate(
     ImageCount.increment()
 
     generated_image2, _ = sd_api.generate_image(
-        prompt=use_prompt,
-        negativeprompt=use_negative_prompt,
+        prompt=final_prompt.prompt,
+        negativeprompt=final_prompt.negativeprompt,
         seed=seed2,
         variation_strength=variation_strength,
         width=width,
@@ -434,8 +435,8 @@ async def generate(
         f"<@{ctx.author.id}>'s Generations:", 
         files=generated_images, 
         view=GenerateView(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
+            prompt=final_prompt.input_prompt,
+            negative_prompt=final_prompt.input_negativeprompt,
             style=style,
             orientation=orientation,
             seed1=seed1,
