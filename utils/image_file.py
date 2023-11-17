@@ -51,8 +51,12 @@ class ImageFile:
         self.image_object = io.BytesIO(image_bytes)
 
     def to_b64(self):
-        b64 = base64.b64encode(self.image_object.read()).decode('utf-8')
-        self.image_object.seek(0)
+        if isinstance(self.image_object, io.BytesIO):
+            self.image_object = self.image_object.read()
+        elif isinstance(self.image_object, Image.Image):
+            self.image_object.read()
+
+        b64 = base64.b64encode(self.image_object).decode('utf-8')
         return b64 
 
     def load(self, filename: str=None):

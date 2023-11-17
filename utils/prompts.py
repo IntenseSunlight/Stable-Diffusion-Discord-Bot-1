@@ -132,19 +132,18 @@ class GeneratePrompt:
     def __init__(
             self, 
             input_prompt: str=None, 
-            input_negativeprompt: str=None, 
+            input_negativeprompt: str="", 
             style: str=PromptConstants.NO_STYLE_PRESET
         ):
+        self._input_prompt = input_prompt
+        self._input_negativeprompt = input_negativeprompt 
         if style in PromptConstants.get_style_presets():
             self._style = style
         else:
             self._style = PromptConstants.NO_STYLE_PRESET 
 
         if input_prompt is not None: 
-            self.input_prompt = input_prompt
-
-        if input_negativeprompt is not None:
-            self.input_negativeprompt = input_negativeprompt
+            self._make_prompt(input_prompt, input_negativeprompt, style)
 
     @property
     def input_prompt(self):
@@ -203,7 +202,7 @@ class GeneratePrompt:
            
     def _make_prompt(self, input_prompt: str, input_negativeprompt: str, style: str):
            
-        prompt = (
+        self._prompt = (
             PromptConstants.cast["preprompt"].get(
                 style, 
                 PromptConstants.cast["preprompt"]["default"]
@@ -214,15 +213,15 @@ class GeneratePrompt:
                 PromptConstants.cast["afterprompt"]["default"]
             )
         )
-        negativeprompt = (
+        self._negativeprompt = (
             input_negativeprompt + 
-            ", " if input_negativeprompt else "" + 
+            (", " if input_negativeprompt else "") + 
             PromptConstants.cast["negativeprompt_template"].get(
                 style, 
                 PromptConstants.cast["negativeprompt_template"]["default"]
             ) 
         )
-        return prompt, negativeprompt
+        return self._prompt, self._negativeprompt
 
     def _random_prompt(self):
         # This generates a random prompt using a finetuned gpt 2. Uses the transformers library.
@@ -247,9 +246,9 @@ class GeneratePrompt:
             repetition_penalty=repitition_penalty, early_stopping=True
         )
 
-        prompt = str(tokenizer.decode(output[0], skip_special_tokens=True) + ", colorful, sharp focus")
-        negativeprompt = "monochrome, nsfw, nude, borders, low quality, low resolution, greyscale"
-        return prompt, negativeprompt
+        self._prompt = str(tokenizer.decode(output[0], skip_special_tokens=True) + ", colorful, sharp focus")
+        self._negativeprompt = "monochrome, nsfw, nude, borders, low quality, low resolution, greyscale"
+        return self._prompt, self._negativeprompt
 
     def make_prompt(
             self, 
@@ -265,5 +264,4 @@ class GeneratePrompt:
         return self._prompt, self._negativeprompt
 
     def make_random_prompt(self):
-        self._prompt, self._negativeprompt = self._random_prompt()
-        return self._prompt, self._negativeprompt
+        return self._random_prompt()

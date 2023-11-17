@@ -4,6 +4,18 @@ from utils.prompts import GeneratePrompt, PromptConstants
 
 
 class TestGeneratePrompt(unittest.TestCase):
+    def test_simple_generate_prompt(self):
+        input_prompt = "a man a plan a canal panama"
+        input_negativeprompt = "camels"
+        prompt = GeneratePrompt(
+            input_prompt=input_prompt,
+            input_negativeprompt=input_negativeprompt,
+            style=PromptConstants.FANTASY
+        )
+        self.assertIsNotNone(prompt.prompt)
+        self.assertNotEqual(prompt.prompt, input_prompt)
+        self.assertNotEqual(prompt.negativeprompt, input_negativeprompt)
+
     def test_generate_prompt(self):
         # Test that generate_prompt method correctly generates prompt
         prompt = GeneratePrompt() 
