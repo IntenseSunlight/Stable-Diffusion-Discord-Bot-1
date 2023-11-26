@@ -1,13 +1,9 @@
 import os
 import sys
-import io
-import requests
 import discord
-import base64
 import logging
 from typing import List, Tuple, Text
 from dotenv import load_dotenv
-from PIL import Image, PngImagePlugin
 
 from utils.constants import Constants
 from utils.prompts import GeneratePrompt, PromptConstants
@@ -17,7 +13,10 @@ from utils.image_file import ImageFile
 from utils.helpers import random_seed, current_time_str
 from sd_apis import AbstractAPI, A1111API, ComfyUiAPI
 
+# Logging, suppresses the discord.py logging
+logging.getLogger('discord').setLevel(logging.CRITICAL)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+logger = logging.getLogger(__name__)
 
 # load environment settings
 # first use .env.development if found, else use .env.deploy
@@ -45,12 +44,12 @@ if sd_api == 'a1111':
 elif sd_api == 'comfyUI':
     sd_api = ComfyUiAPI(webui_url)
 else:
-    logging.error(f"Failed to set SD_API")
+    logger.error(f"Failed to set SD_API")
     raise ValueError(f"Invalid SD_API: {sd_api}")
 
 # clean screen
 os.system('clear')
-logging.info("Started App")
+logger.info("Started App")
 
 # upfront checks
 # check for bot key
@@ -58,17 +57,17 @@ assert discord_bot_key is not None, "Invalid specification: BOT_KEY must be defi
 
 # check SD URL
 if not sd_api.check_sd_host():
-    logging.error(f"Could not establish connection to SD host. Please check your settings.")
+    logger.error(f"Could not establish connection to SD host. Please check your settings.")
     sys.exit(1) 
 
 # check for upscaler name
 if not sd_api.set_upscaler_model(upscaler_model):
-    logging.error(f"Failed to contact set upscaler on SD host. Please check your settings.")
+    logger.error(f"Failed to contact set upscaler on SD host. Please check your settings.")
     sys.exit(1)
 
 # Initialize
 bot = discord.Bot()
-logging.info(f"Bot is running")
+logger.info(f"Bot is running")
 
 # The single upscale button after generating a variation
 class UpscaleOnlyView(discord.ui.View):
@@ -165,7 +164,7 @@ class GenerateView(discord.ui.View):
                 os.path.basename(upscaled_image.image_filename)
             )
         )
-        logging.info(f"Upscaled Image {ImageCount.increment()}: {os.path.basename(self.image1.image_filename)}")
+        logger.info(f"Upscaled Image {ImageCount.increment()}: {os.path.basename(self.image1.image_filename)}")
         
     @discord.ui.button(label="Upscale R", row=0, style=discord.ButtonStyle.primary, emoji="🖼️") 
     async def button_upscale2(self, button, interaction):
@@ -178,7 +177,7 @@ class GenerateView(discord.ui.View):
                 os.path.basename(upscaled_image.image_filename)
             )
         )
-        logging.info(f"Upscaled Image {ImageCount.increment()}: {os.path.basename(self.image2.image_filename)}")
+        logger.info(f"Upscaled Image {ImageCount.increment()}: {os.path.basename(self.image2.image_filename)}")
         
     @discord.ui.button(label="Variation L", row=1, style=discord.ButtonStyle.primary, emoji="🌱") 
     async def button_variation1(self, button, interaction):
