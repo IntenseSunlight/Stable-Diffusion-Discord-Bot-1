@@ -1,9 +1,10 @@
 import os
 import unittest
-from utils.image_file import ImageFile
+from utils_.image_file import ImageFile
 
-TEST_INPUT_FILE = os.path.join(os.path.dirname(__file__),"test_image.png")
-TEST_OUTPUT_FILE = os.path.join(os.path.dirname(__file__),"test_image_output.png")
+TEST_INPUT_FILE = os.path.join(os.path.dirname(__file__), "test_image.png")
+TEST_OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "test_image_output.png")
+
 
 class TestImageFile(unittest.TestCase):
     def test_from_b64(self):
@@ -58,6 +59,3 @@ class TestImageFile(unittest.TestCase):
         self.assertIsNotNone(new_image_file.image_filename)
         self.assertTrue(os.path.exists(new_image_file.image_filename))
         os.remove(new_image_file.image_filename)
-
-
-

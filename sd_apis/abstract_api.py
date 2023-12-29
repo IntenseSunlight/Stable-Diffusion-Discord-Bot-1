@@ -1,34 +1,34 @@
 # Defines the abstract base class for SD API handlers
-import requests 
+import requests
 import random
 import logging
 from abc import ABC, abstractmethod
 from typing import Tuple
 from PIL import Image, PngImagePlugin
-from utils.image_file import ImageFile
-from utils.constants import Constants
-from utils.image_count import ImageCount
+from utils_.image_file import ImageFile
+from utils_.constants import Constants
+from utils_.image_count import ImageCount
 
 
 class AbstractAPI(ABC):
-    def __init__( self, webui_url: str, logger: logging.Logger=logging):
+    def __init__(self, webui_url: str, logger: logging.Logger = logging):
         self._logger = logger
         self.webui_url = webui_url
         self._upscaler_model = Constants.default_upscaler_model
 
     @abstractmethod
     def set_upscaler_model(self, upscaler_model: str) -> bool:
-        pass 
+        pass
 
     @abstractmethod
     def generate_image(
-        self, 
-        prompt: str, 
-        negativeprompt: str, 
-        seed: int, 
-        variation_strength: float=0.0,
-        width: int=512,
-        height: int=512
+        self,
+        prompt: str,
+        negativeprompt: str,
+        seed: int,
+        variation_strength: float = 0.0,
+        width: int = 512,
+        height: int = 512,
     ) -> Tuple[ImageFile, PngImagePlugin.PngInfo]:
         pass
 
@@ -54,15 +54,13 @@ class AbstractAPI(ABC):
                 )
                 return False
         except requests.ConnectionError as e:
-            self._logger.error(f"Failed to connect to SD host; possibly incorrect URL:\n", e) 
+            self._logger.error(
+                f"Failed to connect to SD host; possibly incorrect URL:\n", e
+            )
             return False
 
-    def save_image(
-            self, 
-            image: Image.Image, 
-            pnginfo: PngImagePlugin.PngInfo
-        ):
-        image_id = ''.join(random.choice(Constants.characters) for _ in range(24))
+    def save_image(self, image: Image.Image, pnginfo: PngImagePlugin.PngInfo):
+        image_id = "".join(random.choice(Constants.characters) for _ in range(24))
         file_path = f"GeneratedImages/{image_id}.png"
         image.save(file_path, pnginfo=pnginfo)
         self._logger.info(f"Generated Image {ImageCount.increment()}: {file_path}")
