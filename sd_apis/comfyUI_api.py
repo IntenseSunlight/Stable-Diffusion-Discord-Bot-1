@@ -116,6 +116,56 @@ DEFAULT_WORKFLOW_MAP = """
 }
 """
 
+DEFAULT_UPSCALER_WORKFLOW = """
+{ "prompt":
+    {
+        "1": {
+            "inputs": {
+            "image": "test_image.png",
+            "upload": "image"
+            },
+            "class_type": "LoadImage"
+        },
+        "2": {
+            "inputs": {
+            "model_name": "4x_NMKD-Siax_200k.pth"
+            },
+            "class_type": "UpscaleModelLoader"
+        },
+        "3": {
+            "inputs": {
+            "upscale_model": [
+                "2",
+                0
+            ],
+            "image": [
+                "1",
+                0
+            ]
+            },
+            "class_type": "ImageUpscaleWithModel"
+        },
+        "4": {
+            "inputs": {
+            "filename_prefix": "ComfyUI_upscale",
+            "images": [
+                "3",
+                0
+            ]
+            },
+            "class_type": "SaveImage"
+        }
+    }
+}
+"""
+
+DEFAULT_UPSCALER_WORKFLOW_MAP = """
+{
+    "upscaler_model": [ "prompt", "2", "inputs", "model_name"],
+    "image_file":     [ "prompt", "1", "inputs", "image"]
+}
+"""
+
 
 # Defines the SD API handler for A1111
 class ComfyUIAPI(AbstractAPI):
@@ -124,12 +174,25 @@ class ComfyUIAPI(AbstractAPI):
         webui_url: str,
         workflow_json: Union[str, os.PathLike] = DEFAULT_WORKFLOW,
         workflow_map: Union[str, os.PathLike] = DEFAULT_WORKFLOW_MAP,
+        upscaler_workflow_json: Union[str, os.PathLike] = DEFAULT_UPSCALER_WORKFLOW,
+        upscaler_workflow_map: Union[str, os.PathLike] = DEFAULT_UPSCALER_WORKFLOW_MAP,
         logger: logging.Logger = logging,
         **kwargs,
     ):
         super().__init__(webui_url, logger, **kwargs)
         self.workflow = workflow_json
         self.workflow_map = workflow_map
+        self.upscaler_workflow = upscaler_workflow_json
+        self.upscaler_workflow_map = upscaler_workflow_map
+
+    def _load_json(self, json_input: Union[str, os.PathLike]) -> Dict:
+        if os.path.isfile(json_input):
+            with open(json_input, "r") as f:
+                return json.load(f)
+        elif isinstance(json_input, str):
+            return json.loads(json_input)
+        else:
+            raise TypeError("json_input be a JSON string or a path to a JSON file")
 
     @property
     def workflow(self):
@@ -137,13 +200,7 @@ class ComfyUIAPI(AbstractAPI):
 
     @workflow.setter
     def workflow(self, workflow: Union[str, os.PathLike]):
-        if os.path.isfile(workflow):
-            with open(workflow, "r") as f:
-                self._workflow = json.load(f)
-        elif isinstance(workflow, str):
-            self._workflow = json.loads(workflow)
-        else:
-            raise TypeError("workflow must be a JSON string or a path to a JSON file")
+        self._workflow = self._load_json(workflow)
 
     @property
     def workflow_map(self):
@@ -151,30 +208,41 @@ class ComfyUIAPI(AbstractAPI):
 
     @workflow_map.setter
     def workflow_map(self, workflow_map: Union[str, os.PathLike]):
-        if os.path.isfile(workflow_map):
-            with open(workflow_map, "r") as f:
-                self._workflow_map = json.load(f)
-        elif isinstance(workflow_map, str):
-            self._workflow_map = json.loads(workflow_map)
-        else:
-            raise TypeError(
-                "workflow_map must be a JSON string or a path to a JSON file"
-            )
+        self._workflow_map = self._load_json(workflow_map)
 
-    def _apply_settings(self, model_vals: Dict) -> Dict:
+    @property
+    def upscaler_workflow(self):
+        return self._upscaler_workflow
+
+    @upscaler_workflow.setter
+    def upscaler_workflow(self, upscaler_workflow: Union[str, os.PathLike]):
+        self._upscaler_workflow = self._load_json(upscaler_workflow)
+
+    @property
+    def upscaler_workflow_map(self):
+        return self._upscaler_workflow_map
+
+    @upscaler_workflow_map.setter
+    def upscaler_workflow_map(self, upscaler_workflow_map: Union[str, os.PathLike]):
+        self._upscaler_workflow_map = self._load_json(upscaler_workflow_map)
+
+    def _apply_settings(
+        self, model_vals: Dict, workflow: Dict = None, workflow_map: Dict = None
+    ) -> Dict:
         def set_recursive(stack, workflow, val):
             if len(stack) == 1:
                 workflow[stack[0]] = val
             else:
                 set_recursive(stack[1:], workflow[stack[0]], val)
 
-        wf = {**self.workflow}
-        for sd_var, stack in self.workflow_map.items():
-            if sd_var in model_vals:
-                setting = model_vals[sd_var]
+        wf = {**self.workflow} if workflow is None else {**workflow}
+        wf_map = self.workflow_map if workflow_map is None else workflow_map
+        for sd_var, setting in model_vals.items():
+            if sd_var in wf_map:
+                stack = wf_map[sd_var]
                 set_recursive(stack, wf, setting)
             else:
-                print(f"Warning: {sd_var} not in workflow_map ")
+                self._logger.warn(f"Warning: {sd_var} not in workflow_map")
         return wf
 
     def _queue_prompt(self, workflow: str, client_id: str):
@@ -268,14 +336,45 @@ class ComfyUIAPI(AbstractAPI):
         image = ImageFile()
         image.from_bytes(image_bytes)
         image.save()
+        ws.close()
 
         return image
 
     def set_upscaler_model(self, upscaler_model: str) -> bool:
+        # reset the upscaler model definition
+        if not upscaler_model.endswith(".pth"):
+            self._logger.warning(
+                "Invalid upscaler name, assuming upscaler_model must be a .pth file"
+            )
+            upscaler_model += ".pth"
+
+        self._upscaler_workflow = self._apply_settings(
+            {"upscaler_model": upscaler_model},
+            self.upscaler_workflow,
+            self.upscaler_workflow_map,
+        )
         return True
 
-    def upscale_image(self, request) -> ImageFile:
-        pass
+    def upscale_image(self, request: ImageFile) -> ImageFile:
+        # upscale the image
+        workflow = self._apply_settings(
+            {"image_file": request.image_filename},
+            self.upscaler_workflow,
+            self.upscaler_workflow_map,
+        )
+        client_id = str(uuid.uuid4())
+        ws = websocket.WebSocket()
+        ws.connect(f"ws://{self.webui_url}/ws?clientId={client_id}")
+        images = self._get_images(ws, workflow, client_id)
+        image_bytes = [
+            image_data for node_id in images for image_data in images[node_id]
+        ][0]
+        image = ImageFile()
+        image.from_bytes(image_bytes)
+        image.save()
+        ws.close()
+
+        return image
 
     def get_status(self, request) -> str:
         pass

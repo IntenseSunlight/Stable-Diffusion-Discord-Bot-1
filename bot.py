@@ -38,7 +38,7 @@ sd_api_name = os.environ.get("SD_API", "a1111")
 variation_strength = float(os.environ.get("SD_VARIATION_STRENGTH", "0.065"))
 
 # Name of the upscaler. Recommended is "4x_NMKD-Siax_200k" but you have to download it manually.
-upscaler_model = os.environ.get("SD_UPSCALER", Constants.default_upscaler_model)
+upscaler_model = os.environ.get("SD_UPSCALER", None)
 
 # Set this to the discord bot key from the bot you created on the discord devoloper page.
 discord_bot_key = os.environ.get("BOT_KEY", None)
@@ -79,7 +79,7 @@ if not sd_api.check_sd_host():
     sys.exit(1)
 
 # check for upscaler name
-if not sd_api.set_upscaler_model(upscaler_model):
+if upscaler_model is not None and not sd_api.set_upscaler_model(upscaler_model):
     logger.error(f"Failed to set upscaler on SD host. Please check your settings.")
     sys.exit(1)
 

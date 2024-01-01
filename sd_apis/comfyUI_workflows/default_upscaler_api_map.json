@@ -1,0 +1,4 @@
+{
+    "upscaler_model": [ "prompt", "2", "inputs", "model_name"],
+    "image_file":     [ "prompt", "1", "inputs", "image"]
+}
