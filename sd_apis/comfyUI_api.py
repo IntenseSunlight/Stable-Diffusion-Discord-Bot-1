@@ -6,101 +6,113 @@ import logging
 import urllib.request
 import urllib.parse
 import websocket  # NOTE: websocket-client (https://github.com/websocket-client/websocket-client)
-import requests
-import base64
-from typing import Union
+from typing import Union, Dict
 from PIL import Image, PngImagePlugin
 
 from . import AbstractAPI
 from utils_.image_file import ImageFile
+from utils_.helpers import random_seed
 
 # Default workflow for picture generation
 DEFAULT_WORKFLOW = """
-{
-    "3": {
-        "class_type": "KSampler",
-        "inputs": {
-            "cfg": 8,
-            "denoise": 1,
-            "latent_image": [
-                "5",
-                0
-            ],
-            "model": [
-                "4",
-                0
-            ],
-            "negative": [
-                "7",
-                0
-            ],
-            "positive": [
-                "6",
-                0
-            ],
-            "sampler_name": "euler",
-            "scheduler": "normal",
-            "seed": 8566257,
-            "steps": 20
-        }
-    },
-    "4": {
-        "class_type": "CheckpointLoaderSimple",
-        "inputs": {
-            "ckpt_name": "v1-5-pruned-emaonly.ckpt"
-        }
-    },
-    "5": {
-        "class_type": "EmptyLatentImage",
-        "inputs": {
-            "batch_size": 1,
-            "height": 512,
-            "width": 512
-        }
-    },
-    "6": {
-        "class_type": "CLIPTextEncode",
-        "inputs": {
-            "clip": [
-                "4",
-                1
-            ],
-            "text": "masterpiece best quality girl"
-        }
-    },
-    "7": {
-        "class_type": "CLIPTextEncode",
-        "inputs": {
-            "clip": [
-                "4",
-                1
-            ],
-            "text": "bad hands"
-        }
-    },
-    "8": {
-        "class_type": "VAEDecode",
-        "inputs": {
-            "samples": [
-                "3",
-                0
-            ],
-            "vae": [
-                "4",
-                2
-            ]
-        }
-    },
-    "9": {
-        "class_type": "SaveImage",
-        "inputs": {
-            "filename_prefix": "ComfyUI",
-            "images": [
-                "8",
-                0
-            ]
+{ "prompt": 
+    {
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {
+                "cfg": 8,
+                "denoise": 1,
+                "latent_image": [
+                    "5",
+                    0
+                ],
+                "model": [
+                    "4",
+                    0
+                ],
+                "negative": [
+                    "7",
+                    0
+                ],
+                "positive": [
+                    "6",
+                    0
+                ],
+                "sampler_name": "euler",
+                "scheduler": "normal",
+                "seed": 8566257,
+                "steps": 20
+            }
+        },
+        "4": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {
+                "ckpt_name": "v1-5-pruned-emaonly.ckpt"
+            }
+        },
+        "5": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {
+                "batch_size": 1,
+                "height": 512,
+                "width": 512
+            }
+        },
+        "6": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+                "clip": [
+                    "4",
+                    1
+                ],
+                "text": "masterpiece best quality girl"
+            }
+        },
+        "7": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+                "clip": [
+                    "4",
+                    1
+                ],
+                "text": "bad hands"
+            }
+        },
+        "8": {
+            "class_type": "VAEDecode",
+            "inputs": {
+                "samples": [
+                    "3",
+                    0
+                ],
+                "vae": [
+                    "4",
+                    2
+                ]
+            }
+        },
+        "9": {
+            "class_type": "SaveImage",
+            "inputs": {
+                "filename_prefix": "ComfyUI",
+                "images": [
+                    "8",
+                    0
+                ]
+            }
         }
     }
+}
+"""
+
+DEFAULT_WORKFLOW_MAP = """
+{
+    "sd_model": [ "prompt", "4", "inputs", "ckpt_name"],
+    "seed":   [ "prompt", "3", "inputs", "seed"], 
+    "prompt": [ "prompt", "6", "inputs", "text"],
+    "negativeprompt": ["prompt", "7", "inputs", "text" ],
+    "width":  ["prompt", "5", "inputs", "width"],
+    "height": ["prompt", "5", "inputs", "height"]
 }
 """
 
@@ -110,29 +122,67 @@ class ComfyUIAPI(AbstractAPI):
     def __init__(
         self,
         webui_url: str,
-        workflow: Union[str, os.PathLike] = DEFAULT_WORKFLOW,
+        workflow_json: Union[str, os.PathLike] = DEFAULT_WORKFLOW,
+        workflow_map: Union[str, os.PathLike] = DEFAULT_WORKFLOW_MAP,
         logger: logging.Logger = logging,
         **kwargs,
     ):
         super().__init__(webui_url, logger, **kwargs)
-        self.workflow_json = workflow
+        self.workflow = workflow_json
+        self.workflow_map = workflow_map
 
     @property
-    def workflow_json(self):
-        return self._workflow_json
+    def workflow(self):
+        return self._workflow
 
-    @workflow_json.setter
-    def workflow_json(self, workflow: Union[str, os.PathLike]):
-        if isinstance(workflow, os.PathLike):
+    @workflow.setter
+    def workflow(self, workflow: Union[str, os.PathLike]):
+        if os.path.isfile(workflow):
             with open(workflow, "r") as f:
-                self._workflow_json = json.load(f)
+                self._workflow = json.load(f)
         elif isinstance(workflow, str):
-            self._workflow_json = json.loads(workflow)
+            self._workflow = json.loads(workflow)
         else:
             raise TypeError("workflow must be a JSON string or a path to a JSON file")
 
+    @property
+    def workflow_map(self):
+        return self._workflow_map
+
+    @workflow_map.setter
+    def workflow_map(self, workflow_map: Union[str, os.PathLike]):
+        if os.path.isfile(workflow_map):
+            with open(workflow_map, "r") as f:
+                self._workflow_map = json.load(f)
+        elif isinstance(workflow_map, str):
+            self._workflow_map = json.loads(workflow_map)
+        else:
+            raise TypeError(
+                "workflow_map must be a JSON string or a path to a JSON file"
+            )
+
+    def _apply_settings(self, model_vals: Dict) -> Dict:
+        def set_recursive(stack, workflow, val):
+            if len(stack) == 1:
+                workflow[stack[0]] = val
+            else:
+                set_recursive(stack[1:], workflow[stack[0]], val)
+
+        wf = {**self.workflow}
+        for sd_var, stack in self.workflow_map.items():
+            if sd_var in model_vals:
+                setting = model_vals[sd_var]
+                set_recursive(stack, wf, setting)
+            else:
+                print(f"Warning: {sd_var} not in workflow_map ")
+        return wf
+
     def _queue_prompt(self, workflow: str, client_id: str):
-        p = {"prompt": workflow, "client_id": client_id}
+        if "prompt" in list(workflow.keys()):
+            p = {**workflow, "client_id": client_id}
+        else:
+            p = {"prompt": {**workflow}, "client_id": client_id}
+
         data = json.dumps(p).encode("utf-8")
         req = urllib.request.Request(f"http://{self.webui_url}/prompt", data=data)
         return json.loads(urllib.request.urlopen(req).read())
@@ -146,7 +196,7 @@ class ComfyUIAPI(AbstractAPI):
         data = {"filename": filename, "subfolder": subfolder, "type": folder_type}
         url_values = urllib.parse.urlencode(data)
         with urllib.request.urlopen(
-            "http://{}/view?{}".format(self.webui_url, url_values)
+            f"http://{self.webui_url}/view?{url_values}"
         ) as response:
             return response.read()
 
@@ -190,49 +240,39 @@ class ComfyUIAPI(AbstractAPI):
         prompt: str,
         negativeprompt: str,
         seed: int,
+        subseed: int = random_seed(),
         variation_strength: float = 0.0,
         width: int = 512,
         height: int = 512,
-    ):
-        # payload = {
-        #    "prompt": prompt,
-        #    'negative_prompt': negativeprompt,
-        #    "steps": 20,
-        #    'width': width,
-        #    'height': height,
-        #    'cfg_scale': 7,
-        #    'sampler_name': 'Euler',
-        #    'seed': seed,
-        #    'tiling': False,
-        #    'restore_faces': True,
-        #    'subseed_strength': variation_strength
-        # }
-
-        # response = requests.post(url=f'{self.webui_url}/sdapi/v1/txt2img', json=payload)
-        # img_json = response.json()['images'][0]
-        # image = Image.open(io.BytesIO(base64.b64decode(img_json.split(",",1)[0])))
-        # png_payload = { "image": "data:image/png;base64," + img_json  }
-
-        # response = requests.post(url=f'{self.webui_url}/sdapi/v1/png-info', json=png_payload)
-        # pnginfo = PngImagePlugin.PngInfo()
-        # pnginfo.add_text("parameters", response.json().get("info"))
-        workflow = {**self.workflow_json}
-        workflow["3"]["inputs"]["seed"] = seed
-        workflow["6"]["inputs"]["text"] = prompt
-        workflow["7"]["inputs"]["text"] = negativeprompt
-        workflow["5"]["inputs"]["width"] = width
-        workflow["5"]["inputs"]["height"] = height
+    ) -> ImageFile:
+        workflow = self._apply_settings(
+            {
+                "sd_model": "v1-5-pruned-emaonly.ckpt",
+                "prompt": prompt,
+                "negativeprompt": negativeprompt,
+                "width": width,
+                "height": height,
+                "seed": seed,
+                "variation_strength": variation_strength,
+                "subseed": subseed,
+            }
+        )
 
         client_id = str(uuid.uuid4())
         ws = websocket.WebSocket()
         ws.connect(f"ws://{self.webui_url}/ws?clientId={client_id}")
         images = self._get_images(ws, workflow, client_id)
-        image = [image_data for node_id in images for image_data in images[node_id]][0]
+        image_bytes = [
+            image_data for node_id in images for image_data in images[node_id]
+        ][0]
+        image = ImageFile()
+        image.from_bytes(image_bytes)
+        image.save()
 
-        return image, ""
+        return image
 
     def set_upscaler_model(self, upscaler_model: str) -> bool:
-        pass
+        return True
 
     def upscale_image(self, request) -> ImageFile:
         pass

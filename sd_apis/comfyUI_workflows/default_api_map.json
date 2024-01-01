@@ -1,0 +1,8 @@
+{
+    "sd_model": [ "prompt", "4", "inputs", "ckpt_name"],
+    "seed":   [ "prompt", "3", "inputs", "seed"], 
+    "prompt": [ "prompt", "6", "inputs", "text"],
+    "negativeprompt": ["prompt", "7", "inputs", "text" ],
+    "width":  ["prompt", "5", "inputs", "width"],
+    "height": ["prompt", "5", "inputs", "height"]
+}
