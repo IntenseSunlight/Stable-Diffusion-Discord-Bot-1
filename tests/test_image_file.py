@@ -2,8 +2,10 @@ import os
 import unittest
 from utils_.image_file import ImageFile
 
-TEST_INPUT_FILE = os.path.join(os.path.dirname(__file__), "test_image.png")
-TEST_OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "test_image_output.png")
+TEST_INPUT_FILE = os.path.join(os.path.dirname(__file__), "assets", "test_image.png")
+TEST_OUTPUT_FILE = os.path.join(
+    os.path.dirname(__file__), "assets", "test_image_output.png"
+)
 
 
 class TestImageFile(unittest.TestCase):
