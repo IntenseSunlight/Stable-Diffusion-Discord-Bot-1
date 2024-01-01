@@ -32,7 +32,7 @@ host = os.environ.get("SD_HOST", "localhost")  # URL of the SD API host
 port = int(os.environ.get("SD_PORT", "7860"))  # Port of the SD API host
 
 # API handler of the SD API host (default: a1111, altenetive: comfyUI)
-sd_api = os.environ.get("SD_API", "a1111")
+sd_api_name = os.environ.get("SD_API", "a1111")
 
 # How much should the varied image vary from the original? (variation strength for subseeds)
 variation_strength = float(os.environ.get("SD_VARIATION_STRENGTH", "0.065"))
@@ -55,17 +55,17 @@ generate_random_command = os.environ.get(
 webui_url = f"{host}:{port}"  # URL/Port of the SD API host
 
 # Assign appropriate API handler
-if sd_api == "a1111":
+if sd_api_name == "a1111":
     sd_api = A1111API(webui_url)
-elif sd_api == "comfyUI":
+elif sd_api_name == "comfyUI":
     sd_api = ComfyUIAPI(webui_url)
 else:
     logger.error(f"Failed to set SD_API")
-    raise ValueError(f"Invalid SD_API: {sd_api}")
+    raise ValueError(f"Invalid SD_API: {sd_api_name}")
 
 # clean screen
 os.system("clear")
-logger.info("Started App")
+logger.info(f"Started App, using api={sd_api_name}")
 
 # upfront checks
 # check for bot key
@@ -80,9 +80,7 @@ if not sd_api.check_sd_host():
 
 # check for upscaler name
 if not sd_api.set_upscaler_model(upscaler_model):
-    logger.error(
-        f"Failed to contact set upscaler on SD host. Please check your settings."
-    )
+    logger.error(f"Failed to set upscaler on SD host. Please check your settings.")
     sys.exit(1)
 
 # Initialize
