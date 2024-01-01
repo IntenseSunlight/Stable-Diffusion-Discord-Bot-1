@@ -10,8 +10,8 @@ from utils_.prompts import GeneratePrompt, PromptConstants
 from utils_.orientation import Orientation
 from utils_.image_count import ImageCount
 from utils_.image_file import ImageFile
-from utils_.helpers import random_seed, current_time_str
-from sd_apis import AbstractAPI, A1111API, ComfyUiAPI
+from utils_.helpers import random_seed
+from sd_apis import AbstractAPI, A1111API, ComfyUIAPI
 
 # Logging, suppresses the discord.py logging
 logging.getLogger("discord").setLevel(logging.CRITICAL)
@@ -30,33 +30,35 @@ if not os.path.exists(dotenv_path):
 load_dotenv(dotenv_path=dotenv_path, override=True)
 host = os.environ.get("SD_HOST", "localhost")  # URL of the SD API host
 port = int(os.environ.get("SD_PORT", "7860"))  # Port of the SD API host
-sd_api = os.environ.get(
-    "SD_API", "a1111"
-)  # API handler of the SD API host (default: a1111, altenetive: comfyUI)
-variation_strength = float(
-    os.environ.get("SD_VARIATION_STRENGTH", "0.065")
-)  # How much should the varied image vary from the original? (variation strength for subseeds)
-upscaler_model = os.environ.get(
-    "SD_UPSCALER", Constants.default_upscaler_model
-)  # Name of the upscaler. I recommend "4x_NMKD-Siax_200k" but you have to download it manually.
-discord_bot_key = os.environ.get(
-    "BOT_KEY", None
-)  # Set this to the discord bot key from the bot you created on the discord devoloper page.
-generate_command = os.environ.get(
-    "BOT_GENERATE_COMMAND", "generate"
-)  # Discord slash command to generate from prompt
+
+# API handler of the SD API host (default: a1111, altenetive: comfyUI)
+sd_api = os.environ.get("SD_API", "a1111")
+
+# How much should the varied image vary from the original? (variation strength for subseeds)
+variation_strength = float(os.environ.get("SD_VARIATION_STRENGTH", "0.065"))
+
+# Name of the upscaler. Recommended is "4x_NMKD-Siax_200k" but you have to download it manually.
+upscaler_model = os.environ.get("SD_UPSCALER", Constants.default_upscaler_model)
+
+# Set this to the discord bot key from the bot you created on the discord devoloper page.
+discord_bot_key = os.environ.get("BOT_KEY", None)
+
+# Discord slash command to generate from prompt
+generate_command = os.environ.get("BOT_GENERATE_COMMAND", "generate")
+
+# Discord slash command to generate random
 generate_random_command = os.environ.get(
     "BOT_GENERATE_RANDOM_COMMAND", "generate_random"
-)  # Discord slash command to generate random
+)
 
 # Apply Settings:
-webui_url = f"http://{host}:{port}"  # URL/Port of the SD API host
+webui_url = f"{host}:{port}"  # URL/Port of the SD API host
 
 # Assign appropriate API handler
 if sd_api == "a1111":
     sd_api = A1111API(webui_url)
 elif sd_api == "comfyUI":
-    sd_api = ComfyUiAPI(webui_url)
+    sd_api = ComfyUIAPI(webui_url)
 else:
     logger.error(f"Failed to set SD_API")
     raise ValueError(f"Invalid SD_API: {sd_api}")
@@ -95,7 +97,7 @@ class UpscaleOnlyView(discord.ui.View):
         self.image = image
         self.sd_api = sd_api
 
-    @discord.ui.button(label="Upscale", style=discord.ButtonStyle.primary, emoji="🖼️" 
+    @discord.ui.button(label="Upscale", style=discord.ButtonStyle.primary, emoji="🖼️")
     async def button_upscale(self, button, interaction):
         await interaction.response.send_message(
             f"Upscaling the image...", ephemeral=True, delete_after=3
@@ -116,7 +118,7 @@ class UpscaleOnlyView2(discord.ui.View):
         self.image2 = image2
         self.sd_api = sd_api
 
-    @discord.ui.button(label="Upscale L", style=discord.ButtonStyle.primary, emoji="🖼️" 
+    @discord.ui.button(label="Upscale L", style=discord.ButtonStyle.primary, emoji="🖼️")
     async def button_upscale2(self, button, interaction):
         await interaction.response.send_message(
             f"Upscaling the image...", ephemeral=True, delete_after=3
@@ -127,7 +129,7 @@ class UpscaleOnlyView2(discord.ui.View):
             file=discord.File(upscaled_image.image_object, "upscaled.png"),
         )
 
-    @discord.ui.button(label="Upscale R", style=discord.ButtonStyle.primary, emoji="🖼️" 
+    @discord.ui.button(label="Upscale R", style=discord.ButtonStyle.primary, emoji="🖼️")
     async def button_upscale3(self, button, interaction):
         await interaction.response.send_message(
             f"Upscaling the image...", ephemeral=True, delete_after=3
@@ -171,8 +173,8 @@ class GenerateView(discord.ui.View):
         self.sd_api = sd_api
 
     @discord.ui.button(
-        label="Upscale L", row=0, style=discord.ButtonStyle.primary, emoji="🖼️
-    ) 
+        label="Upscale L", row=0, style=discord.ButtonStyle.primary, emoji="🖼️"
+    )
     async def button_upscale1(self, button, interaction):
         await interaction.response.send_message(
             f"Upscaling the image...", ephemeral=True, delete_after=4
@@ -190,8 +192,8 @@ class GenerateView(discord.ui.View):
         )
 
     @discord.ui.button(
-        label="Upscale R", row=0, style=discord.ButtonStyle.primary, emoji="🖼️
-    ) 
+        label="Upscale R", row=0, style=discord.ButtonStyle.primary, emoji="🖼️"
+    )
     async def button_upscale2(self, button, interaction):
         await interaction.response.send_message(
             f"Upscaling the image...", ephemeral=True, delete_after=4
@@ -209,14 +211,14 @@ class GenerateView(discord.ui.View):
         )
 
     @discord.ui.button(
-        label="Variation L", row=1, style=discord.ButtonStyle.primary, emoji="🌱
-    ) 
+        label="Variation L", row=1, style=discord.ButtonStyle.primary, emoji="🌱"
+    )
     async def button_variation1(self, button, interaction):
         await interaction.response.send_message(
             f"Creating a variation of the image...", ephemeral=True, delete_after=4
         )
         width, height = Orientation.make_orientation(self.orientation)
-        variation_image, _ = sd_api.generate_image(
+        variation_image = sd_api.generate_image(
             prompt=self.use_prompt.prompt,
             negativeprompt=self.use_prompt.negativeprompt,
             seed=self.seed1,
@@ -236,14 +238,14 @@ class GenerateView(discord.ui.View):
         )
 
     @discord.ui.button(
-        label="Variation R", row=1, style=discord.ButtonStyle.primary, emoji="🌱
-    ) 
+        label="Variation R", row=1, style=discord.ButtonStyle.primary, emoji="🌱"
+    )
     async def button_variation2(self, button, interaction):
         await interaction.response.send_message(
             f"Creating a variation of the image...", ephemeral=True, delete_after=4
         )
         width, height = Orientation.make_orientation(self.orientation)
-        variation_image, image_id = self.sd_api.generate_image(
+        variation_image = self.sd_api.generate_image(
             prompt=self.use_prompt.prompt,
             negativeprompt=self.use_prompt.negativeprompt,
             seed=self.seed2,
@@ -263,8 +265,8 @@ class GenerateView(discord.ui.View):
         )
 
     @discord.ui.button(
-        label="Retry", row=2, style=discord.ButtonStyle.primary, emoji="🔄
-    ")
+        label="Retry", row=2, style=discord.ButtonStyle.primary, emoji="🔄"
+    )
     async def button_retry(self, button, interaction):
         await interaction.response.send_message(
             f"Regenerating the image using the same settings...",
@@ -272,14 +274,14 @@ class GenerateView(discord.ui.View):
             delete_after=4,
         )
         width, height = Orientation.make_orientation(self.orientation)
-        retried_image1, _ = self.sd_api.generate_image(
+        retried_image1 = self.sd_api.generate_image(
             prompt=self.use_prompt.prompt,
             negativeprompt=self.use_prompt.negativeprompt,
             seed=random_seed(),
             width=width,
             height=height,
         )
-        retried_image2, _ = self.sd_api.generate_image(
+        retried_image2 = self.sd_api.generate_image(
             prompt=self.use_prompt.prompt,
             negativeprompt=self.use_prompt.negativeprompt,
             seed=random_seed(),
@@ -339,7 +341,7 @@ async def generate_random(
         color=discord.Colour.blurple(),
     )
 
-    generated_image1, _ = sd_api.generate_image(
+    generated_image1 = sd_api.generate_image(
         prompt=prompt1,
         negativeprompt=negative_prompt,
         seed=seed1,
@@ -349,7 +351,7 @@ async def generate_random(
     )
     ImageCount.increment()
 
-    generated_image2, _ = sd_api.generate_image(
+    generated_image2 = sd_api.generate_image(
         prompt=prompt2,
         negativeprompt=negative_prompt,
         seed=seed2,
@@ -382,9 +384,9 @@ async def generate_random(
         ),
         embed=embed,
     )
-    await message.add_reaction(""')
-    await message.add_reaction("")
-)
+    await message.add_reaction("👍")
+    await message.add_reaction("👎")
+
 
 # Command for the normal 2 image generation
 @bot.command(name=generate_command, description="Generates 2 image")
@@ -447,7 +449,7 @@ async def generate(
         input_prompt=prompt, input_negativeprompt=negative_prompt, style=style
     )
 
-    generated_image1, _ = sd_api.generate_image(
+    generated_image1 = sd_api.generate_image(
         prompt=final_prompt.prompt,
         negativeprompt=final_prompt.negativeprompt,
         seed=seed1,
@@ -457,7 +459,7 @@ async def generate(
     )
     ImageCount.increment()
 
-    generated_image2, _ = sd_api.generate_image(
+    generated_image2 = sd_api.generate_image(
         prompt=final_prompt.prompt,
         negativeprompt=final_prompt.negativeprompt,
         seed=seed2,
@@ -491,8 +493,8 @@ async def generate(
         embed=embed,
     )
 
-    await message.add_reaction(""')
-    await message.add_reaction("")
-)
+    await message.add_reaction("👍")
+    await message.add_reaction("👎")
+
 
 bot.run(discord_bot_key)
