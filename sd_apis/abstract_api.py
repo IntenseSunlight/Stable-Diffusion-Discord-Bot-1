@@ -29,7 +29,7 @@ class AbstractAPI(ABC):
         variation_strength: float = 0.0,
         width: int = 512,
         height: int = 512,
-    ) -> Tuple[ImageFile, PngImagePlugin.PngInfo]:
+    ) -> ImageFile:
         pass
 
     @abstractmethod
@@ -43,7 +43,7 @@ class AbstractAPI(ABC):
     def check_sd_host(self) -> bool:
         # check SD URL
         try:
-            res = requests.get(self.webui_url)
+            res = requests.get(f"http://{self.webui_url}")
             if res.status_code == 200:
                 self._logger.info(f"Connected to SD host on URL: {self.webui_url}")
                 return True

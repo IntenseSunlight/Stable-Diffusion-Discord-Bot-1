@@ -30,17 +30,19 @@ class A1111API(AbstractAPI):
             "seed": seed,
             "tiling": False,
             "restore_faces": True,
-            "subseed_strength": variation_strength,
+            "variation_strength": variation_strength,
         }
 
-        response = requests.post(url=f"{self.webui_url}/sdapi/v1/txt2img", json=payload)
+        response = requests.post(
+            url=f"http://{self.webui_url}/sdapi/v1/txt2img", json=payload
+        )
         img_json = response.json()["images"][0]
         pil_image_object = Image.open(
             io.BytesIO(base64.b64decode(img_json.split(",", 1)[0]))
         )
         png_payload = {"image": "data:image/png;base64," + img_json}
         response = requests.post(
-            url=f"{self.webui_url}/sdapi/v1/png-info", json=png_payload
+            url=f"http://{self.webui_url}/sdapi/v1/png-info", json=png_payload
         )
         pnginfo = PngImagePlugin.PngInfo()
         pnginfo.add_text("parameters", response.json().get("info"))
@@ -48,11 +50,11 @@ class A1111API(AbstractAPI):
         pil_image_object.save(image.create_file_name(), format="PNG", pnginfo=pnginfo)
         image.load()
 
-        return image, pnginfo
+        return image
 
     def set_upscaler_model(self, upscaler_model: str) -> bool:
         try:
-            res = requests.get(f"{self.webui_url}/sdapi/v1/upscalers")
+            res = requests.get(f"http://{self.webui_url}/sdapi/v1/upscalers")
             if res.status_code == 200:
                 upscalers = [r["name"] for r in res.json()]
                 if upscaler_model in upscalers:
@@ -90,7 +92,8 @@ class A1111API(AbstractAPI):
             "image": image_b64,
         }
         response_upscaled = requests.post(
-            url=f"{self.webui_url}/sdapi/v1/extra-single-image", json=upscale_payload
+            url=f"http://{self.webui_url}/sdapi/v1/extra-single-image",
+            json=upscale_payload,
         )
         r_u = response_upscaled.json()
         image_upscaled = ImageFile()
