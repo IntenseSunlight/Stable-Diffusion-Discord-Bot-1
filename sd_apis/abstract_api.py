@@ -13,7 +13,7 @@ from utils_.log_helper import LogOnce
 
 class AbstractAPI(ABC):
     def __init__(self, webui_url: str, logger: logging.Logger = logging):
-        self._logger = logger
+        self._logger = LogOnce(logger)
         self.webui_url = webui_url
         self._upscaler_model = Constants.default_upscaler_model
 

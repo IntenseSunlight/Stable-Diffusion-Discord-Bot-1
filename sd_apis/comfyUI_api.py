@@ -342,7 +342,7 @@ class ComfyUIAPI(AbstractAPI):
     def set_upscaler_model(self, upscaler_model: str) -> bool:
         # reset the upscaler model definition
         if not upscaler_model.endswith(".pth"):
-            self._logger.warning(
+            self._logger.warn(
                 "Invalid upscaler name, assuming upscaler_model must be a .pth file"
             )
             upscaler_model += ".pth"

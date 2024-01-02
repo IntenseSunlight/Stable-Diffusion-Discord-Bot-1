@@ -244,7 +244,9 @@ async def generate(
         width=width,
         height=height,
     )
-    ImageCount.increment()
+    logger.info(
+        f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image1.image_filename)}"
+    )
 
     generated_image2 = sd_api.generate_image(
         prompt=final_prompt.prompt,
@@ -254,7 +256,9 @@ async def generate(
         width=width,
         height=height,
     )
-    ImageCount.increment()
+    logger.info(
+        f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image2.image_filename)}"
+    )
 
     generated_images = [
         discord.File(generated_image1.image_filename),
