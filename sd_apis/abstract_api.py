@@ -8,6 +8,7 @@ from PIL import Image, PngImagePlugin
 from utils_.image_file import ImageFile
 from utils_.constants import Constants
 from utils_.image_count import ImageCount
+from utils_.log_helper import LogOnce
 
 
 class AbstractAPI(ABC):

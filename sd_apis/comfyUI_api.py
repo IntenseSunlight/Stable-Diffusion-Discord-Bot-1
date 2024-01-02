@@ -333,8 +333,7 @@ class ComfyUIAPI(AbstractAPI):
         image_bytes = [
             image_data for node_id in images for image_data in images[node_id]
         ][0]
-        image = ImageFile()
-        image.from_bytes(image_bytes)
+        image = ImageFile(image_bytes=image_bytes)
         image.save()
         ws.close()
 
@@ -369,8 +368,7 @@ class ComfyUIAPI(AbstractAPI):
         image_bytes = [
             image_data for node_id in images for image_data in images[node_id]
         ][0]
-        image = ImageFile()
-        image.from_bytes(image_bytes)
+        image = ImageFile(image_bytes=image_bytes)
         image.save()
         ws.close()
 

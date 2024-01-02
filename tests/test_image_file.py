@@ -26,13 +26,14 @@ class TestImageFile(unittest.TestCase):
         image_file = ImageFile()
         image_file.from_bytes(image_bytes)
         self.assertIsNotNone(image_file.image_object)
+        image_file = ImageFile(image_bytes=image_bytes)
+        self.assertIsNotNone(image_file.image_object)
 
     def test_to_b64(self):
         # Test that to_b64 method correctly encodes image to base64 string
         with open(TEST_INPUT_FILE, "rb") as f:
             image_bytes = f.read()
-        image_file = ImageFile()
-        image_file.from_bytes(image_bytes)
+        image_file = ImageFile(image_bytes=image_bytes)
         image_b64 = image_file.to_b64()
         self.assertIsNotNone(image_b64)
 
@@ -47,8 +48,7 @@ class TestImageFile(unittest.TestCase):
         with open(TEST_INPUT_FILE, "rb") as f:
             image_bytes = f.read()
 
-        image_file = ImageFile()
-        image_file.from_bytes(image_bytes)
+        image_file = ImageFile(image_bytes=image_bytes)
         image_file.save(TEST_OUTPUT_FILE)
         self.assertTrue(os.path.exists(TEST_OUTPUT_FILE))
         os.remove(TEST_OUTPUT_FILE)
