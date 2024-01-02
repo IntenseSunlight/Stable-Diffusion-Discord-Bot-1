@@ -230,7 +230,9 @@ async def generate(
         ),
         color=discord.Colour.blurple(),
     )
-    await ctx.respond("Generating 2 images...", ephemeral=True, delete_after=3)
+    response = await ctx.respond(
+        "Generating 2 images...", ephemeral=True, delete_after=3
+    )
     width, height = Orientation.make_orientation(orientation)
     final_prompt = GeneratePrompt(
         input_prompt=prompt, input_negativeprompt=negative_prompt, style=style
@@ -244,6 +246,7 @@ async def generate(
         width=width,
         height=height,
     )
+    await response.edit_original_response(content="Generated the first image...")
     logger.info(
         f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image1.image_filename)}"
     )
@@ -259,6 +262,7 @@ async def generate(
     logger.info(
         f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image2.image_filename)}"
     )
+    await response.edit_original_response(content="Generated the second image...")
 
     generated_images = [
         discord.File(generated_image1.image_filename),
