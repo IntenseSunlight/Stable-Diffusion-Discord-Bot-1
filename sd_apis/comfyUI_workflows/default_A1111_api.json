@@ -60,16 +60,16 @@
         },
         "10": {
             "inputs": {
-                "seed": 118320341214938,
+                "seed": 341280637905565,
                 "steps": 20,
                 "cfg": 8,
                 "sampler_name": "euler",
                 "scheduler": "normal",
                 "denoise": 1,
                 "noise_mode": "GPU(=A1111)",
-                "batch_seed_mode": "incremental",
+                "batch_seed_mode": "comfy",
                 "variation_seed": 100,
-                "variation_strength": 0,
+                "variation_strength": 0.12,
                 "model": [
                     "4",
                     0
@@ -240,39 +240,6 @@
                         }
                     },
                     {
-                        "id": 5,
-                        "type": "EmptyLatentImage",
-                        "pos": [
-                            473,
-                            609
-                        ],
-                        "size": {
-                            "0": 315,
-                            "1": 106
-                        },
-                        "flags": {},
-                        "order": 0,
-                        "mode": 0,
-                        "outputs": [
-                            {
-                                "name": "LATENT",
-                                "type": "LATENT",
-                                "links": [
-                                    13
-                                ],
-                                "slot_index": 0
-                            }
-                        ],
-                        "properties": {
-                            "Node name for S&R": "EmptyLatentImage"
-                        },
-                        "widgets_values": [
-                            512,
-                            512,
-                            1
-                        ]
-                    },
-                    {
                         "id": 4,
                         "type": "CheckpointLoaderSimple",
                         "pos": [
@@ -284,7 +251,7 @@
                             "1": 98
                         },
                         "flags": {},
-                        "order": 1,
+                        "order": 0,
                         "mode": 0,
                         "outputs": [
                             {
@@ -318,6 +285,39 @@
                         },
                         "widgets_values": [
                             "v1-5-pruned-emaonly.ckpt"
+                        ]
+                    },
+                    {
+                        "id": 5,
+                        "type": "EmptyLatentImage",
+                        "pos": [
+                            473,
+                            609
+                        ],
+                        "size": {
+                            "0": 315,
+                            "1": 106
+                        },
+                        "flags": {},
+                        "order": 1,
+                        "mode": 0,
+                        "outputs": [
+                            {
+                                "name": "LATENT",
+                                "type": "LATENT",
+                                "links": [
+                                    13
+                                ],
+                                "slot_index": 0
+                            }
+                        ],
+                        "properties": {
+                            "Node name for S&R": "EmptyLatentImage"
+                        },
+                        "widgets_values": [
+                            512,
+                            512,
+                            1
                         ]
                     },
                     {
@@ -370,17 +370,17 @@
                             "Node name for S&R": "KSampler //Inspire"
                         },
                         "widgets_values": [
-                            118320341214938,
-                            "randomize",
+                            341280637905565,
+                            "fixed",
                             20,
                             8,
                             "euler",
                             "normal",
                             1,
                             "GPU(=A1111)",
-                            "incremental",
+                            "comfy",
                             100,
-                            0
+                            0.12
                         ]
                     }
                 ],
