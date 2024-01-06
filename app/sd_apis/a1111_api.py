@@ -2,10 +2,11 @@ import io
 import requests
 import base64
 from typing import Tuple
-from . import AbstractAPI
-from utils_.constants import Constants
 from PIL import Image, PngImagePlugin
-from utils_.image_file import ImageFile
+
+from . import AbstractAPI
+from app.utils_.constants import Constants
+from app.utils_.image_file import ImageFile
 
 
 # Defines the SD API handler for A1111

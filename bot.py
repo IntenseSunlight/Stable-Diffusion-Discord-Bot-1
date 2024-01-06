@@ -5,13 +5,13 @@ import logging
 from typing import List, Tuple, Text
 from dotenv import load_dotenv
 
-from utils_.prompts import GeneratePrompt, PromptConstants
-from utils_.orientation import Orientation
-from utils_.image_count import ImageCount
-from utils_.image_file import ImageFile
-from utils_.helpers import random_seed
-from sd_apis import A1111API, ComfyUIAPI
-from views.generate_image import GenerateView
+from app.utils_.prompts import GeneratePrompt, PromptConstants
+from app.utils_.orientation import Orientation
+from app.utils_.image_count import ImageCount
+from app.utils_.image_file import ImageFile
+from app.utils_.helpers import random_seed
+from app.sd_apis import A1111API, ComfyUIAPI
+from app.views.generate_image import GenerateView
 
 # Logging, suppresses the discord.py logging
 logging.getLogger("discord").setLevel(logging.CRITICAL)

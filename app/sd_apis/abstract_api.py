@@ -5,10 +5,11 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Tuple
 from PIL import Image, PngImagePlugin
-from utils_.image_file import ImageFile
-from utils_.constants import Constants
-from utils_.image_count import ImageCount
-from utils_.log_helper import LogOnce
+
+from app.utils_.image_file import ImageFile
+from app.utils_.constants import Constants
+from app.utils_.image_count import ImageCount
+from app.utils_.log_helper import LogOnce
 
 
 class AbstractAPI(ABC):

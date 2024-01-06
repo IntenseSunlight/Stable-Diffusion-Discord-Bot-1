@@ -16,4 +16,7 @@ def current_time_str():
 
 
 def get_base_dir():
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path_name = os.path.abspath(__file__)
+    for _ in range(3):
+        path_name = os.path.dirname(path_name)
+    return path_name

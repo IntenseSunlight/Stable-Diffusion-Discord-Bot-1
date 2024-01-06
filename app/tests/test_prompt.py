@@ -1,5 +1,5 @@
 import unittest
-from utils_.prompts import GeneratePrompt, PromptConstants
+from app.utils_.prompts import GeneratePrompt, PromptConstants
 
 
 class TestGeneratePrompt(unittest.TestCase):
