@@ -7,3 +7,4 @@ torchvision
 torchaudio
 python-dotenv
 websocket-client
+pydantic
