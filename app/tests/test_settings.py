@@ -1,7 +1,15 @@
+from contextlib import AbstractContextManager
 import os
 import re
+from typing import Any
 import unittest
 from app.settings import Settings
+
+ENV_TEST = """
+SD_HOST="127.0.0.2"
+SD_PORT=8190
+BOT_KEY="1234abcd56789"
+"""
 
 
 class TestSettings(unittest.TestCase):
@@ -78,9 +86,21 @@ class TestSettings(unittest.TestCase):
         Settings.load_json("test_settings2_model.json")
         self.assertEqual(Settings.server.port, 8190)
 
+    def test_settings_dotenv(self):
+        with open(".env.test", "w") as f:
+            f.write(ENV_TEST)
+
+        Settings.load_dotenv(".env.test")
+        self.assertEqual(Settings.server.host, "127.0.0.2")
+        self.assertEqual(Settings.server.port, "8190")
+        self.assertEqual(Settings.server.discord_bot_key, "1234abcd56789")
+
     def tearDown(self):
         if os.path.exists("test_settings_model.json"):
             os.remove("test_settings_model.json")
 
         if os.path.exists("test_settings2_model.json"):
             os.remove("test_settings2_model.json")
+
+        if os.path.exists(".env.test"):
+            os.remove(".env.test")

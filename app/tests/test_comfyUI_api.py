@@ -20,11 +20,17 @@ class TestComfyUIAPI(unittest.TestCase):
         # Test that the ComfyUIAPI object is initialized correctly
         api = ComfyUIAPI(DEFAULT_URL)
         self.assertIsNotNone(api)
+        if not api.check_sd_host():
+            self.skipTest("SD host is not available")
+
         self.assertTrue(api.check_sd_host())
 
     def test_default_workflow(self):
         # Test that the default workflow is loaded correctly
         api = ComfyUIAPI(DEFAULT_URL)
+        if not api.check_sd_host():
+            self.skipTest("SD host is not available")
+
         image = api.generate_image(
             prompt="a man, a plan, a canal, panama",
             negativeprompt="text, watermark, logo",
@@ -39,6 +45,9 @@ class TestComfyUIAPI(unittest.TestCase):
             workflow_json=TEST_WORKFLOW_FILE,
             workflow_map=TEST_WORKFLOW_MAP_FILE,
         )
+        if not api.check_sd_host():
+            self.skipTest("SD host is not available")
+
         image = api.generate_image(
             prompt="a man, a plan, a canal, panama",
             negativeprompt="text, watermark, logo",
@@ -51,6 +60,9 @@ class TestComfyUIAPI(unittest.TestCase):
     def test_upscale_image(self):
         # Test that image upscaling workflow is functioning correctly
         api = ComfyUIAPI(DEFAULT_URL)
+        if not api.check_sd_host():
+            self.skipTest("SD host is not available")
+
         input_image = ImageFile(image_filename=TEST_IMAGE)
         output_image = api.upscale_image(input_image)
         self.assertIsNotNone(output_image)

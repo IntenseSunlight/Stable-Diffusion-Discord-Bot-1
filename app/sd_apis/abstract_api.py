@@ -61,10 +61,11 @@ class AbstractAPI(ABC):
             )
             return False
 
-    def save_image(self, image: Image.Image, pnginfo: PngImagePlugin.PngInfo):
-        image_id = "".join(random.choice(Constants.characters) for _ in range(24))
-        file_path = f"GeneratedImages/{image_id}.png"
-        image.save(file_path, pnginfo=pnginfo)
-        self._logger.info(f"Generated Image {ImageCount.increment()}: {file_path}")
+    def save_image(self, image_file: ImageFile, pnginfo: PngImagePlugin.PngInfo):
+        image = Image(image_file.image_object)
+        image.save(image_file.image_filename, pnginfo=pnginfo)
+        self._logger.info(
+            f"Generated Image {ImageCount.increment()}: {image_file.image_filename}"
+        )
 
-        return file_path, image_id
+        return image_file.image_filename
