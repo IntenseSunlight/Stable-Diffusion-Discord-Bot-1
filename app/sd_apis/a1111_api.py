@@ -5,7 +5,7 @@ from typing import Tuple
 from PIL import Image, PngImagePlugin
 
 from . import AbstractAPI
-from app.utils.constants import Constants
+from app.settings import Settings
 from app.utils.image_file import ImageFile
 
 
@@ -63,9 +63,9 @@ class A1111API(AbstractAPI):
                     self._logger.info(f"Using upscaler model: '{upscaler_model}'")
                     return True
                 else:
-                    self._upscaler_model = Constants.default_upscaler_model
+                    self._upscaler_model = Settings.txt2img.upscaler_model
                     self._logger.warn(
-                        f"Specified upscaler model '{upscaler_model}' not found, using '{Constants.default_upscaler_model}'"
+                        f"Specified upscaler model '{upscaler_model}' not found, using '{Settings.txt2img.upscaler_model}'"
                     )
                     return True
             else:
@@ -89,7 +89,7 @@ class A1111API(AbstractAPI):
             "gfpgan_visibility": 0.6,
             "codeformer_visibility": 0,
             "codeformer_weight": 0,
-            "upscaler_1": Constants.default_upscaler_model,
+            "upscaler_1": Settings.txt2img.upscaler_model,
             "image": image_b64,
         }
         response_upscaled = requests.post(
