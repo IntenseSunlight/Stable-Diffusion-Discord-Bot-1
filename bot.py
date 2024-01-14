@@ -3,12 +3,11 @@ import sys
 import discord
 import logging
 from typing import List, Tuple, Text
-from dotenv import load_dotenv
 
+from app.settings import Settings
 from app.utils.prompts import GeneratePrompt, PromptConstants
 from app.utils.orientation import Orientation
 from app.utils.image_count import ImageCount
-from app.utils.image_file import ImageFile
 from app.utils.helpers import random_seed
 from app.sd_apis import A1111API, ComfyUIAPI
 from app.views.generate_image import GenerateView
@@ -17,6 +16,7 @@ from app.views.generate_image import GenerateView
 logging.getLogger("discord").setLevel(logging.CRITICAL)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
+os.system("clear")
 
 # load environment settings
 # first use .env.development if found, else use .env.deploy
@@ -27,49 +27,41 @@ dotenv_path = os.getenv(
 if not os.path.exists(dotenv_path):
     dotenv_path = os.path.join(os.getcwd(), ".env.deploy")
 
-load_dotenv(dotenv_path=dotenv_path, override=True)
-host = os.environ.get("SD_HOST", "localhost")  # URL of the SD API host
-port = int(os.environ.get("SD_PORT", "7860"))  # Port of the SD API host
+if not os.path.exists(dotenv_path):
+    logger.info(f".env.deploy file not found. JSON settings will be used")
+    dotenv_path = None
 
-# API handler of the SD API host (default: a1111, altenetive: comfyUI)
-sd_api_name = os.environ.get("SD_API", "a1111")
+# determine if settings.json exists
+settings_path = os.path.join(os.getcwd(), "settings.json")
+if not os.path.exists(settings_path):
+    logger.info(f"settings.json not found. Creating default 'settings.json'")
+    Settings.save_json(settings_path)
 
-# How much should the varied image vary from the original? (variation strength for subseeds)
-variation_strength = float(os.environ.get("SD_VARIATION_STRENGTH", "0.065"))
-
-# Name of the upscaler. Recommended is "4x_NMKD-Siax_200k" but you have to download it manually.
-upscaler_model = os.environ.get("SD_UPSCALER", None)
-
-# Set this to the discord bot key from the bot you created on the discord devoloper page.
-discord_bot_key = os.environ.get("BOT_KEY", None)
-
-# Discord slash command to generate from prompt
-generate_command = os.environ.get("BOT_GENERATE_COMMAND", "generate")
-
-# Discord slash command to generate random
-generate_random_command = os.environ.get(
-    "BOT_GENERATE_RANDOM_COMMAND", "generate_random"
-)
+# load settings, using json file first then .env file
+Settings.reload(dot_env=dotenv_path, json_file=settings_path)
 
 # Apply Settings:
-webui_url = f"{host}:{port}"  # URL/Port of the SD API host
+webui_url = (
+    f"{Settings.server.host}:{Settings.server.port}"  # URL/Port of the SD API host
+)
 
 # Assign appropriate API handler
-if sd_api_name == "a1111":
+if Settings.server.sd_api_name == "a1111":
     sd_api = A1111API(webui_url)
-elif sd_api_name == "comfyUI":
+elif Settings.server.sd_api_name == "comfyUI":
     sd_api = ComfyUIAPI(webui_url)
 else:
     logger.error(f"Failed to set SD_API")
-    raise ValueError(f"Invalid SD_API: {sd_api_name}")
+    raise ValueError(f"Invalid SD_API: {Settings.server.sd_api_name}")
 
 # clean screen
-os.system("clear")
-logger.info(f"Started App, using api={sd_api_name}")
+logger.info(f"Started App, using api={Settings.server.sd_api_name}")
 
 # upfront checks
 # check for bot key
-assert discord_bot_key is not None, "Invalid specification: BOT_KEY must be defined"
+assert (
+    Settings.server.discord_bot_key is not None
+), "Invalid specification: BOT_KEY must be defined"
 
 # check SD URL
 if not sd_api.check_sd_host():
@@ -79,18 +71,24 @@ if not sd_api.check_sd_host():
     sys.exit(1)
 
 # check for upscaler name
-if upscaler_model is not None and not sd_api.set_upscaler_model(upscaler_model):
+if Settings.txt2img.upscaler_model is not None and not sd_api.set_upscaler_model(
+    Settings.txt2img.upscaler_model
+):
     logger.error(f"Failed to set upscaler on SD host. Please check your settings.")
     sys.exit(1)
 
 # Initialize
 bot = discord.Bot()
+logger.info("-" * 80)
 logger.info(f"Bot is running")
 
 
 # Sends the upscale request to A1111
 # Command for the 2 random images
-@bot.command(name=generate_random_command, description="Generates 2 random images")
+@bot.command(
+    name=Settings.commands.generate_random_command,
+    description="Generates 2 random images",
+)
 async def generate_random(
     ctx: discord.ApplicationContext,
     orientation: discord.Option(
@@ -123,7 +121,7 @@ async def generate_random(
             f"Seed (Right): `{seed2}`\n"
             f"Negative Prompt: `{negative_prompt}`\n"
             f"Total generated images: `{ImageCount.get_count()}`\n\n"
-            f"Want to generate your own image? Type your prompt and style after `/{generate_command}`!"
+            f"Want to generate your own image? Type your prompt and style after `/{Settings.commands.generate_txt2img}`!"
         ),
         color=discord.Colour.blurple(),
     )
@@ -132,7 +130,7 @@ async def generate_random(
         prompt=prompt1,
         negativeprompt=negative_prompt,
         seed=seed1,
-        variation_strength=variation_strength,
+        variation_strength=Settings.txt2img.variation_strength,
         width=width,
         height=height,
     )
@@ -142,7 +140,7 @@ async def generate_random(
         prompt=prompt2,
         negativeprompt=negative_prompt,
         seed=seed2,
-        variation_strength=variation_strength,
+        variation_strength=Settings.txt2img.variation_strength,
         width=width,
         height=height,
     )
@@ -176,7 +174,7 @@ async def generate_random(
 
 
 # Command for the normal 2 image generation
-@bot.command(name=generate_command, description="Generates 2 image")
+@bot.command(name=Settings.commands.generate_txt2img, description="Generates 2 image")
 async def generate(
     ctx: discord.ApplicationContext,
     prompt: discord.Option(str, description="What do you want to generate?"),
@@ -211,7 +209,7 @@ async def generate(
         negative_prompt = "Default"
 
     for word in banned_words:
-        prompt = prompt.replace(word, "clothes :)")
+        prompt: str = prompt.replace(word, "clothes :)")
 
     title_prompt = prompt
     if len(title_prompt) > 150:
@@ -226,7 +224,7 @@ async def generate(
             f"Seed (Right): `{seed2}`\n"
             f"Negative Prompt: `{negative_prompt}`\n"
             f"Total generated images: `{ImageCount.get_count()}`\n\n"
-            f"Want to generate your own image? Type your prompt and style after `/{generate_command}`!"
+            f"Want to generate your own image? Type your prompt and style after `/{Settings.commands.generate_txt2img}`!"
         ),
         color=discord.Colour.blurple(),
     )
@@ -242,7 +240,7 @@ async def generate(
         prompt=final_prompt.prompt,
         negativeprompt=final_prompt.negativeprompt,
         seed=seed1,
-        variation_strength=variation_strength,
+        variation_strength=Settings.txt2img.variation_strength,
         width=width,
         height=height,
     )
@@ -255,7 +253,7 @@ async def generate(
         prompt=final_prompt.prompt,
         negativeprompt=final_prompt.negativeprompt,
         seed=seed2,
-        variation_strength=variation_strength,
+        variation_strength=Settings.txt2img.variation_strength,
         width=width,
         height=height,
     )
@@ -292,4 +290,4 @@ async def generate(
     await message.add_reaction("👎")
 
 
-bot.run(discord_bot_key)
+bot.run(Settings.server.discord_bot_key)

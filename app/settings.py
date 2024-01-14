@@ -2,7 +2,7 @@ import os
 import json
 from dotenv import load_dotenv
 from pydantic import BaseModel, field_serializer
-from typing import Optional, List, Dict, Union, TextIO
+from typing import Optional, Literal, List, Dict, Union, TextIO
 
 __all__ = ["Settings"]
 
@@ -32,9 +32,9 @@ class FilesModel(BaseModel):
     image_folder: Union[str, os.PathLike] = "./GeneratedImages"
     workflows_folder: Union[str, os.PathLike] = "./app/sd_apis/comfyUI_workflows"
     image_types: List[str] = ["jpg", "png", "jpeg"]
-    default_image_type: str = "png"
+    default_image_type: Literal["jpg", "png", "jpeg"] = "png"
     video_types: List[str] = ["mp4", "gif"]
-    default_video_type: str = "gif"
+    default_video_type: Literal["mp4", "gif"] = "gif"
 
     # Default txt2img settings
 
@@ -83,6 +83,18 @@ class _Settings(BaseModel):
 
     def reset(self):
         self.__dict__.update(self.__class__().__dict__)
+
+    def reload(
+        self,
+        dot_env: Union[str, os.PathLike, TextIO] = None,
+        json_file: Union[str, os.PathLike, TextIO] = None,
+    ):
+        self.reset()
+        if json_file is not None:
+            self.load_json(json_file)
+
+        if dot_env is not None:
+            self.load_dotenv(dot_env)
 
     def load_json(self, json_file: Union[str, os.PathLike, TextIO]):
         if isinstance(json_file, str):
