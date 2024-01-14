@@ -6,8 +6,8 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 from PIL import Image, PngImagePlugin
 
+from app.settings import Settings
 from app.utils.image_file import ImageFile
-from app.utils.constants import Constants
 from app.utils.image_count import ImageCount
 from app.utils.log_helper import LogOnce
 
@@ -16,7 +16,7 @@ class AbstractAPI(ABC):
     def __init__(self, webui_url: str, logger: logging.Logger = logging):
         self._logger = LogOnce(logger)
         self.webui_url = webui_url
-        self._upscaler_model = Constants.default_upscaler_model
+        self._upscaler_model = Settings.txt2img.upscaler_model
 
     @abstractmethod
     def set_upscaler_model(self, upscaler_model: str) -> bool:
