@@ -5,11 +5,11 @@ import logging
 from typing import List, Tuple, Text
 from dotenv import load_dotenv
 
-from app.utils_.prompts import GeneratePrompt, PromptConstants
-from app.utils_.orientation import Orientation
-from app.utils_.image_count import ImageCount
-from app.utils_.image_file import ImageFile
-from app.utils_.helpers import random_seed
+from app.utils.prompts import GeneratePrompt, PromptConstants
+from app.utils.orientation import Orientation
+from app.utils.image_count import ImageCount
+from app.utils.image_file import ImageFile
+from app.utils.helpers import random_seed
 from app.sd_apis import A1111API, ComfyUIAPI
 from app.views.generate_image import GenerateView
 

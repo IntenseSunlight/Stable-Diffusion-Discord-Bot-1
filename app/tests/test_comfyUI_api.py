@@ -2,8 +2,8 @@ import os
 import unittest
 
 from app.sd_apis.comfyUI_api import ComfyUIAPI
-from app.utils_.helpers import random_seed
-from app.utils_.image_file import ImageFile
+from app.utils.helpers import random_seed
+from app.utils.image_file import ImageFile
 
 DEFAULT_URL = "127.0.0.1:8188"
 TEST_WORKFLOW_FILE = os.path.join(

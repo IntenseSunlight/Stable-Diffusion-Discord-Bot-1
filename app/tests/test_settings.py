@@ -86,7 +86,7 @@ class TestSettings(unittest.TestCase):
         Settings.load_json("test_settings2_model.json")
         self.assertEqual(Settings.server.port, 8190)
 
-    def test_settings_dotenv(self):
+        # test load_dotenv
         with open(".env.test", "w") as f:
             f.write(ENV_TEST)
 

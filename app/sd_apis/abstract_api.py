@@ -6,10 +6,10 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 from PIL import Image, PngImagePlugin
 
-from app.utils_.image_file import ImageFile
-from app.utils_.constants import Constants
-from app.utils_.image_count import ImageCount
-from app.utils_.log_helper import LogOnce
+from app.utils.image_file import ImageFile
+from app.utils.constants import Constants
+from app.utils.image_count import ImageCount
+from app.utils.log_helper import LogOnce
 
 
 class AbstractAPI(ABC):

@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from app.utils_.image_file import ImageFile
+from app.utils.image_file import ImageFile
 
 TEST_INPUT_FILE = os.path.join(os.path.dirname(__file__), "assets", "test_image.png")
 TEST_OUTPUT_FILE = os.path.join(

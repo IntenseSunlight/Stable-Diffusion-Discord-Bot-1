@@ -13,6 +13,3 @@ class Constants:
 
     # file locations
     image_folder = "GeneratedImages"
-
-    # Characters used to generate image IDs
-    characters = string.ascii_letters + string.digits

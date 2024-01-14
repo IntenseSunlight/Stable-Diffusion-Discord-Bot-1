@@ -5,8 +5,8 @@ from typing import Tuple
 from PIL import Image, PngImagePlugin
 
 from . import AbstractAPI
-from app.utils_.constants import Constants
-from app.utils_.image_file import ImageFile
+from app.utils.constants import Constants
+from app.utils.image_file import ImageFile
 
 
 # Defines the SD API handler for A1111

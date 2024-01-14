@@ -3,13 +3,13 @@ import discord
 import logging
 from typing import Text
 
-from utils_.image_file import ImageFile
-from utils_.orientation import Orientation
-from utils_.prompts import GeneratePrompt
-from utils_.image_count import ImageCount
-from utils_.helpers import random_seed
+from app.utils.image_file import ImageFile
+from app.utils.orientation import Orientation
+from app.utils.prompts import GeneratePrompt
+from app.utils.image_count import ImageCount
+from app.utils.helpers import random_seed
 
-from sd_apis.abstract_api import AbstractAPI
+from app.sd_apis.abstract_api import AbstractAPI
 
 
 # The main button rows, contains Upscale L/R, Variation L/R and Retry

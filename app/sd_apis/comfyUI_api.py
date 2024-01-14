@@ -10,8 +10,8 @@ from typing import Union, Dict
 from PIL import Image, PngImagePlugin
 
 from . import AbstractAPI
-from app.utils_.image_file import ImageFile
-from app.utils_.helpers import random_seed
+from app.utils.image_file import ImageFile
+from app.utils.helpers import random_seed
 
 # Default workflow for picture generation
 DEFAULT_WORKFLOW = """

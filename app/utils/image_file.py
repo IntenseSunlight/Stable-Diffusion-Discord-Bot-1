@@ -2,8 +2,9 @@ import os
 import io
 import base64
 import random
+import string
 from PIL import Image
-from .constants import Constants
+from app.settings import Settings
 from .helpers import get_base_dir
 
 
@@ -15,7 +16,7 @@ class ImageFile:
         image_bytes: bytes = None,
         image_filename: str = None,
         *,
-        image_type: str = Constants.default_image_type
+        image_type: str = Settings.files.default_image_type,
     ):
         self.image_id = image_id
         self.image_object = image_object
@@ -35,14 +36,18 @@ class ImageFile:
         return self.__copy__()
 
     @staticmethod
-    def _random_filename(extension: str = Constants.default_image_type):
+    def _random_filename(extension: str = Settings.files.default_image_type):
         return os.path.join(
             get_base_dir(),
-            Constants.image_folder,
-            "".join(random.choices(Constants.characters, k=24)) + "." + extension,
+            Settings.files.image_folder,
+            "".join(random.choices(string.ascii_letters + string.digits, k=24))
+            + "."
+            + extension,
         )
 
-    def create_file_name(self, extension: str = Constants.default_image_type) -> str:
+    def create_file_name(
+        self, extension: str = Settings.files.default_image_type
+    ) -> str:
         self.image_filename = self._random_filename(extension)
         return self.image_filename
 
@@ -68,13 +73,15 @@ class ImageFile:
             self.image_filename = filename
 
         self.image_type = os.path.splitext(filename)[1][1:]
-        assert self.image_type in Constants.image_types, "Invalid image type"
+        assert self.image_type in Settings.files.image_types, "Invalid image type"
         assert os.path.exists(filename), "File does not exist"
 
         with open(filename, "rb") as f:
             self.image_object = f.read()
 
-    def save(self, filename: str = None, extension: str = Constants.default_image_type):
+    def save(
+        self, filename: str = None, extension: str = Settings.files.default_image_type
+    ):
         self.image_type = extension or self.image_type
         self.image_filename = filename or self.image_filename or self._random_filename()
 
