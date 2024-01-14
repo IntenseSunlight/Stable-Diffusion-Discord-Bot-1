@@ -31,6 +31,7 @@ class AbstractAPI(ABC):
         variation_strength: float = 0.0,
         width: int = 512,
         height: int = 512,
+        sd_model: str = "v1-5-pruned-emaonly.ckpt",
     ) -> ImageFile:
         pass
 

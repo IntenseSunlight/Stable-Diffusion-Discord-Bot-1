@@ -1,6 +1,6 @@
-from contextlib import AbstractContextManager
 import os
 import re
+import json
 from typing import Any
 import unittest
 from app.settings import Settings
@@ -94,6 +94,12 @@ class TestSettings(unittest.TestCase):
         self.assertEqual(Settings.server.host, "127.0.0.2")
         self.assertEqual(Settings.server.port, "8190")
         self.assertEqual(Settings.server.discord_bot_key, "1234abcd56789")
+
+    def test_optional_parameters(self):
+        schema = json.loads(Settings.model_dump_json())
+        del schema["upscaler"]
+        Settings.load_json(json_str=json.dumps(schema))
+        self.assertNotIn("upscaler", Settings.model_fields_set)
 
     def tearDown(self):
         if os.path.exists("test_settings_model.json"):

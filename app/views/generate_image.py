@@ -98,6 +98,7 @@ class GenerateView(discord.ui.View):
             variation_strength=self.variation_strength,
             width=width,
             height=height,
+            sd_model="v1-5-pruned-emaonly.ckpt",
         )
 
         await interaction.followup.send(
@@ -125,6 +126,7 @@ class GenerateView(discord.ui.View):
             variation_strength=self.variation_strength,
             width=width,
             height=height,
+            sd_model="v1-5-pruned-emaonly.ckpt",
         )
 
         await interaction.followup.send(
@@ -153,6 +155,7 @@ class GenerateView(discord.ui.View):
             seed=random_seed(),
             width=width,
             height=height,
+            sd_model="v1-5-pruned-emaonly.ckpt",
         )
         retried_image2 = self.sd_api.generate_image(
             prompt=self.use_prompt.prompt,
@@ -160,6 +163,7 @@ class GenerateView(discord.ui.View):
             seed=random_seed(),
             width=width,
             height=height,
+            sd_model="v1-5-pruned-emaonly.ckpt",
         )
         retried_images = [
             discord.File(retried_image1.image_filename),

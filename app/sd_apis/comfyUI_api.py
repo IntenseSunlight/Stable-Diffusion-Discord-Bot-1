@@ -1,5 +1,4 @@
 import os
-import io
 import json
 import uuid
 import logging
@@ -312,10 +311,11 @@ class ComfyUIAPI(AbstractAPI):
         variation_strength: float = 0.0,
         width: int = 512,
         height: int = 512,
+        sd_model: str = "v1-5-pruned-emaonly.ckpt",
     ) -> ImageFile:
         workflow = self._apply_settings(
             {
-                "sd_model": "v1-5-pruned-emaonly.ckpt",
+                "sd_model": sd_model,
                 "prompt": prompt,
                 "negativeprompt": negativeprompt,
                 "width": width,

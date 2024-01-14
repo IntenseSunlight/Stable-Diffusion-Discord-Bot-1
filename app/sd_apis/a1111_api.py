@@ -19,6 +19,7 @@ class A1111API(AbstractAPI):
         variation_strength: float = 0.0,
         width: int = 512,
         height: int = 512,
+        sd_model: str = "v1-5-pruned-emaonly.ckpt",
     ) -> Tuple[ImageFile, PngImagePlugin.PngInfo]:
         payload = {
             "prompt": prompt,

@@ -61,7 +61,8 @@ logger.info(f"Started App, using api={Settings.server.sd_api_name}")
 # check for bot key
 assert (
     Settings.server.discord_bot_key is not None
-), "Invalid specification: BOT_KEY must be defined"
+    and not Settings.server.discord_bot_key.startswith("**")
+), "Invalid specification: BOT_KEY must be defined in settings.json or .env.XXXX file"
 
 # check SD URL
 if not sd_api.check_sd_host():
@@ -86,7 +87,7 @@ logger.info(f"Bot is running")
 # Sends the upscale request to A1111
 # Command for the 2 random images
 @bot.command(
-    name=Settings.commands.generate_random_command,
+    name=Settings.commands.botcmd_random,
     description="Generates 2 random images",
 )
 async def generate_random(
@@ -133,6 +134,7 @@ async def generate_random(
         variation_strength=Settings.txt2img.variation_strength,
         width=width,
         height=height,
+        sd_model="v1-5-pruned-emaonly.ckpt",
     )
     ImageCount.increment()
 
@@ -143,6 +145,7 @@ async def generate_random(
         variation_strength=Settings.txt2img.variation_strength,
         width=width,
         height=height,
+        sd_model="v1-5-pruned-emaonly.ckpt",
     )
     ImageCount.increment()
 
@@ -174,7 +177,7 @@ async def generate_random(
 
 
 # Command for the normal 2 image generation
-@bot.command(name=Settings.commands.generate_txt2img, description="Generates 2 image")
+@bot.command(name=Settings.commands.botcmd_txt2img, description="Generates 2 image")
 async def generate(
     ctx: discord.ApplicationContext,
     prompt: discord.Option(str, description="What do you want to generate?"),
@@ -243,6 +246,7 @@ async def generate(
         variation_strength=Settings.txt2img.variation_strength,
         width=width,
         height=height,
+        sd_model="v1-5-pruned-emaonly.ckpt",
     )
     await response.edit_original_response(content="Generated the first image...")
     logger.info(
@@ -256,6 +260,7 @@ async def generate(
         variation_strength=Settings.txt2img.variation_strength,
         width=width,
         height=height,
+        sd_model="v1-5-pruned-emaonly.ckpt",
     )
     logger.info(
         f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image2.image_filename)}"

@@ -1,10 +1,20 @@
 import os
 import json
+from enum import Enum
 from dotenv import load_dotenv
 from pydantic import BaseModel, field_serializer
 from typing import Optional, Literal, List, Dict, Union, TextIO
 
-__all__ = ["Settings"]
+__all__ = ["Settings", "BotCommands"]
+
+
+class BotCommands(Enum):
+    txt2img = "txt2img"
+    img2img = "img2img"
+    txt2vid = "txt2vid"
+    img2vid = "img2vid"
+    faceswap = "faceswap"
+    upscaler = "upscaler"
 
 
 # Default settings
@@ -21,10 +31,12 @@ class ServerModel(BaseModel):
 
 # Default command settings
 class CommandsModel(BaseModel):
-    generate_random_command: str = "generate_random"
-    generate_txt2img: str = "generate"
-    generate_txt2vid: str = "generate_txt2video"
-    generate_img2vid: str = "generate_img2video"
+    botcmd_random: str = "generate_random"
+    botcmd_txt2img: str = "generate"
+    botcmd_upscale: str = "generate_upscale"
+    # botcmd_txt2vid: str = "generate_txt2video"  # not implemented
+    # botcmd_img2vid: str = "generate_img2video"  # not implemented
+    # botcmd_faceswap: str = "generate_faceswap"  # not implemented
 
 
 # Default image file settings
@@ -35,8 +47,6 @@ class FilesModel(BaseModel):
     default_image_type: Literal["jpg", "png", "jpeg"] = "png"
     video_types: List[str] = ["mp4", "gif"]
     default_video_type: Literal["mp4", "gif"] = "gif"
-
-    # Default txt2img settings
 
 
 class Txt2ImgSingleModel(BaseModel):
@@ -49,7 +59,8 @@ class Txt2ImgSingleModel(BaseModel):
 
 
 class Txt2ImgContainerModel(BaseModel):
-    variation_strength: float = 0.0
+    bot_command: BotCommands = BotCommands.txt2img
+    variation_strength: float = 0.065
     upscaler_model: str = "4x_NMKD-Siax_200k"
     n_images: int = 2  # number of images to generate per request
     models: Dict[str, Txt2ImgSingleModel] = {
@@ -61,18 +72,62 @@ class Txt2ImgContainerModel(BaseModel):
         self.models.update({model.display_name: model})
 
 
+class Img2ImgSingleModel(BaseModel):
+    display_name: str = "upscaler_4x"
+    sd_model: str = "4x_NMKD-Siax_200k.ckpt"
+    width: Optional[int] = 512
+    height: Optional[int] = 512
+    workflow_api: Optional[str] = "default_upscaler_api.json"
+    workflow_api_map: Optional[str] = "default_upscaler_api_map.json"
+
+
+class Img2ImgContainerModel(BaseModel):
+    bot_command: BotCommands = BotCommands.img2img
+    models: Dict[str, Img2ImgSingleModel] = {
+        Img2ImgSingleModel().display_name: Img2ImgSingleModel()
+    }
+
+    def add_model(self, model_dict: Dict):
+        model = Img2ImgSingleModel(**model_dict)
+        self.models.update({model.display_name: model})
+
+
+class UpscalerSingleModel(BaseModel):
+    display_name: str = "upscaler_4x"
+    sd_model: str = "4x_NMKD-Siax_200k.ckpt"
+    width: Optional[int] = 512
+    height: Optional[int] = 512
+    workflow_api: Optional[str] = "default_upscaler_api.json"
+    workflow_api_map: Optional[str] = "default_upscaler_api_map.json"
+
+
+class UpscalerContainerModel(BaseModel):
+    bot_command: BotCommands = BotCommands.upscaler
+    models: Dict[str, UpscalerSingleModel] = {
+        UpscalerSingleModel().display_name: UpscalerSingleModel()
+    }
+
+    def add_model(self, model_dict: Dict):
+        model = UpscalerSingleModel(**model_dict)
+        self.models.update({model.display_name: model})
+
+
+# Main Settings Model
+# - Capabilities are added here as the bot is expanded
 class _Settings(BaseModel):
     server: ServerModel = ServerModel()
     commands: CommandsModel = CommandsModel()
     files: FilesModel = FilesModel()
     txt2img: Txt2ImgContainerModel = Txt2ImgContainerModel()
+    upscaler: Optional[UpscalerContainerModel] = UpscalerContainerModel()
+    # img2img: Optional[Img2ImgContainerModel] = Img2ImgContainerModel()   # not implemented
 
     def __init__(
         self,
         *args,
         dot_env: Union[str, os.PathLike, TextIO] = None,
         json_file: Union[str, os.PathLike, TextIO] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         if json_file is not None:
@@ -80,6 +135,20 @@ class _Settings(BaseModel):
 
         if dot_env is not None:
             self.load_dotenv(dot_env)
+
+    @staticmethod
+    def _check_commands(new_self: BaseModel):
+        commands = {}
+        for k in new_self.model_fields_set:
+            s = getattr(new_self, k)
+            if isinstance(s, BaseModel) and (v := getattr(s, "bot_command", None)):
+                if v.value in commands:
+                    raise ValueError(
+                        f"Duplicate bot command capability in settings.json for setting: {v.value}"
+                        f"\n\t{commands[v.value]} and {k} both have bot_command={v.value}"
+                    )
+
+                commands[v.value] = k
 
     def reset(self):
         self.__dict__.update(self.__class__().__dict__)
@@ -96,14 +165,21 @@ class _Settings(BaseModel):
         if dot_env is not None:
             self.load_dotenv(dot_env)
 
-    def load_json(self, json_file: Union[str, os.PathLike, TextIO]):
-        if isinstance(json_file, str):
+    def load_json(
+        self,
+        json_file: Union[str, os.PathLike, TextIO] = None,
+        json_str: Optional[str] = None,
+    ):
+        if json_str is not None:
+            new_self = self.__class__(**json.loads(json_str))
+        elif isinstance(json_file, str):
             with open(json_file, "r") as f:
                 new_self = self.__class__(**json.load(f))
-                self.__dict__.update(new_self.__dict__)
         else:
             new_self = self.__class__(**json.load(json_file))
-            self.__dict__.update(new_self.__dict__)
+
+        self._check_commands(new_self)
+        self.__dict__.update(new_self.__dict__)
 
     def load_dotenv(self, dotenv_path: Union[str, os.PathLike, TextIO]):
         load_dotenv(dotenv_path=dotenv_path, override=True)
@@ -113,12 +189,12 @@ class _Settings(BaseModel):
         self.server.host = os.getenv("SD_HOST", self.server.host)
         self.server.port = os.getenv("SD_PORT", self.server.port)
         self.server.sd_api_name = os.getenv("SD_API", self.server.sd_api_name)
-        self.commands.generate_random_command = os.getenv(
+        self.commands.botcmd_random = os.getenv(
             "BOT_GENERATE_RANDOM_COMMAND",
-            self.commands.generate_random_command,
+            self.commands.botcmd_random,
         )
-        self.commands.generate_txt2img = os.getenv(
-            "BOT_GENERATE_COMMAND", self.commands.generate_txt2img
+        self.commands.botcmd_txt2img = os.getenv(
+            "BOT_GENERATE_COMMAND", self.commands.botcmd_txt2img
         )
         self.txt2img.variation_strength = os.getenv(
             "SD_VARIATION_STRENGTH", self.txt2img.variation_strength
