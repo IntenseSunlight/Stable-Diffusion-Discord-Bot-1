@@ -6,3 +6,4 @@ GeneratedImages/*.png
 .env.development
 .vscode/launch.json
 current_requests.txt
+settings.json

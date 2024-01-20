@@ -1,15 +1,15 @@
 import os
 import sys
-import discord
 import logging
 from typing import List, Tuple, Text
 
+import discord
 from app.settings import Settings
+from app.sd_apis.api_handler import Sd
 from app.utils.prompts import GeneratePrompt, PromptConstants
 from app.utils.orientation import Orientation
 from app.utils.image_count import ImageCount
 from app.utils.helpers import random_seed
-from app.sd_apis import A1111API, ComfyUIAPI
 from app.views.generate_image import GenerateView
 
 # Logging, suppresses the discord.py logging
@@ -45,17 +45,11 @@ webui_url = (
     f"{Settings.server.host}:{Settings.server.port}"  # URL/Port of the SD API host
 )
 
-# Assign appropriate API handler
-if Settings.server.sd_api_name == "a1111":
-    sd_api = A1111API(webui_url)
-elif Settings.server.sd_api_name == "comfyUI":
-    sd_api = ComfyUIAPI(webui_url)
-else:
-    logger.error(f"Failed to set SD_API")
-    raise ValueError(f"Invalid SD_API: {Settings.server.sd_api_name}")
+# Initialize SD API
+Sd.api_configure(webui_url, Settings.server.sd_api_type)
 
 # clean screen
-logger.info(f"Started App, using api={Settings.server.sd_api_name}")
+logger.info(f"Started App, using api={Sd.api_type}")
 
 # upfront checks
 # check for bot key
@@ -65,14 +59,14 @@ assert (
 ), "Invalid specification: BOT_KEY must be defined in settings.json or .env.XXXX file"
 
 # check SD URL
-if not sd_api.check_sd_host():
+if not Sd.api.check_sd_host():
     logger.error(
         f"Could not establish connection to SD host. Please check your settings."
     )
     sys.exit(1)
 
 # check for upscaler name
-if Settings.txt2img.upscaler_model is not None and not sd_api.set_upscaler_model(
+if Settings.txt2img.upscaler_model is not None and not Sd.api.set_upscaler_model(
     Settings.txt2img.upscaler_model
 ):
     logger.error(f"Failed to set upscaler on SD host. Please check your settings.")
@@ -90,7 +84,7 @@ logger.info(f"Bot is running")
     name=Settings.commands.botcmd_random,
     description="Generates 2 random images",
 )
-async def generate_random(
+async def botcmd_random(
     ctx: discord.ApplicationContext,
     orientation: discord.Option(
         str,
@@ -127,7 +121,7 @@ async def generate_random(
         color=discord.Colour.blurple(),
     )
 
-    generated_image1 = sd_api.generate_image(
+    generated_image1 = Sd.api.generate_image(
         prompt=prompt1,
         negativeprompt=negative_prompt,
         seed=seed1,
@@ -138,7 +132,7 @@ async def generate_random(
     )
     ImageCount.increment()
 
-    generated_image2 = sd_api.generate_image(
+    generated_image2 = Sd.api.generate_image(
         prompt=prompt2,
         negativeprompt=negative_prompt,
         seed=seed2,
@@ -168,7 +162,7 @@ async def generate_random(
             seed2=seed1,
             image1=generated_image1,
             image2=generated_image2,
-            sd_api=sd_api,
+            sd_api=Sd.api,
         ),
         embed=embed,
     )
@@ -178,7 +172,7 @@ async def generate_random(
 
 # Command for the normal 2 image generation
 @bot.command(name=Settings.commands.botcmd_txt2img, description="Generates 2 image")
-async def generate(
+async def botcmd_txt2img(
     ctx: discord.ApplicationContext,
     prompt: discord.Option(str, description="What do you want to generate?"),
     style: discord.Option(
@@ -227,7 +221,7 @@ async def generate(
             f"Seed (Right): `{seed2}`\n"
             f"Negative Prompt: `{negative_prompt}`\n"
             f"Total generated images: `{ImageCount.get_count()}`\n\n"
-            f"Want to generate your own image? Type your prompt and style after `/{Settings.commands.generate_txt2img}`!"
+            f"Want to generate your own image? Type your prompt and style after `/{Settings.commands.botcmd_txt2img}`!"
         ),
         color=discord.Colour.blurple(),
     )
@@ -239,7 +233,7 @@ async def generate(
         input_prompt=prompt, input_negativeprompt=negative_prompt, style=style
     )
 
-    generated_image1 = sd_api.generate_image(
+    generated_image1 = Sd.api.generate_image(
         prompt=final_prompt.prompt,
         negativeprompt=final_prompt.negativeprompt,
         seed=seed1,
@@ -253,7 +247,7 @@ async def generate(
         f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image1.image_filename)}"
     )
 
-    generated_image2 = sd_api.generate_image(
+    generated_image2 = Sd.api.generate_image(
         prompt=final_prompt.prompt,
         negativeprompt=final_prompt.negativeprompt,
         seed=seed2,
@@ -286,7 +280,7 @@ async def generate(
             seed2=seed1,
             image1=generated_image1,
             image2=generated_image2,
-            sd_api=sd_api,
+            sd_api=Sd.api,
         ),
         embed=embed,
     )
@@ -294,5 +288,26 @@ async def generate(
     await message.add_reaction("👍")
     await message.add_reaction("👎")
 
+
+# check new commands, to see if bot commands exist
+# new_commands = {
+#     bc: Settings.commands.__dict__[bc] for bc in Settings.commands.model_fields_set
+# }
+# missed_commands = set(new_commands.keys()) - set(globals().keys())
+# if missed_commands:
+#     msg = f"No bot command found in global scope for: {missed_commands}"
+#     logger.error(msg)
+#     raise ValueError(msg)
+
+# # remove existing old commands and add new commands
+# old_commands = [
+#     cmd.name for cmd in bot.walk_commands() if cmd.name in new_commands.values()
+# ]
+# for old_name in old_commands:
+#     bot.remove_command(old_name)
+
+# for new_name in new_commands:
+#     # bot.add_command(globals()[new_name])
+#     bot.add_application_command(globals()[new_name])
 
 bot.run(Settings.server.discord_bot_key)

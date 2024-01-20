@@ -21,7 +21,7 @@ class BotCommands(Enum):
 class ServerModel(BaseModel):
     host: Optional[str] = "127.0.0.1"
     port: Optional[int] = 8188
-    sd_api_name: Optional[str] = "comfyUI"
+    sd_api_type: Optional[str] = "comfyUI"
     discord_bot_key: Optional[str] = "fake"  # must be supplied in .env file
 
     @field_serializer("discord_bot_key", when_used="json")
@@ -181,6 +181,15 @@ class _Settings(BaseModel):
         self._check_commands(new_self)
         self.__dict__.update(new_self.__dict__)
 
+        def recurse_update(old: BaseModel, new: BaseModel):
+            if hasattr(new, "__pydantic_fields_set__"):
+                old.__pydantic_fields_set__.update(new.__pydantic_fields_set__)
+                for k, v in new.__dict__.items():
+                    if isinstance(v, BaseModel):
+                        recurse_update(old.__dict__[k], v)
+
+        recurse_update(self, new_self)
+
     def load_dotenv(self, dotenv_path: Union[str, os.PathLike, TextIO]):
         load_dotenv(dotenv_path=dotenv_path, override=True)
 
@@ -188,7 +197,7 @@ class _Settings(BaseModel):
         self.server.discord_bot_key = os.getenv("BOT_KEY", self.server.discord_bot_key)
         self.server.host = os.getenv("SD_HOST", self.server.host)
         self.server.port = os.getenv("SD_PORT", self.server.port)
-        self.server.sd_api_name = os.getenv("SD_API", self.server.sd_api_name)
+        self.server.sd_api_type = os.getenv("SD_API", self.server.sd_api_type)
         self.commands.botcmd_random = os.getenv(
             "BOT_GENERATE_RANDOM_COMMAND",
             self.commands.botcmd_random,
