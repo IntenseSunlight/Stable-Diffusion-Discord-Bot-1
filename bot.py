@@ -4,7 +4,7 @@ import logging
 from typing import List, Tuple, Text
 
 import discord
-from app.settings import Settings
+from app.settings import Settings, GroupCommands
 from app.sd_apis.api_handler import Sd
 from app.utils.prompts import GeneratePrompt, PromptConstants
 from app.utils.orientation import Orientation
@@ -74,14 +74,18 @@ if Settings.txt2img.upscaler_model is not None and not Sd.api.set_upscaler_model
 
 # Initialize
 bot = discord.Bot()
-logger.info("-" * 80)
-logger.info(f"Bot is running")
+cmds = discord.SlashCommandGroup(
+    Settings.server.bot_command, "Stable Diffusion Commands"
+)
+txt2img_group = cmds.create_subgroup(
+    GroupCommands.txt2img.name, "Create image using prompt"
+)
 
 
 # Sends the upscale request to A1111
 # Command for the 2 random images
-@bot.command(
-    name=Settings.commands.botcmd_random,
+@txt2img_group.command(
+    name="random",
     description="Generates 2 random images",
 )
 async def botcmd_random(
@@ -106,6 +110,7 @@ async def botcmd_random(
     title_prompt1 = prompt1 if len(prompt1) > 150 else prompt1[:150] + "..."
     title_prompt2 = prompt2 if len(prompt2) > 150 else prompt2[:150] + "..."
 
+    command_name = f"{Settings.server.bot_command}.{GroupCommands.txt2img.name}.random"
     embed = discord.Embed(
         title="Generated 2 random images using these settings:",
         description=(
@@ -116,7 +121,7 @@ async def botcmd_random(
             f"Seed (Right): `{seed2}`\n"
             f"Negative Prompt: `{negative_prompt}`\n"
             f"Total generated images: `{ImageCount.get_count()}`\n\n"
-            f"Want to generate your own image? Type your prompt and style after `/{Settings.commands.generate_txt2img}`!"
+            f"Want to generate your own image? Type your prompt and style after `/{command_name}`!"
         ),
         color=discord.Colour.blurple(),
     )
@@ -171,7 +176,7 @@ async def botcmd_random(
 
 
 # Command for the normal 2 image generation
-@bot.command(name=Settings.commands.botcmd_txt2img, description="Generates 2 image")
+@txt2img_group.command(name="image", description="Generates 2 images")
 async def botcmd_txt2img(
     ctx: discord.ApplicationContext,
     prompt: discord.Option(str, description="What do you want to generate?"),
@@ -212,6 +217,7 @@ async def botcmd_txt2img(
     if len(title_prompt) > 150:
         title_prompt = title_prompt[:150] + "..."
 
+    command_name = f"{Settings.server.bot_command}.{GroupCommands.txt2img.name}.image"
     embed = discord.Embed(
         title="Prompt: " + title_prompt,
         description=(
@@ -221,7 +227,7 @@ async def botcmd_txt2img(
             f"Seed (Right): `{seed2}`\n"
             f"Negative Prompt: `{negative_prompt}`\n"
             f"Total generated images: `{ImageCount.get_count()}`\n\n"
-            f"Want to generate your own image? Type your prompt and style after `/{Settings.commands.botcmd_txt2img}`!"
+            f"Want to generate your own image? Type your prompt and style after `/{command_name}`!"
         ),
         color=discord.Colour.blurple(),
     )
@@ -289,25 +295,9 @@ async def botcmd_txt2img(
     await message.add_reaction("👎")
 
 
-# check new commands, to see if bot commands exist
-# new_commands = {
-#     bc: Settings.commands.__dict__[bc] for bc in Settings.commands.model_fields_set
-# }
-# missed_commands = set(new_commands.keys()) - set(globals().keys())
-# if missed_commands:
-#     msg = f"No bot command found in global scope for: {missed_commands}"
-#     logger.error(msg)
-#     raise ValueError(msg)
+bot.add_application_command(cmds)
+bot.auto_sync_commands = True
 
-# # remove existing old commands and add new commands
-# old_commands = [
-#     cmd.name for cmd in bot.walk_commands() if cmd.name in new_commands.values()
-# ]
-# for old_name in old_commands:
-#     bot.remove_command(old_name)
-
-# for new_name in new_commands:
-#     # bot.add_command(globals()[new_name])
-#     bot.add_application_command(globals()[new_name])
-
+logger.info("-" * 80)
+logger.info(f"Bot is running")
 bot.run(Settings.server.discord_bot_key)
