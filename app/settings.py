@@ -8,7 +8,7 @@ from typing import Optional, Literal, List, Dict, Union, TextIO
 __all__ = ["Settings", "BotCommands"]
 
 
-class BotCommands(Enum):
+class GroupCommands(Enum):
     txt2img = "txt2img"
     img2img = "img2img"
     txt2vid = "txt2vid"
@@ -23,20 +23,48 @@ class ServerModel(BaseModel):
     port: Optional[int] = 8188
     sd_api_type: Optional[str] = "comfyUI"
     discord_bot_key: Optional[str] = "fake"  # must be supplied in .env file
+    bot_command: Optional[str] = "generate"
 
     @field_serializer("discord_bot_key", when_used="json")
     def _hide_discord_bot_key(cls, v: str) -> str:
         return "*" * 8
 
 
-# Default command settings
-class CommandsModel(BaseModel):
-    botcmd_random: str = "generate_random"
-    botcmd_txt2img: str = "generate"
-    botcmd_upscale: str = "generate_upscale"
-    # botcmd_txt2vid: str = "generate_txt2video"  # not implemented
-    # botcmd_img2vid: str = "generate_img2video"  # not implemented
-    # botcmd_faceswap: str = "generate_faceswap"  # not implemented
+# # Default sub-command settings
+# class CommandsSubModel(BaseModel):
+#     command: str = "default"
+#     description: str = "default description"
+
+
+# # Default group-command settings
+# class CommandsGroupModel(BaseModel):
+#     group_txt2img: str = "txt2img"
+#     group_txt2img_subcmds: Dict[str, CommandsSubModel] = {
+#         "image": CommandsSubModel(
+#             command="image", description="Generate image from text"
+#         ),
+#         "random": CommandsSubModel(
+#             command="random", description="Generate random image"
+#         ),
+#     }
+
+#     group_txt2vid: str = "txt2video"  # not implemented
+#     group_txt2vid_subcmds: Dict[str, CommandsSubModel] = {}
+
+#     group_img2vid: str = "img2video"  # not implemented
+#     group_img2vid_subcmds: Dict[str, CommandsSubModel] = {}
+
+#     group_vid2vid: str = "vid2video"  # not implemented
+#     group_vid2vid_subcmds: Dict[str, CommandsSubModel] = {}
+
+#     group_faceswap: str = "faceswap"  # not implemented
+#     group_faceswap_subcmds: Dict[str, CommandsSubModel] = {}
+
+
+# # Default bot level command
+# class CommandsBotModel(BaseModel):
+#     bot_command: str = "generate"
+#     group_commands: CommandsGroupModel = CommandsGroupModel()
 
 
 # Default image file settings
@@ -59,7 +87,7 @@ class Txt2ImgSingleModel(BaseModel):
 
 
 class Txt2ImgContainerModel(BaseModel):
-    bot_command: BotCommands = BotCommands.txt2img
+    group_command: GroupCommands = GroupCommands.txt2img
     variation_strength: float = 0.065
     upscaler_model: str = "4x_NMKD-Siax_200k"
     n_images: int = 2  # number of images to generate per request
@@ -82,7 +110,7 @@ class Img2ImgSingleModel(BaseModel):
 
 
 class Img2ImgContainerModel(BaseModel):
-    bot_command: BotCommands = BotCommands.img2img
+    group_command: GroupCommands = GroupCommands.img2img
     models: Dict[str, Img2ImgSingleModel] = {
         Img2ImgSingleModel().display_name: Img2ImgSingleModel()
     }
@@ -102,7 +130,7 @@ class UpscalerSingleModel(BaseModel):
 
 
 class UpscalerContainerModel(BaseModel):
-    bot_command: BotCommands = BotCommands.upscaler
+    group_command: GroupCommands = GroupCommands.upscaler
     models: Dict[str, UpscalerSingleModel] = {
         UpscalerSingleModel().display_name: UpscalerSingleModel()
     }
@@ -116,7 +144,7 @@ class UpscalerContainerModel(BaseModel):
 # - Capabilities are added here as the bot is expanded
 class _Settings(BaseModel):
     server: ServerModel = ServerModel()
-    commands: CommandsModel = CommandsModel()
+    # commands: CommandsBotModel = CommandsBotModel()
     files: FilesModel = FilesModel()
     txt2img: Txt2ImgContainerModel = Txt2ImgContainerModel()
     upscaler: Optional[UpscalerContainerModel] = UpscalerContainerModel()
@@ -141,7 +169,7 @@ class _Settings(BaseModel):
         commands = {}
         for k in new_self.model_fields_set:
             s = getattr(new_self, k)
-            if isinstance(s, BaseModel) and (v := getattr(s, "bot_command", None)):
+            if isinstance(s, BaseModel) and (v := getattr(s, "group_command", None)):
                 if v.value in commands:
                     raise ValueError(
                         f"Duplicate bot command capability in settings.json for setting: {v.value}"
@@ -198,13 +226,13 @@ class _Settings(BaseModel):
         self.server.host = os.getenv("SD_HOST", self.server.host)
         self.server.port = os.getenv("SD_PORT", self.server.port)
         self.server.sd_api_type = os.getenv("SD_API", self.server.sd_api_type)
-        self.commands.botcmd_random = os.getenv(
-            "BOT_GENERATE_RANDOM_COMMAND",
-            self.commands.botcmd_random,
-        )
-        self.commands.botcmd_txt2img = os.getenv(
-            "BOT_GENERATE_COMMAND", self.commands.botcmd_txt2img
-        )
+        # self.commands.botcmd_random = os.getenv(
+        #    "BOT_GENERATE_RANDOM_COMMAND",
+        #    self.commands.botcmd_random,
+        # )
+        # self.commands.botcmd_txt2img = os.getenv(
+        #    "BOT_GENERATE_COMMAND", self.commands.botcmd_txt2img
+        # )
         self.txt2img.variation_strength = os.getenv(
             "SD_VARIATION_STRENGTH", self.txt2img.variation_strength
         )

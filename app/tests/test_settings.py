@@ -17,7 +17,7 @@ class TestSettings(unittest.TestCase):
         server = Settings.server
         host = Settings.server.host
         bot_key = Settings.server.discord_bot_key
-        commands = Settings.commands
+        # commands = Settings.commands
         files = Settings.files
         txt2img = Settings.txt2img
         models = Settings.txt2img.models
@@ -25,7 +25,7 @@ class TestSettings(unittest.TestCase):
         self.assertIsNotNone(server)
         self.assertIsNotNone(host)
         self.assertIsNotNone(bot_key)
-        self.assertIsNotNone(commands)
+        # self.assertIsNotNone(commands)
         self.assertIsNotNone(files)
         self.assertIsNotNone(txt2img)
         self.assertIsNotNone(models.get("default_v1.5"))
