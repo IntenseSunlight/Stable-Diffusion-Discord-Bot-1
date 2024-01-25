@@ -1,8 +1,10 @@
 import os
+import json
 import discord
+from typing import Tuple, Dict
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
-from app.utils.helpers import random_seed
-from app.settings import Settings, GroupCommands
+from app.utils.helpers import random_seed, get_base_dir
+from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.sd_apis.api_handler import Sd
 from app.views.generate_image import GenerateView
 from .abstract_command import AbstractCommand
@@ -20,11 +22,35 @@ class Txt2ImageCommands(AbstractCommand):
     # subcommand functions must be async
 
     # -------------------------------
+    # helper functions, only for this instance
+    # -------------------------------
+    def _load_workflow_and_map(self, model: str) -> Tuple[Dict, Dict]:
+        model_def = Settings.txt2img.models[model]
+        workflow_folder = os.path.abspath(
+            os.path.join(get_base_dir(), model_def["workflow_folder"])
+        )
+        with open(os.path.join(workflow_folder, model_def["workflow_api"]), "r") as f:
+            workflow_api = json.load(f)
+
+        with open(
+            os.path.join(workflow_folder, model_def["workflow_api_map"]), "r"
+        ) as f:
+            workflow_map = json.load(f)
+
+        return workflow_api, workflow_map
+
+    # -------------------------------
     # Random Image
     # -------------------------------
     async def random_image(
         self,
         ctx: discord.ApplicationContext,
+        model: discord.Option(
+            str,
+            choices=Settings.txt2img.models.keys(),
+            default=list(Settings.txt2img.models.keys())[0],
+            description="Which model should be used?",
+        ),
         orientation: discord.Option(
             str,
             choices=["Square", "Portrait", "Landscape"],
@@ -39,11 +65,18 @@ class Txt2ImageCommands(AbstractCommand):
         await ctx.respond(
             "Generating 2 random images...", ephemeral=True, delete_after=4
         )
+        model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
+
         prompt1, negative_prompt = GeneratePrompt().make_random_prompt()
         prompt2, _ = GeneratePrompt().make_random_prompt()
         seed1 = random_seed()
         seed2 = random_seed()
-        width, height = Orientation.make_orientation(orientation)
+
+        if model_def.width == model_def.height:
+            width, height = Orientation.make_orientation(orientation, model_def.width)
+        else:
+            width, height = model_def.width, model_def.height
+
         title_prompt1 = prompt1 if len(prompt1) > 150 else prompt1[:150] + "..."
         title_prompt2 = prompt2 if len(prompt2) > 150 else prompt2[:150] + "..."
 
@@ -59,11 +92,20 @@ class Txt2ImageCommands(AbstractCommand):
                 f"Seed (Left): `{seed1}`\n"
                 f"Seed (Right): `{seed2}`\n"
                 f"Negative Prompt: `{negative_prompt}`\n"
+                f"Model: `{model}`\n"
                 f"Total generated images: `{ImageCount.get_count()}`\n\n"
                 f"Want to generate your own image? Type your prompt and style after `/{command_name}`!"
             ),
             color=discord.Colour.blurple(),
         )
+        workflow_folder = os.path.abspath(
+            os.path.join(get_base_dir(), Settings.files.workflows_folder)
+        )
+        with open(os.path.join(workflow_folder, model_def.workflow_api), "r") as f:
+            workflow_api = json.load(f)
+
+        with open(os.path.join(workflow_folder, model_def.workflow_api_map), "r") as f:
+            workflow_map = json.load(f)
 
         generated_image1 = Sd.api.generate_image(
             prompt=prompt1,
@@ -72,9 +114,13 @@ class Txt2ImageCommands(AbstractCommand):
             variation_strength=Settings.txt2img.variation_strength,
             width=width,
             height=height,
-            sd_model="v1-5-pruned-emaonly.ckpt",
+            sd_model=model_def.sd_model,
+            workflow=workflow_api,
+            workflow_map=workflow_map,
         )
-        ImageCount.increment()
+        self.logger.info(
+            f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image1.image_filename)}"
+        )
 
         generated_image2 = Sd.api.generate_image(
             prompt=prompt2,
@@ -83,9 +129,13 @@ class Txt2ImageCommands(AbstractCommand):
             variation_strength=Settings.txt2img.variation_strength,
             width=width,
             height=height,
-            sd_model="v1-5-pruned-emaonly.ckpt",
+            sd_model=model_def.sd_model,
+            workflow=workflow_api,
+            workflow_map=workflow_map,
         )
-        ImageCount.increment()
+        self.logger.info(
+            f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image2.image_filename)}"
+        )
 
         generated_images = [
             discord.File(generated_image1.image_filename),

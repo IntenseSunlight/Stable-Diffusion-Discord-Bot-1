@@ -4,7 +4,7 @@
     "prompt": [ "prompt", "6", "inputs", "text"],
     "negativeprompt": ["prompt", "7", "inputs", "text" ],
     "width":  ["prompt", "5", "inputs", "width"],
-    "height": ["prompt", "5", "inputs", "height"]
+    "height": ["prompt", "5", "inputs", "height"],
 	"variation_strength": ["prompt", "10", "inputs", "variation_strength"],
     "subseed": ["prompt", "10", "inputs", "variation_seed"]
 }

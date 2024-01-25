@@ -198,32 +198,48 @@ class ComfyUIAPI(AbstractAPI):
         return self._workflow
 
     @workflow.setter
-    def workflow(self, workflow: Union[str, os.PathLike]):
-        self._workflow = self._load_json(workflow)
+    def workflow(self, workflow: Union[str, os.PathLike, Dict]):
+        if isinstance(workflow, dict):
+            self._workflow = workflow
+        else:
+            self._workflow = self._load_json(workflow)
 
     @property
     def workflow_map(self):
         return self._workflow_map
 
     @workflow_map.setter
-    def workflow_map(self, workflow_map: Union[str, os.PathLike]):
-        self._workflow_map = self._load_json(workflow_map)
+    def workflow_map(self, workflow_map: Union[str, os.PathLike, Dict]) -> Dict:
+        if isinstance(workflow_map, dict):
+            self._workflow_map = workflow_map
+        else:
+            self._workflow_map = self._load_json(workflow_map)
 
     @property
     def upscaler_workflow(self):
         return self._upscaler_workflow
 
     @upscaler_workflow.setter
-    def upscaler_workflow(self, upscaler_workflow: Union[str, os.PathLike]):
-        self._upscaler_workflow = self._load_json(upscaler_workflow)
+    def upscaler_workflow(
+        self, upscaler_workflow: Union[str, os.PathLike, Dict]
+    ) -> Dict:
+        if isinstance(upscaler_workflow, dict):
+            self._upscaler_workflow = upscaler_workflow
+        else:
+            self._upscaler_workflow = self._load_json(upscaler_workflow)
 
     @property
     def upscaler_workflow_map(self):
         return self._upscaler_workflow_map
 
     @upscaler_workflow_map.setter
-    def upscaler_workflow_map(self, upscaler_workflow_map: Union[str, os.PathLike]):
-        self._upscaler_workflow_map = self._load_json(upscaler_workflow_map)
+    def upscaler_workflow_map(
+        self, upscaler_workflow_map: Union[str, os.PathLike, Dict]
+    ) -> Dict:
+        if isinstance(upscaler_workflow_map, dict):
+            self._upscaler_workflow_map = upscaler_workflow_map
+        else:
+            self._upscaler_workflow_map = self._load_json(upscaler_workflow_map)
 
     def _apply_settings(
         self, model_vals: Dict, workflow: Dict = None, workflow_map: Dict = None
@@ -312,8 +328,10 @@ class ComfyUIAPI(AbstractAPI):
         width: int = 512,
         height: int = 512,
         sd_model: str = "v1-5-pruned-emaonly.ckpt",
+        workflow: Dict = None,
+        workflow_map: Dict = None,
     ) -> ImageFile:
-        workflow = self._apply_settings(
+        out_workflow = self._apply_settings(
             {
                 "sd_model": sd_model,
                 "prompt": prompt,
@@ -323,13 +341,15 @@ class ComfyUIAPI(AbstractAPI):
                 "seed": seed,
                 "variation_strength": variation_strength,
                 "subseed": subseed,
-            }
+            },
+            workflow=workflow,
+            workflow_map=workflow_map,
         )
 
         client_id = str(uuid.uuid4())
         ws = websocket.WebSocket()
         ws.connect(f"ws://{self.webui_url}/ws?clientId={client_id}")
-        images = self._get_images(ws, workflow, client_id)
+        images = self._get_images(ws, out_workflow, client_id)
         image_bytes = [
             image_data for node_id in images for image_data in images[node_id]
         ][0]
