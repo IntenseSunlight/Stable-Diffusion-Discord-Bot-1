@@ -47,7 +47,7 @@ class Txt2ImageCommands(AbstractCommand):
         ctx: discord.ApplicationContext,
         model: discord.Option(
             str,
-            choices=Settings.txt2img.models.keys(),
+            choices=list(Settings.txt2img.models.keys()),
             default=list(Settings.txt2img.models.keys())[0],
             description="Which model should be used?",
         ),

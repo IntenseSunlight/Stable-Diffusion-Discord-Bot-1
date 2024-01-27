@@ -11,7 +11,7 @@ from typing import Callable
 # Bot                    : instance
 # - group                : slash command group (e.g. /generate)
 # -- sub_group           : slash command subgroup (e.g. /generate.txt2img)
-# --- sub_group_command  : slash command (e.g. /generate.txt2img.image)
+# --- sub_group_command  : sub-group command (e.g. /generate.txt2img.image)
 
 __all__ = ["Bot"]
 

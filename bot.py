@@ -2,48 +2,28 @@ import os
 import sys
 import logging
 
+# Logging, suppresses the discord.py logging
+os.system("clear")
+logging.getLogger("discord").setLevel(logging.CRITICAL)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
+
+# load settings first, since it is required by the other modules
 from app.settings import Settings, GroupCommands
+from app.utils.helpers import get_env_and_settings_paths
+
+dotenv_path, settings_path = get_env_and_settings_paths()
+Settings.reload(dot_env=dotenv_path, json_file=settings_path)
+
 from app.commands.bot_handler import Bot
 from app.sd_apis.api_handler import Sd
 from app.commands.txt2img_cmds import Txt2ImageCommands
 
-# Logging, suppresses the discord.py logging
-logging.getLogger("discord").setLevel(logging.CRITICAL)
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-logger = logging.getLogger(__name__)
-os.system("clear")
-
-# load environment settings
-# first use .env.development if found, else use .env.deploy
-# NOTE: These file are NOT versioned by git, since they contain your local settings
-dotenv_path = os.getenv(
-    "ENVIRONMENT_FILE", os.path.join(os.getcwd(), ".env.development")
-)
-if not os.path.exists(dotenv_path):
-    dotenv_path = os.path.join(os.getcwd(), ".env.deploy")
-
-if not os.path.exists(dotenv_path):
-    logger.info(f".env.deploy file not found. JSON settings will be used")
-    dotenv_path = None
-
-# determine if settings.json exists
-settings_path = os.path.join(os.getcwd(), "settings.json")
-if not os.path.exists(settings_path):
-    logger.info(f"settings.json not found. Creating default 'settings.json'")
-    Settings.save_json(settings_path)
-
-# load settings, using json file first then .env file
-Settings.reload(dot_env=dotenv_path, json_file=settings_path)
-
-# Apply Settings:
+# Set the URL of the SD API host, initialize the API
 webui_url = (
     f"{Settings.server.host}:{Settings.server.port}"  # URL/Port of the SD API host
 )
-
-# Initialize SD API
 Sd.api_configure(webui_url, Settings.server.sd_api_type)
-
-# clean screen
 logger.info(f"Started App, using api={Sd.api_type}")
 
 # upfront checks
@@ -67,14 +47,20 @@ if Settings.txt2img.upscaler_model is not None and not Sd.api.set_upscaler_model
     logger.error(f"Failed to set upscaler on SD host. Please check your settings.")
     sys.exit(1)
 
-# Initialize
+# Initialize the bot, organization is as follows:
+# Layers:
+# Bot                    : instance
+# - group                : slash command group (e.g. /generate)
+# -- sub_group           : slash command subgroup (e.g. /generate.txt2img)
+# --- sub_group_command  : sub-group command (e.g. /generate.txt2img.image)
 Bot.configure(
     botkey=Settings.server.discord_bot_key,
     slash_command=Settings.server.bot_command,
-)
+)  # group
 
 # Add subgroups
 # specific command binding occurs in the individual command files
+# sub_group (sub_group_commands are contained therein)
 txt2img_group = Bot.create_subgroup(
     GroupCommands.txt2img.name, "Create image using prompt"
 )
