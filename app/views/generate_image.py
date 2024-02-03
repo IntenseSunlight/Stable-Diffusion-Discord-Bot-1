@@ -29,114 +29,120 @@ def create_image(image: ImageContainer, sd_api: AbstractAPI):
     )
 
 
-# The main button rows, contains Upscale L/R, Variation L/R and Retry
+# ----------------------------------------------
+# Upscale button class
+# ----------------------------------------------
+class UpscaleButton(discord.ui.Button):
+    def __init__(
+        self,
+        image: ImageContainer,
+        sd_api: AbstractAPI,
+        logger: logging.Logger,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._logger = logger
+        self.image = image
+        self.sd_api = sd_api
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            f"Upscaling the image...", ephemeral=True, delete_after=4
+        )
+        upscaled_image = self.sd_api.upscale_image(self.image.image)
+        await interaction.followup.send(
+            f"Upscaled This Generation:",
+            file=discord.File(
+                upscaled_image.image_object,
+                os.path.basename(upscaled_image.image_filename),
+            ),
+        )
+        self._logger.info(
+            f"Upscaled Image {ImageCount.increment()}: {os.path.basename(self.image.image.image_filename)}"
+        )
+
+
+# ----------------------------------------------
+# Variation button class
+# ----------------------------------------------
+class VariationButton(discord.ui.Button):
+    def __init__(
+        self,
+        image: ImageContainer,
+        sd_api: AbstractAPI,
+        logger: logging.Logger,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._logger = logger
+        self.image = image
+        self.sd_api = sd_api
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            f"Creating a variation of the image...", ephemeral=True, delete_after=4
+        )
+
+        var_image = self.image.copy()
+        var_image.variation_strength = min(var_image.variation_strength * 2, 1.0)
+        var_image.image: ImageFile = create_image(var_image, self.sd_api)
+
+        await interaction.followup.send(
+            f"Varied This Generation:",
+            file=discord.File(
+                var_image.image.image_object,
+                os.path.basename(var_image.image.image_filename).split(".")[0]
+                + "-varied.png",
+            ),
+            view=UpscaleOnlyView(var_image.image, sd_api=self.sd_api),
+        )
+
+
+# ----------------------------------------------
+# Retry button class
+# ----------------------------------------------
+class RetryButton(discord.ui.Button):
+    def __init__(
+        self,
+        image: ImageContainer,
+        sd_api: AbstractAPI,
+        logger: logging.Logger,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._logger = logger
+        self.image = image
+        self.sd_api = sd_api
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            f"Regenerating the image using the same settings...",
+            ephemeral=True,
+            delete_after=4,
+        )
+        new_images: List[ImageContainer] = []
+        for _ in range(Settings.txt2img.n_images):
+            new_image: ImageContainer = self.image.copy()
+            new_image.seed = random_seed()
+            new_image.sub_seed = random_seed()
+            new_image.variation_strength = Settings.txt2img.variation_strength
+            new_image.image: ImageFile = create_image(new_image, self.sd_api)
+            new_images.append(new_image)
+            self._logger.info(
+                f"Generated Image {ImageCount.increment()}: {os.path.basename(new_image.image.image_filename)}"
+            )
+
+        await interaction.followup.send(
+            f"Retried This Generation:",
+            files=[discord.File(img.image.image_filename) for img in new_images],
+            view=UpscaleOnlyView(new_images[0].image, sd_api=self.sd_api),
+        )
+
+
+# The top level view for generating an image
 # Variation generates almost the same image again using same settings / seed. In addition, this uses an variation strength.
 # We have to refernce all the settings like you see below to generate the correct image again - or we need a reference to the filename to upscale it.
 class GenerateView(discord.ui.View):
-    # ----------------------------------------------
-    # Upscale button class
-    # ----------------------------------------------
-    class UpscaleButton(discord.ui.Button):
-        def __init__(
-            self,
-            image: ImageContainer,
-            sd_api: AbstractAPI,
-            logger: logging.Logger,
-            **kwargs,
-        ):
-            super().__init__(**kwargs)
-            self._logger = logger
-            self.image = image
-            self.sd_api = sd_api
-
-        async def callback(self, interaction: discord.Interaction):
-            await interaction.response.send_message(
-                f"Upscaling the image...", ephemeral=True, delete_after=4
-            )
-            upscaled_image = self.sd_api.upscale_image(self.image.image)
-            await interaction.followup.send(
-                f"Upscaled This Generation:",
-                file=discord.File(
-                    upscaled_image.image_object,
-                    os.path.basename(upscaled_image.image_filename),
-                ),
-            )
-            self._logger.info(
-                f"Upscaled Image {ImageCount.increment()}: {os.path.basename(self.image.image.image_filename)}"
-            )
-
-    # ----------------------------------------------
-    # Variation button class
-    # ----------------------------------------------
-    class VariationButton(discord.ui.Button):
-        def __init__(
-            self,
-            image: ImageContainer,
-            sd_api: AbstractAPI,
-            logger: logging.Logger,
-            **kwargs,
-        ):
-            super().__init__(**kwargs)
-            self._logger = logger
-            self.image = image
-            self.sd_api = sd_api
-
-        async def callback(self, interaction: discord.Interaction):
-            await interaction.response.send_message(
-                f"Creating a variation of the image...", ephemeral=True, delete_after=4
-            )
-
-            var_image = self.image.copy()
-            var_image.variation_strength = min(var_image.variation_strength * 2, 1.0)
-            var_image.image: ImageFile = create_image(var_image, self.sd_api)
-
-            await interaction.followup.send(
-                f"Varied This Generation:",
-                file=discord.File(
-                    var_image.image.image_object,
-                    os.path.basename(var_image.image.image_filename).split(".")[0]
-                    + "-varied.png",
-                ),
-                view=UpscaleOnlyView(var_image.image, sd_api=self.sd_api),
-            )
-
-    class RetryButton(discord.ui.Button):
-        def __init__(
-            self,
-            image: ImageContainer,
-            sd_api: AbstractAPI,
-            logger: logging.Logger,
-            **kwargs,
-        ):
-            super().__init__(**kwargs)
-            self._logger = logger
-            self.image = image
-            self.sd_api = sd_api
-
-        async def callback(self, interaction: discord.Interaction):
-            await interaction.response.send_message(
-                f"Regenerating the image using the same settings...",
-                ephemeral=True,
-                delete_after=4,
-            )
-            new_images: List[ImageContainer] = []
-            for _ in range(Settings.txt2img.n_images):
-                new_image: ImageContainer = self.image.copy()
-                new_image.seed = random_seed()
-                new_image.sub_seed = random_seed()
-                new_image.variation_strength = Settings.txt2img.variation_strength
-                new_image.image: ImageFile = create_image(new_image, self.sd_api)
-                new_images.append(new_image)
-                self._logger.info(
-                    f"Generated Image {ImageCount.increment()}: {os.path.basename(new_image.image.image_filename)}"
-                )
-
-            await interaction.followup.send(
-                f"Retried This Generation:",
-                files=[discord.File(img.image.image_filename) for img in new_images],
-                view=UpscaleOnlyView(new_images[0].image, sd_api=self.sd_api),
-            )
-
     # ----------------------------------------------
     # The main view
     # ----------------------------------------------
@@ -161,7 +167,7 @@ class GenerateView(discord.ui.View):
         )
         for label, image in zip(labels, self.images):
             self.add_item(
-                self.__class__.UpscaleButton(
+                UpscaleButton(
                     image=image,
                     label=label,
                     sd_api=self.sd_api,
@@ -180,7 +186,7 @@ class GenerateView(discord.ui.View):
         )
         for label, image in zip(labels, self.images):
             self.add_item(
-                self.__class__.VariationButton(
+                VariationButton(
                     image=image,
                     label=label,
                     sd_api=self.sd_api,
@@ -192,7 +198,7 @@ class GenerateView(discord.ui.View):
             )
         # row 2: retry button
         self.add_item(
-            self.__class__.RetryButton(
+            RetryButton(
                 image=self.images[0],
                 sd_api=self.sd_api,
                 logger=self._logger,
