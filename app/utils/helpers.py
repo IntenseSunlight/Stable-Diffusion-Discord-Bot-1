@@ -6,6 +6,7 @@ from datetime import datetime
 from app.settings import Settings
 import logging
 
+CARDINALS = ["first", "second", "third", "fourth", "fifth", "sixth", "umpteenth"]
 
 # return a random seed
 def random_seed():

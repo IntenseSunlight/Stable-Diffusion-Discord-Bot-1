@@ -3,14 +3,12 @@ import json
 import discord
 from typing import Tuple, Dict, List
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
-from app.utils.helpers import random_seed, get_base_dir
+from app.utils.helpers import random_seed, get_base_dir, CARDINALS
 from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.sd_apis.api_handler import Sd
 from app.utils.image_file import ImageFile, ImageContainer
 from app.views.generate_image import GenerateView
 from .abstract_command import AbstractCommand
-
-CARDINALS = ["first", "second", "third", "fourth", "fifth", "sixth", "umpteenth"]
 
 
 class Txt2ImageCommands(AbstractCommand):
@@ -105,8 +103,9 @@ class Txt2ImageCommands(AbstractCommand):
             )
 
             cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
+            percent = int((i + 1) / Settings.txt2img.n_images * 100)
             await response.edit_original_response(
-                content=f"Generated the {cardinal} image..."
+                content=f"Generated the {cardinal} image...({percent}%)"
             )
             self.logger.info(
                 f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
@@ -124,7 +123,7 @@ class Txt2ImageCommands(AbstractCommand):
             for i in range(len(title_prompts))
         )
         embed = discord.Embed(
-            title="Generated 2 random images using these settings:",
+            title=f"Generated {Settings.txt2img.n_images} random images using these settings:",
             description=(
                 f"{prompt_description}\n"
                 f"Orientation: `{orientation}`\n"
@@ -240,8 +239,9 @@ class Txt2ImageCommands(AbstractCommand):
                 workflow_map=image.workflow_map,
             )
             cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
+            percent = int((i + 1) / Settings.txt2img.n_images * 100)
             await response.edit_original_response(
-                content=f"Generated the {cardinal} image..."
+                content=f"Generated the {cardinal} image...({percent}%)"
             )
             self.logger.info(
                 f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
@@ -275,7 +275,6 @@ class Txt2ImageCommands(AbstractCommand):
             f"<@{ctx.author.id}>'s Generations:",
             files=[discord.File(img.image.image_filename) for img in images],
             view=GenerateView(
-                orientation=orientation,
                 images=images,
                 sd_api=Sd.api,
             ),
