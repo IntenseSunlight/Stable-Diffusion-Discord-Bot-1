@@ -16,6 +16,7 @@ class A1111API(AbstractAPI):
         prompt: str,
         negativeprompt: str,
         seed: int,
+        sub_seed: int,
         variation_strength: float = 0.0,
         width: int = 512,
         height: int = 512,

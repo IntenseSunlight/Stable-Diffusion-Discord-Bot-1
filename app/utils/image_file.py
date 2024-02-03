@@ -4,6 +4,8 @@ import base64
 import random
 import string
 from PIL import Image
+from typing_extensions import Self
+from dataclasses import dataclass
 from app.settings import Settings
 from .helpers import get_base_dir
 
@@ -87,3 +89,22 @@ class ImageFile:
 
         with open(self.image_filename, "wb") as f:
             f.write(self.image_object.getbuffer())
+
+
+@dataclass
+class ImageContainer:
+    def copy(self) -> Self:
+        return self.__class__(**self.__dict__)
+
+    image: ImageFile = None
+    seed: int = None
+    sub_seed: int = None
+    variation_strength: float = None
+    prompt: str = None
+    negative_prompt: str = None
+    final_prompt: str = None
+    width: int = None
+    height: int = None
+    model: str = None
+    workflow: str = None
+    workflow_map: str = None

@@ -2,7 +2,7 @@ import os
 import json
 from enum import Enum
 from dotenv import load_dotenv
-from pydantic import BaseModel, field_serializer
+from pydantic import BaseModel, field_serializer, validator
 from typing import Optional, Literal, List, Dict, Union, TextIO
 
 __all__ = ["Settings", "BotCommands"]
@@ -24,47 +24,12 @@ class ServerModel(BaseModel):
     sd_api_type: Optional[str] = "comfyUI"
     discord_bot_key: Optional[str] = "fake"  # must be supplied in .env file
     bot_command: Optional[str] = "generate"
+    interaction_timeout: Optional[int] = 3600
+    allow_dm: Optional[bool] = False
 
     @field_serializer("discord_bot_key", when_used="json")
     def _hide_discord_bot_key(cls, v: str) -> str:
         return "*" * 8
-
-
-# # Default sub-command settings
-# class CommandsSubModel(BaseModel):
-#     command: str = "default"
-#     description: str = "default description"
-
-
-# # Default group-command settings
-# class CommandsGroupModel(BaseModel):
-#     group_txt2img: str = "txt2img"
-#     group_txt2img_subcmds: Dict[str, CommandsSubModel] = {
-#         "image": CommandsSubModel(
-#             command="image", description="Generate image from text"
-#         ),
-#         "random": CommandsSubModel(
-#             command="random", description="Generate random image"
-#         ),
-#     }
-
-#     group_txt2vid: str = "txt2video"  # not implemented
-#     group_txt2vid_subcmds: Dict[str, CommandsSubModel] = {}
-
-#     group_img2vid: str = "img2video"  # not implemented
-#     group_img2vid_subcmds: Dict[str, CommandsSubModel] = {}
-
-#     group_vid2vid: str = "vid2video"  # not implemented
-#     group_vid2vid_subcmds: Dict[str, CommandsSubModel] = {}
-
-#     group_faceswap: str = "faceswap"  # not implemented
-#     group_faceswap_subcmds: Dict[str, CommandsSubModel] = {}
-
-
-# # Default bot level command
-# class CommandsBotModel(BaseModel):
-#     bot_command: str = "generate"
-#     group_commands: CommandsGroupModel = CommandsGroupModel()
 
 
 # Default image file settings
@@ -98,6 +63,12 @@ class Txt2ImgContainerModel(BaseModel):
     def add_model(self, model_dict: Dict):
         model = Txt2ImgSingleModel(**model_dict)
         self.models.update({model.display_name: model})
+
+    @validator("n_images")
+    def n_images_must_be_even(cls, v):
+        if (v % 2 != 0) or (v < 2):
+            raise ValueError("n_images must be an even number")
+        return v
 
 
 class Img2ImgSingleModel(BaseModel):
@@ -144,7 +115,6 @@ class UpscalerContainerModel(BaseModel):
 # - Capabilities are added here as the bot is expanded
 class _Settings(BaseModel):
     server: ServerModel = ServerModel()
-    # commands: CommandsBotModel = CommandsBotModel()
     files: FilesModel = FilesModel()
     txt2img: Txt2ImgContainerModel = Txt2ImgContainerModel()
     upscaler: Optional[UpscalerContainerModel] = UpscalerContainerModel()
@@ -226,15 +196,8 @@ class _Settings(BaseModel):
         self.server.host = os.getenv("SD_HOST", self.server.host)
         self.server.port = os.getenv("SD_PORT", self.server.port)
         self.server.sd_api_type = os.getenv("SD_API", self.server.sd_api_type)
-        # self.commands.botcmd_random = os.getenv(
-        #    "BOT_GENERATE_RANDOM_COMMAND",
-        #    self.commands.botcmd_random,
-        # )
-        # self.commands.botcmd_txt2img = os.getenv(
-        #    "BOT_GENERATE_COMMAND", self.commands.botcmd_txt2img
-        # )
-        self.txt2img.variation_strength = os.getenv(
-            "SD_VARIATION_STRENGTH", self.txt2img.variation_strength
+        self.txt2img.variation_strength = float(
+            os.getenv("SD_VARIATION_STRENGTH", self.txt2img.variation_strength)
         )
 
     def save_json(self, json_file: Union[str, os.PathLike, TextIO]):

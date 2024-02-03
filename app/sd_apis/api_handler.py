@@ -15,7 +15,7 @@ class _Sd:
             self.api_type = api_type
 
         if webui_url and api_type:
-            self.configure(webui_url, api_type)
+            self.api_configure(webui_url, api_type)
 
     def api_configure(self, webui_url: str, api_type: str):
         self.webui_url = webui_url

@@ -101,6 +101,24 @@ class TestSettings(unittest.TestCase):
         Settings.load_json(json_str=json.dumps(schema))
         self.assertNotIn("upscaler", Settings.model_fields_set)
 
+    def test_n_images(self):
+        schema = json.loads(Settings.model_dump_json())
+        schema["txt2img"]["n_images"] = "abc"
+        with self.assertRaises(ValueError):
+            Settings.load_json(json_str=json.dumps(schema))
+
+        schema["txt2img"]["n_images"] = 3
+        with self.assertRaises(ValueError):
+            Settings.load_json(json_str=json.dumps(schema))
+
+        schema["txt2img"]["n_images"] = 0
+        with self.assertRaises(ValueError):
+            Settings.load_json(json_str=json.dumps(schema))
+
+        schema["txt2img"]["n_images"] = 4
+        Settings.load_json(json_str=json.dumps(schema))
+        self.assertEqual(Settings.txt2img.n_images, 4)
+
     def tearDown(self):
         if os.path.exists("test_settings_model.json"):
             os.remove("test_settings_model.json")

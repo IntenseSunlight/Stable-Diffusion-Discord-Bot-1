@@ -1,13 +1,16 @@
 import os
 import json
 import discord
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
 from app.utils.helpers import random_seed, get_base_dir
 from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.sd_apis.api_handler import Sd
+from app.utils.image_file import ImageFile, ImageContainer
 from app.views.generate_image import GenerateView
 from .abstract_command import AbstractCommand
+
+CARDINALS = ["first", "second", "third", "fourth", "fifth", "sixth", "umpteenth"]
 
 
 class Txt2ImageCommands(AbstractCommand):
@@ -27,14 +30,12 @@ class Txt2ImageCommands(AbstractCommand):
     def _load_workflow_and_map(self, model: str) -> Tuple[Dict, Dict]:
         model_def = Settings.txt2img.models[model]
         workflow_folder = os.path.abspath(
-            os.path.join(get_base_dir(), model_def["workflow_folder"])
+            os.path.join(get_base_dir(), Settings.files.workflows_folder)
         )
-        with open(os.path.join(workflow_folder, model_def["workflow_api"]), "r") as f:
+        with open(os.path.join(workflow_folder, model_def.workflow_api), "r") as f:
             workflow_api = json.load(f)
 
-        with open(
-            os.path.join(workflow_folder, model_def["workflow_api_map"]), "r"
-        ) as f:
+        with open(os.path.join(workflow_folder, model_def.workflow_api_map), "r") as f:
             workflow_map = json.load(f)
 
         return workflow_api, workflow_map
@@ -58,104 +59,89 @@ class Txt2ImageCommands(AbstractCommand):
             description="In which orientation should the image be?",
         ),
     ):
-        if ctx.guild is None:
+        if ctx.guild is None and not Settings.server.allow_dm:
             await ctx.respond("This command cannot be used in direct messages.")
             return
 
-        await ctx.respond(
-            "Generating 2 random images...", ephemeral=True, delete_after=4
+        response = await ctx.respond(
+            f"Generating {Settings.txt2img.n_images} random images...",
+            ephemeral=True,
+            delete_after=10,
         )
         model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
+        workflow, workflow_map = self._load_workflow_and_map(model)
 
-        prompt1, negative_prompt = GeneratePrompt().make_random_prompt()
-        prompt2, _ = GeneratePrompt().make_random_prompt()
-        seed1 = random_seed()
-        seed2 = random_seed()
+        images: List[ImageContainer] = []
+        title_prompts: List[str] = []
+        for i in range(Settings.txt2img.n_images):
+            image = ImageContainer(
+                seed=random_seed(),
+                sub_seed=random_seed(),
+                variation_strength=Settings.txt2img.variation_strength,
+                model=model,
+                workflow=workflow,
+                workflow_map=workflow_map,
+            )
+            image.prompt, image.negative_prompt = GeneratePrompt().make_random_prompt()
 
-        if model_def.width == model_def.height:
-            width, height = Orientation.make_orientation(orientation, model_def.width)
-        else:
-            width, height = model_def.width, model_def.height
+            if model_def.width == model_def.height:
+                image.width, image.height = Orientation.make_orientation(
+                    orientation, model_def.width
+                )
+            else:
+                image.width, image.height = model_def.width, model_def.height
 
-        title_prompt1 = prompt1 if len(prompt1) > 150 else prompt1[:150] + "..."
-        title_prompt2 = prompt2 if len(prompt2) > 150 else prompt2[:150] + "..."
+            image.image: ImageFile = Sd.api.generate_image(
+                prompt=image.prompt,
+                negativeprompt=image.negative_prompt,
+                seed=image.seed,
+                sub_seed=image.sub_seed,
+                variation_strength=image.variation_strength,
+                width=image.width,
+                height=image.height,
+                sd_model=model_def.sd_model,
+                workflow=image.workflow,
+                workflow_map=image.workflow_map,
+            )
+
+            cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
+            await response.edit_original_response(
+                content=f"Generated the {cardinal} image..."
+            )
+            self.logger.info(
+                f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
+            )
+            images.append(image)
+            title_prompts.append(
+                image.prompt if len(image.prompt) < 150 else image.prompt[:150] + "..."
+            )
 
         command_name = (
             f"{Settings.server.bot_command}.{GroupCommands.txt2img.name}.random"
         )
+        prompt_description = "\n".join(
+            f"Prompt ({CARDINALS[min(i, len(CARDINALS)-1)]}): `{title_prompts[i]}`"
+            for i in range(len(title_prompts))
+        )
         embed = discord.Embed(
             title="Generated 2 random images using these settings:",
             description=(
-                f"Prompt (Left): `{title_prompt1}`\n"
-                f"Prompt (Right): `{title_prompt2}`\n"
+                f"{prompt_description}\n"
                 f"Orientation: `{orientation}`\n"
-                f"Seed (Left): `{seed1}`\n"
-                f"Seed (Right): `{seed2}`\n"
-                f"Negative Prompt: `{negative_prompt}`\n"
+                f"Negative Prompt: `{images[0].negative_prompt}`\n"
                 f"Model: `{model}`\n"
                 f"Total generated images: `{ImageCount.get_count()}`\n\n"
-                f"Want to generate your own image? Type your prompt and style after `/{command_name}`!"
+                f"Want to generate your own image? Type your prompt and style after `/{command_name}`"
             ),
             color=discord.Colour.blurple(),
         )
-        workflow_folder = os.path.abspath(
-            os.path.join(get_base_dir(), Settings.files.workflows_folder)
-        )
-        with open(os.path.join(workflow_folder, model_def.workflow_api), "r") as f:
-            workflow_api = json.load(f)
-
-        with open(os.path.join(workflow_folder, model_def.workflow_api_map), "r") as f:
-            workflow_map = json.load(f)
-
-        generated_image1 = Sd.api.generate_image(
-            prompt=prompt1,
-            negativeprompt=negative_prompt,
-            seed=seed1,
-            variation_strength=Settings.txt2img.variation_strength,
-            width=width,
-            height=height,
-            sd_model=model_def.sd_model,
-            workflow=workflow_api,
-            workflow_map=workflow_map,
-        )
-        self.logger.info(
-            f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image1.image_filename)}"
-        )
-
-        generated_image2 = Sd.api.generate_image(
-            prompt=prompt2,
-            negativeprompt=negative_prompt,
-            seed=seed2,
-            variation_strength=Settings.txt2img.variation_strength,
-            width=width,
-            height=height,
-            sd_model=model_def.sd_model,
-            workflow=workflow_api,
-            workflow_map=workflow_map,
-        )
-        self.logger.info(
-            f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image2.image_filename)}"
-        )
-
-        generated_images = [
-            discord.File(generated_image1.image_filename),
-            discord.File(generated_image2.image_filename),
-        ]
-        if len(prompt1) > 100:
-            prompt1 = prompt1[:100]
+        # workflow, workflow_map = self._load_workflow_and_map(model)
 
         message = await ctx.respond(
             f"<@{ctx.author.id}>'s Random Generations:",
-            files=generated_images,
+            files=[discord.File(img.image.image_filename) for img in images],
             view=GenerateView(
-                prompt=prompt1,
-                negative_prompt=negative_prompt,
-                style=PromptConstants.NO_STYLE_PRESET,
-                orientation=orientation,
-                seed1=seed1,
-                seed2=seed1,
-                image1=generated_image1,
-                image2=generated_image2,
+                images=images,
                 sd_api=Sd.api,
             ),
             embed=embed,
@@ -175,6 +161,12 @@ class Txt2ImageCommands(AbstractCommand):
             choices=PromptConstants.get_style_presets(),
             description="In which style should the image be?",
         ),
+        model: discord.Option(
+            str,
+            choices=list(Settings.txt2img.models.keys()),
+            default=list(Settings.txt2img.models.keys())[0],
+            description="Which model should be used?",
+        ),
         orientation: discord.Option(
             str,
             choices=Orientation.get_orientation_presets(),
@@ -185,23 +177,79 @@ class Txt2ImageCommands(AbstractCommand):
             str, description="What do you want to avoid?", default=""
         ),
     ):
-        if ctx.guild is None:
+        if ctx.guild is None and not Settings.server.allow_dm:
             await ctx.respond("This command cannot be used in direct messages.")
             return
 
-        seed1 = random_seed()
-        seed2 = random_seed()
+        response = await ctx.respond(
+            f"Generating {Settings.txt2img.n_images} images...",
+            ephemeral=True,
+            delete_after=3,
+        )
+
+        model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
+        workflow, workflow_map = self._load_workflow_and_map(model)
+
         banned_words = [
             "nude",
             "naked",
             "nsfw",
             "porn",
         ]  # The most professional nsfw filter lol
+        prompt = " ".join(
+            [w for w in prompt.split(" ") if w.lower() not in banned_words]
+        )
+
+        if model_def.width == model_def.height:
+            width, height = Orientation.make_orientation(orientation, model_def.width)
+        else:
+            width, height = model_def.width, model_def.height
+
         if not negative_prompt:
             negative_prompt = "Default"
 
-        for word in banned_words:
-            prompt: str = prompt.replace(word, "clothes :)")
+        final_prompt = GeneratePrompt(
+            input_prompt=prompt, input_negativeprompt=negative_prompt, style=style
+        )
+
+        images = []
+        for i in range(Settings.txt2img.n_images):
+            image = ImageContainer(
+                seed=random_seed(),
+                sub_seed=random_seed(),
+                variation_strength=Settings.txt2img.variation_strength,
+                model=model,
+                prompt=final_prompt.prompt,
+                negative_prompt=final_prompt.negativeprompt,
+                width=width,
+                height=height,
+                workflow=workflow,
+                workflow_map=workflow_map,
+            )
+
+            image.image: ImageFile = Sd.api.generate_image(
+                prompt=final_prompt.prompt,
+                negativeprompt=final_prompt.negativeprompt,
+                seed=image.seed,
+                sub_seed=image.sub_seed,
+                variation_strength=image.variation_strength,
+                width=image.width,
+                height=image.height,
+                sd_model=model_def.sd_model,
+                workflow=image.workflow,
+                workflow_map=image.workflow_map,
+            )
+            cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
+            await response.edit_original_response(
+                content=f"Generated the {cardinal} image..."
+            )
+            self.logger.info(
+                f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
+            )
+            images.append(image)
+
+        if len(prompt) > 100:
+            prompt = prompt[:100]
 
         title_prompt = prompt
         if len(title_prompt) > 150:
@@ -210,74 +258,25 @@ class Txt2ImageCommands(AbstractCommand):
         command_name = (
             f"{Settings.server.bot_command}.{GroupCommands.txt2img.name}.image"
         )
+
         embed = discord.Embed(
             title="Prompt: " + title_prompt,
             description=(
                 f"Style: `{style}`\n"
                 f"Orientation: `{orientation}`\n"
-                f"Seed (Left): `{seed1}`\n"
-                f"Seed (Right): `{seed2}`\n"
                 f"Negative Prompt: `{negative_prompt}`\n"
                 f"Total generated images: `{ImageCount.get_count()}`\n\n"
-                f"Want to generate your own image? Type your prompt and style after `/{command_name}`!"
+                f"Want to generate your own image? Type your prompt and style after `/{command_name}`"
             ),
             color=discord.Colour.blurple(),
         )
-        response = await ctx.respond(
-            "Generating 2 images...", ephemeral=True, delete_after=3
-        )
-        width, height = Orientation.make_orientation(orientation)
-        final_prompt = GeneratePrompt(
-            input_prompt=prompt, input_negativeprompt=negative_prompt, style=style
-        )
-
-        generated_image1 = Sd.api.generate_image(
-            prompt=final_prompt.prompt,
-            negativeprompt=final_prompt.negativeprompt,
-            seed=seed1,
-            variation_strength=Settings.txt2img.variation_strength,
-            width=width,
-            height=height,
-            sd_model="v1-5-pruned-emaonly.ckpt",
-        )
-        await response.edit_original_response(content="Generated the first image...")
-        self.logger.info(
-            f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image1.image_filename)}"
-        )
-
-        generated_image2 = Sd.api.generate_image(
-            prompt=final_prompt.prompt,
-            negativeprompt=final_prompt.negativeprompt,
-            seed=seed2,
-            variation_strength=Settings.txt2img.variation_strength,
-            width=width,
-            height=height,
-            sd_model="v1-5-pruned-emaonly.ckpt",
-        )
-        self.logger.info(
-            f"Generated Image {ImageCount.increment()}: {os.path.basename(generated_image2.image_filename)}"
-        )
-        await response.edit_original_response(content="Generated the second image...")
-
-        generated_images = [
-            discord.File(generated_image1.image_filename),
-            discord.File(generated_image2.image_filename),
-        ]
-        if len(prompt) > 100:
-            prompt = prompt[:100]
 
         message = await ctx.respond(
             f"<@{ctx.author.id}>'s Generations:",
-            files=generated_images,
+            files=[discord.File(img.image.image_filename) for img in images],
             view=GenerateView(
-                prompt=final_prompt.input_prompt,
-                negative_prompt=final_prompt.input_negativeprompt,
-                style=style,
                 orientation=orientation,
-                seed1=seed1,
-                seed2=seed1,
-                image1=generated_image1,
-                image2=generated_image2,
+                images=images,
                 sd_api=Sd.api,
             ),
             embed=embed,
