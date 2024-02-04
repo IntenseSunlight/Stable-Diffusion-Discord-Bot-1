@@ -1,6 +1,8 @@
 .venv/**
 credentials/**
 GeneratedImages/*.png
+GeneratedImages/*.gif
+GeneratedImages/*.mp4
 *.pyc
 .env.deploy
 .env.development
