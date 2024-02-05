@@ -207,10 +207,11 @@ class RetryButton(discord.ui.Button):
         await interaction.response.send_message(
             f"Regenerating the image using the same settings...",
             ephemeral=True,
-            delete_after=10,
+            delete_after=60,
         )
+        model_def = Settings.txt2img.models[self.image.model]
         new_images: List[ImageContainer] = []
-        for i in range(Settings.txt2img.n_images):
+        for i in range(model_def.n_images):
             new_image: ImageContainer = self.image.copy()
             new_image.seed = random_seed()
             new_image.sub_seed = random_seed()
@@ -218,18 +219,21 @@ class RetryButton(discord.ui.Button):
             new_image.image: ImageFile = create_image(new_image, self.sd_api)
             new_images.append(new_image)
 
-            percent = int((i + 1) / Settings.txt2img.n_images * 100)
+            percent = int((i + 1) / model_def.n_images * 100)
             cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
-            await interaction.edit_original_response(
-                content=f"Generated the {cardinal} image...({percent}%)"
-            )
+            try:
+                await interaction.edit_original_response(
+                    content=f"Generated the {cardinal} image...({percent}%)"
+                )
+            except discord.NotFound:
+                pass
 
             self._logger.info(
                 f"Generated Image {ImageCount.increment()}: {os.path.basename(new_image.image.image_filename)}"
             )
 
         embed = discord.Embed(
-            title=f"Generated {Settings.txt2img.n_images} random images using these settings:",
+            title=f"Generated {model_def.n_images} random images using these settings:",
             description=(
                 f"Prompt: `{self.image.prompt}`\n"
                 f"Negative Prompt: `{self.image.negative_prompt}`\n"
@@ -244,6 +248,7 @@ class RetryButton(discord.ui.Button):
             files=[discord.File(img.image.image_filename) for img in new_images],
             view=GenerateView(images=new_images, sd_api=self.sd_api),
         )
+        await interaction.delete_original_response()
 
 # ----------------------------------------------
 # Upscale only view
@@ -257,7 +262,7 @@ class UpscaleOnlyView(discord.ui.View):
     @discord.ui.button(label="Upscale", style=discord.ButtonStyle.primary, emoji="🖼️")
     async def button_upscale(self, button, interaction):
         await interaction.response.send_message(
-            f"Upscaling the image...", ephemeral=True, delete_after=3
+            f"Upscaling the image...", ephemeral=True, delete_after=4
         )
         upscaled_image = self.sd_api.upscale_image(self.image)
 

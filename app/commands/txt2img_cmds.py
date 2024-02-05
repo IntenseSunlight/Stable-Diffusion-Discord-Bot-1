@@ -61,17 +61,17 @@ class Txt2ImageCommands(AbstractCommand):
             await ctx.respond("This command cannot be used in direct messages.")
             return
 
-        response = await ctx.respond(
-            f"Generating {Settings.txt2img.n_images} random images...",
-            ephemeral=True,
-            delete_after=10,
-        )
         model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
+        response = await ctx.respond(
+            f"Generating {model_def.n_images} random images...",
+            ephemeral=True,
+            delete_after=30,
+        )
         workflow, workflow_map = self._load_workflow_and_map(model)
 
         images: List[ImageContainer] = []
         title_prompts: List[str] = []
-        for i in range(Settings.txt2img.n_images):
+        for i in range(model_def.n_images):
             image = ImageContainer(
                 seed=random_seed(),
                 sub_seed=random_seed(),
@@ -103,7 +103,7 @@ class Txt2ImageCommands(AbstractCommand):
             )
 
             cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
-            percent = int((i + 1) / Settings.txt2img.n_images * 100)
+            percent = int((i + 1) / model_def.n_images * 100)
             await response.edit_original_response(
                 content=f"Generated the {cardinal} image...({percent}%)"
             )
@@ -123,7 +123,7 @@ class Txt2ImageCommands(AbstractCommand):
             for i in range(len(title_prompts))
         )
         embed = discord.Embed(
-            title=f"Generated {Settings.txt2img.n_images} random images using these settings:",
+            title=f"Generated {model_def.n_images} random images using these settings:",
             description=(
                 f"{prompt_description}\n"
                 f"Orientation: `{orientation}`\n"
@@ -180,13 +180,13 @@ class Txt2ImageCommands(AbstractCommand):
             await ctx.respond("This command cannot be used in direct messages.")
             return
 
+        model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
         response = await ctx.respond(
-            f"Generating {Settings.txt2img.n_images} images...",
+            f"Generating {model_def.n_images} images...",
             ephemeral=True,
-            delete_after=3,
+            delete_after=30,
         )
 
-        model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
         workflow, workflow_map = self._load_workflow_and_map(model)
 
         banned_words = [
@@ -212,7 +212,7 @@ class Txt2ImageCommands(AbstractCommand):
         )
 
         images = []
-        for i in range(Settings.txt2img.n_images):
+        for i in range(model_def.n_images):
             image = ImageContainer(
                 seed=random_seed(),
                 sub_seed=random_seed(),
@@ -239,7 +239,7 @@ class Txt2ImageCommands(AbstractCommand):
                 workflow_map=image.workflow_map,
             )
             cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
-            percent = int((i + 1) / Settings.txt2img.n_images * 100)
+            percent = int((i + 1) / model_def.n_images * 100)
             await response.edit_original_response(
                 content=f"Generated the {cardinal} image...({percent}%)"
             )

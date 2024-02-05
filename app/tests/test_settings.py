@@ -103,21 +103,25 @@ class TestSettings(unittest.TestCase):
 
     def test_n_images(self):
         schema = json.loads(Settings.model_dump_json())
-        schema["txt2img"]["n_images"] = "abc"
+        models = schema["txt2img"]["models"]
+        model_def = models[list(models.keys())[0]]
+
+        model_def["n_images"] = "abc"
         with self.assertRaises(ValueError):
             Settings.load_json(json_str=json.dumps(schema))
 
-        schema["txt2img"]["n_images"] = 3
+        model_def["n_images"] = 3
         with self.assertRaises(ValueError):
             Settings.load_json(json_str=json.dumps(schema))
 
-        schema["txt2img"]["n_images"] = 0
+        model_def["n_images"] = 0
         with self.assertRaises(ValueError):
             Settings.load_json(json_str=json.dumps(schema))
 
-        schema["txt2img"]["n_images"] = 4
+        model_def["n_images"] = 4
         Settings.load_json(json_str=json.dumps(schema))
-        self.assertEqual(Settings.txt2img.n_images, 4)
+        model_name = list(Settings.txt2img.models.keys())[0]
+        self.assertEqual(Settings.txt2img.models[model_name].n_images, 4)
 
     def tearDown(self):
         if os.path.exists("test_settings_model.json"):

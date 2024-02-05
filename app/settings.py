@@ -45,17 +45,23 @@ class FilesModel(BaseModel):
 class Txt2ImgSingleModel(BaseModel):
     display_name: str = "default_v1.5"
     sd_model: str = "v1-5-pruned-emaonly.ckpt"
+    n_images: int = 4  # number of images to generate per request
     width: Optional[int] = 512
     height: Optional[int] = 512
     workflow_api: Optional[str] = "default_api.json"
     workflow_api_map: Optional[str] = "default_api_map.json"
+
+    @validator("n_images")
+    def n_images_must_be_even(cls, v):
+        if (v % 2 != 0) or (v < 2):
+            raise ValueError("n_images must be an even number")
+        return v
 
 
 class Txt2ImgContainerModel(BaseModel):
     group_command: GroupCommands = GroupCommands.txt2img
     variation_strength: float = 0.065
     upscaler_model: str = "4x_NMKD-Siax_200k"
-    n_images: int = 2  # number of images to generate per request
     models: Dict[str, Txt2ImgSingleModel] = {
         Txt2ImgSingleModel().display_name: Txt2ImgSingleModel()
     }
@@ -63,12 +69,6 @@ class Txt2ImgContainerModel(BaseModel):
     def add_model(self, model_dict: Dict):
         model = Txt2ImgSingleModel(**model_dict)
         self.models.update({model.display_name: model})
-
-    @validator("n_images")
-    def n_images_must_be_even(cls, v):
-        if (v % 2 != 0) or (v < 2):
-            raise ValueError("n_images must be an even number")
-        return v
 
 
 class Img2ImgSingleModel(BaseModel):
