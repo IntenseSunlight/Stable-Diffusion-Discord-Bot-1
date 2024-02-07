@@ -16,7 +16,6 @@ class AbstractAPI(ABC):
     def __init__(self, webui_url: str, logger: logging.Logger = logging):
         self._logger = LogOnce(logger)
         self.webui_url = webui_url
-        self._upscaler_model = Settings.txt2img.upscaler_model
 
     @abstractmethod
     def set_upscaler_model(self, upscaler_model: str) -> bool:

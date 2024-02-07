@@ -40,9 +40,10 @@ if not Sd.api.check_sd_host():
     )
     sys.exit(1)
 
-# check for upscaler name
-if Settings.txt2img.upscaler_model is not None and not Sd.api.set_upscaler_model(
-    Settings.txt2img.upscaler_model
+# check for an upscaler name (default to first)
+model_def = Settings.txt2img.models[list(Settings.txt2img.models.keys())[0]]
+if model_def.upscaler_model is not None and not Sd.api.set_upscaler_model(
+    model_def.upscaler_model
 ):
     logger.error(f"Failed to set upscaler on SD host. Please check your settings.")
     sys.exit(1)

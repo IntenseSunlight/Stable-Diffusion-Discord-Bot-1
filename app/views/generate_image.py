@@ -133,6 +133,8 @@ class UpscaleButton(discord.ui.Button):
         await interaction.response.send_message(
             f"Upscaling the image...", ephemeral=True, delete_after=4
         )
+        model_def = Settings.txt2img.models[self.image.model]
+        self.sd_api.set_upscaler_model(model_def.upscaler_model)
         upscaled_image = self.sd_api.upscale_image(self.image.image)
         await interaction.followup.send(
             f"Upscaled This Generation:",
@@ -183,7 +185,7 @@ class VariationButton(discord.ui.Button):
                 os.path.basename(var_image.image.image_filename).split(".")[0]
                 + "-varied.png",
             ),
-            view=UpscaleOnlyView(var_image.image, sd_api=self.sd_api),
+            view=UpscaleOnlyView(var_image, sd_api=self.sd_api),
         )
 
 
@@ -252,9 +254,9 @@ class RetryButton(discord.ui.Button):
 
 # ----------------------------------------------
 # Upscale only view
-# ----------------------------------------------
+# ----------------------------------------------:
 class UpscaleOnlyView(discord.ui.View):
-    def __init__(self, image: ImageFile, sd_api: AbstractAPI, **kwargs):
+    def __init__(self, image: ImageContainer, sd_api: AbstractAPI, **kwargs):
         super().__init__(**kwargs)
         self.image = image
         self.sd_api = sd_api
@@ -264,9 +266,14 @@ class UpscaleOnlyView(discord.ui.View):
         await interaction.response.send_message(
             f"Upscaling the image...", ephemeral=True, delete_after=4
         )
-        upscaled_image = self.sd_api.upscale_image(self.image)
+        model_def = Settings.txt2img.models[self.image.model]
+        self.sd_api.set_upscaler_model(model_def.upscaler_model)
+        upscaled_image = self.sd_api.upscale_image(self.image.image)
 
         await interaction.followup.send(
             f"Upscaled This Generation:",
-            file=discord.File(upscaled_image.image_object, "upscaled.png"),
+            file=discord.File(
+                upscaled_image.image_object, 
+                os.path.basename(upscaled_image.image_filename).split(".")[0] + "-upscaled.png"
+            ),
         )

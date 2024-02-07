@@ -99,6 +99,7 @@ class TestSettings(unittest.TestCase):
         schema = json.loads(Settings.model_dump_json())
         del schema["upscaler"]
         Settings.load_json(json_str=json.dumps(schema))
+        # sometimes this fails, since someone else might have added the upscaler
         self.assertNotIn("upscaler", Settings.model_fields_set)
 
     def test_n_images(self):

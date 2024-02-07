@@ -45,6 +45,7 @@ class FilesModel(BaseModel):
 class Txt2ImgSingleModel(BaseModel):
     display_name: str = "default_v1.5"
     sd_model: str = "v1-5-pruned-emaonly.ckpt"
+    upscaler_model: str = "4x_NMKD-Siax_200k.ckpt"
     n_images: int = 4  # number of images to generate per request
     width: Optional[int] = 512
     height: Optional[int] = 512
@@ -61,7 +62,6 @@ class Txt2ImgSingleModel(BaseModel):
 class Txt2ImgContainerModel(BaseModel):
     group_command: GroupCommands = GroupCommands.txt2img
     variation_strength: float = 0.065
-    upscaler_model: str = "4x_NMKD-Siax_200k"
     models: Dict[str, Txt2ImgSingleModel] = {
         Txt2ImgSingleModel().display_name: Txt2ImgSingleModel()
     }
