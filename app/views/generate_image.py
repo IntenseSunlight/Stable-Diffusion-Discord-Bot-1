@@ -209,7 +209,7 @@ class RetryButton(discord.ui.Button):
         await interaction.response.send_message(
             f"Regenerating the image using the same settings...",
             ephemeral=True,
-            delete_after=60,
+            delete_after=1800,
         )
         model_def = Settings.txt2img.models[self.image.model]
         new_images: List[ImageContainer] = []

@@ -65,7 +65,7 @@ class Txt2ImageCommands(AbstractCommand):
         response = await ctx.respond(
             f"Generating {model_def.n_images} random images...",
             ephemeral=True,
-            delete_after=30,
+            delete_after=1800,
         )
         workflow, workflow_map = self._load_workflow_and_map(model)
 
@@ -147,6 +147,7 @@ class Txt2ImageCommands(AbstractCommand):
         )
         await message.add_reaction("👍")
         await message.add_reaction("👎")
+        await response.delete_original_response()
 
     # -------------------------------
     # Generate Image
@@ -184,7 +185,7 @@ class Txt2ImageCommands(AbstractCommand):
         response = await ctx.respond(
             f"Generating {model_def.n_images} images...",
             ephemeral=True,
-            delete_after=30,
+            delete_after=1800,
         )
 
         workflow, workflow_map = self._load_workflow_and_map(model)
@@ -283,3 +284,4 @@ class Txt2ImageCommands(AbstractCommand):
 
         await message.add_reaction("👍")
         await message.add_reaction("👎")
+        await response.delete_original_response()
