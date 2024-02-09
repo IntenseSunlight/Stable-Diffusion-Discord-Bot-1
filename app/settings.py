@@ -26,6 +26,7 @@ class ServerModel(BaseModel):
     bot_command: Optional[str] = "generate"
     interaction_timeout: Optional[int] = 3600
     allow_dm: Optional[bool] = False
+    max_jobs: Optional[int] = 5
 
     @field_serializer("discord_bot_key", when_used="json")
     def _hide_discord_bot_key(cls, v: str) -> str:
