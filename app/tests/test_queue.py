@@ -67,3 +67,35 @@ class TestTaskQueue(unittest.TestCase):
         self.assertEqual(TaskQueue.qsize(), 3)
         TaskQueue.join()
         self.assertEqual(TaskQueue.qsize(), 0)
+
+    def test_queue_cancel_user_tasks(self):
+        TaskQueue._use_logger = True
+        TaskQueue.max_jobs = 5
+        _ = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=3)
+        b = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=4)
+        c = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=5)
+        d = TaskQueue.create_and_add_task(long_task, task_owner="bob", delay=3)
+        TaskQueue.cancel_user_tasks("me")
+        self.assertEqual(b.state, TaskState.CANCELLED)
+        self.assertEqual(c.state, TaskState.CANCELLED)
+        self.assertEqual(d.state, TaskState.PENDING)
+        TaskQueue.join()
+
+    def test_queue_cancel_all_tasks(self):
+        TaskQueue._use_logger = True
+        TaskQueue.max_jobs = 10
+        for _ in range(3):
+            TaskQueue.create_and_add_task(long_task, task_owner="me", delay=3)
+
+        for _ in range(3):
+            TaskQueue.create_and_add_task(long_task, task_owner="bob", delay=3)
+
+        for _ in range(3):
+            TaskQueue.create_and_add_task(long_task, task_owner="alice", delay=3)
+
+        sleep(1)  # let first task start
+        n_canceled = TaskQueue.cancel_all_tasks()
+        TaskQueue.join()
+
+        # first task was already started when others were canceled, so 8 tasks should be canceled
+        self.assertEqual(n_canceled, 8)

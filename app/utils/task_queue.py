@@ -3,7 +3,7 @@ import discord
 import logging
 import atexit
 from queue import Queue
-from typing import Callable, Any, List, Dict
+from typing import Callable, Any, List, Dict, cast
 
 from app.settings import Settings
 
@@ -114,6 +114,10 @@ class _TaskQueue(Queue):
     def max_jobs(self, value: int):
         self._max_jobs = value
 
+    def snapshot(self):
+        with self.mutex:
+            return list(self.queue)
+
     def add_task(self, task: Task):
         if self.qsize() >= self.max_jobs:
             return False
@@ -130,6 +134,19 @@ class _TaskQueue(Queue):
             return task
         else:
             return None
+
+    def cancel_user_tasks(self, task_owner: discord.Member) -> int:
+        q = self.snapshot()
+        count = 0
+        for task in q:
+            task = cast(Task, task)
+            if task.task_owner == task_owner and task.cancel():
+                count += 1
+
+        return count
+
+    def cancel_all_tasks(self):
+        return sum([int(task.cancel()) for task in self.snapshot()])
 
     def start_workers(self):
         for _ in range(self._num_workers):
