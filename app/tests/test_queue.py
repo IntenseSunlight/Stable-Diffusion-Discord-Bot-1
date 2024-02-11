@@ -14,7 +14,7 @@ def bad_task():
 
 class TestTaskQueue(unittest.TestCase):
     def test_task(self):
-        t = Task(long_task, task_owner="me", delay=0.5)
+        t = Task(long_task, task_owner="me", kwargs=dict(delay=0.5))
         t.run()
         self.assertEqual(t.state, TaskState.COMPLETED)
 
@@ -23,9 +23,19 @@ class TestTaskQueue(unittest.TestCase):
         t.run()
         self.assertEqual(t.state, TaskState.FAILED)
 
+    def test_task_equal(self):
+        t1 = Task(long_task, task_owner="me", task_id=1, kwargs=dict(delay=3))
+        t2 = Task(long_task, task_owner="you", task_id=2, kwargs=dict(delay=3))
+        tasks = [t1, t2]
+        for t in tasks:
+            if t == t2:
+                self.assertEqual(t.task_owner, "you")
+
+        self.assertNotEqual(t1, t2)
+
     def test_queue_add_task(self):
         TaskQueue._use_logger = True
-        t = Task(long_task, task_owner="me", delay=3)
+        t = Task(long_task, task_owner="me", kwargs=dict(delay=3))
         TaskQueue.add_task(t)
         TaskQueue.join()
         self.assertEqual(t.state, TaskState.COMPLETED)
@@ -33,14 +43,16 @@ class TestTaskQueue(unittest.TestCase):
 
     def test_queue_create_and_add_task(self):
         TaskQueue._use_logger = True
-        t = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=3)
+        t = TaskQueue.create_and_add_task(
+            long_task, task_owner="me", kwargs=dict(delay=3)
+        )
         TaskQueue.join()
         self.assertEqual(t.state, TaskState.COMPLETED)
         self.assertEqual(t.result, 3)
 
     def test_queue_cancel_task(self):
         TaskQueue._use_logger = True
-        t = Task(long_task, task_owner="me", delay=3)
+        t = Task(long_task, task_owner="me", kwargs=dict(delay=3))
         TaskQueue.add_task(t)
         t.cancel()
         TaskQueue.join()
@@ -48,9 +60,15 @@ class TestTaskQueue(unittest.TestCase):
 
     def test_queue_cancel_task_running(self):
         TaskQueue._use_logger = True
-        a = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=3)
-        b = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=4)
-        c = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=5)
+        a = TaskQueue.create_and_add_task(
+            long_task, task_owner="me", kwargs=dict(delay=3)
+        )
+        b = TaskQueue.create_and_add_task(
+            long_task, task_owner="me", kwargs=dict(delay=4)
+        )
+        c = TaskQueue.create_and_add_task(
+            long_task, task_owner="me", kwargs=dict(delay=5)
+        )
         sleep(1)
         self.assertEqual(a.state, TaskState.RUNNING)
         self.assertEqual(b.state, TaskState.PENDING)
@@ -62,7 +80,9 @@ class TestTaskQueue(unittest.TestCase):
         TaskQueue._use_logger = True
         TaskQueue.max_jobs = 3
         for _ in range(4):
-            t = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=3)
+            t = TaskQueue.create_and_add_task(
+                long_task, task_owner="me", kwargs=dict(delay=3)
+            )
         self.assertIsNone(t)
         self.assertEqual(TaskQueue.qsize(), 3)
         TaskQueue.join()
@@ -71,10 +91,18 @@ class TestTaskQueue(unittest.TestCase):
     def test_queue_cancel_user_tasks(self):
         TaskQueue._use_logger = True
         TaskQueue.max_jobs = 5
-        _ = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=3)
-        b = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=4)
-        c = TaskQueue.create_and_add_task(long_task, task_owner="me", delay=5)
-        d = TaskQueue.create_and_add_task(long_task, task_owner="bob", delay=3)
+        _ = TaskQueue.create_and_add_task(
+            long_task, task_owner="me", kwargs=dict(delay=3)
+        )
+        b = TaskQueue.create_and_add_task(
+            long_task, task_owner="me", kwargs=dict(delay=4)
+        )
+        c = TaskQueue.create_and_add_task(
+            long_task, task_owner="me", kwargs=dict(delay=5)
+        )
+        d = TaskQueue.create_and_add_task(
+            long_task, task_owner="bob", kwargs=dict(delay=3)
+        )
         TaskQueue.cancel_user_tasks("me")
         self.assertEqual(b.state, TaskState.CANCELLED)
         self.assertEqual(c.state, TaskState.CANCELLED)
@@ -85,13 +113,19 @@ class TestTaskQueue(unittest.TestCase):
         TaskQueue._use_logger = True
         TaskQueue.max_jobs = 10
         for _ in range(3):
-            TaskQueue.create_and_add_task(long_task, task_owner="me", delay=3)
+            TaskQueue.create_and_add_task(
+                long_task, task_owner="me", kwargs=dict(delay=3)
+            )
 
         for _ in range(3):
-            TaskQueue.create_and_add_task(long_task, task_owner="bob", delay=3)
+            TaskQueue.create_and_add_task(
+                long_task, task_owner="bob", kwargs=dict(delay=3)
+            )
 
         for _ in range(3):
-            TaskQueue.create_and_add_task(long_task, task_owner="alice", delay=3)
+            TaskQueue.create_and_add_task(
+                long_task, task_owner="alice", kwargs=dict(delay=3)
+            )
 
         sleep(1)  # let first task start
         n_canceled = TaskQueue.cancel_all_tasks()

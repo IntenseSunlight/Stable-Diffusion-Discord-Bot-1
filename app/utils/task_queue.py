@@ -2,6 +2,7 @@ import threading
 import discord
 import logging
 import atexit
+import random
 from queue import Queue
 from typing import Callable, Any, List, Dict, cast
 
@@ -19,8 +20,18 @@ class TaskState:
 
 
 class Task:
-    def __init__(self, func: Callable, *args, task_owner: discord.Member, **kwargs):
+
+    def __init__(
+        self,
+        func: Callable,
+        task_owner: discord.Member,
+        *,
+        task_id: int = None,
+        args: List = [],
+        kwargs: Dict = {},
+    ):
         self.func = func
+        self._task_id = task_id
         self._task_owner = task_owner
         self._state: TaskState = TaskState.PENDING
         self._result: Any = None
@@ -32,6 +43,11 @@ class Task:
         return (
             f"<Task {self.func.__name__} owner={self.task_owner}, state={self.state}>"
         )
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Task):
+            return self._task_id == other._task_id
+        return False
 
     @property
     def task_owner(self):
@@ -104,7 +120,14 @@ class _TaskQueue(Queue):
         self._num_workers = num_workers
         self._max_jobs = max_jobs
         self._workers = []
+        self._curr_id = 0
         self.start_workers()
+        atexit.register(self.cancel_all_tasks)
+
+    @property
+    def new_id(self):
+        self._curr_id += 1
+        return self._curr_id
 
     @property
     def max_jobs(self):
@@ -126,9 +149,15 @@ class _TaskQueue(Queue):
             return True
 
     def create_and_add_task(
-        self, func: Callable, *args, task_owner: discord.Member, **kwargs
+        self,
+        func: Callable,
+        task_owner: discord.Member,
+        args: List = [],
+        kwargs: Dict = {},
     ) -> Task:
-        task = Task(func, *args, task_owner=task_owner, **kwargs)
+        task = Task(
+            func, task_owner=task_owner, task_id=self.new_id, args=args, kwargs=kwargs
+        )
         ok = self.add_task(task)
         if ok:
             return task
