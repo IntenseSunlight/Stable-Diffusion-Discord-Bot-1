@@ -1,13 +1,15 @@
 import os
 import json
 import discord
+import asyncio
 from typing import Tuple, Dict, List
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
 from app.utils.helpers import random_seed, get_base_dir, CARDINALS
 from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.sd_apis.api_handler import Sd
+# from app.utils.task_queue import TaskQueue, Task
 from app.utils.image_file import ImageFile, ImageContainer
-from app.views.generate_image import GenerateView
+from app.views.generate_image import GenerateView, create_image
 from .abstract_command import AbstractCommand
 
 
@@ -57,16 +59,20 @@ class Txt2ImageCommands(AbstractCommand):
             description="In which orientation should the image be?",
         ),
     ):
-        if ctx.guild is None and not Settings.server.allow_dm:
-            await ctx.respond("This command cannot be used in direct messages.")
-            return
+        try:
+            if ctx.guild is None and not Settings.server.allow_dm:
+                await ctx.respond("This command cannot be used in direct messages.")
+                return
 
-        model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
-        response = await ctx.respond(
-            f"Generating {model_def.n_images} random images...",
-            ephemeral=True,
-            delete_after=1800,
-        )
+            model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
+            response = await ctx.respond(
+                f"Generating {model_def.n_images} random images...",
+                ephemeral=True,
+                delete_after=1800,
+            )
+        except:
+            pass
+
         workflow, workflow_map = self._load_workflow_and_map(model)
 
         images: List[ImageContainer] = []
@@ -89,18 +95,26 @@ class Txt2ImageCommands(AbstractCommand):
             else:
                 image.width, image.height = model_def.width, model_def.height
 
-            image.image: ImageFile = Sd.api.generate_image(
-                prompt=image.prompt,
-                negativeprompt=image.negative_prompt,
-                seed=image.seed,
-                sub_seed=image.sub_seed,
-                variation_strength=image.variation_strength,
-                width=image.width,
-                height=image.height,
-                sd_model=model_def.sd_model,
-                workflow=image.workflow,
-                workflow_map=image.workflow_map,
-            )
+            # task = TaskQueue.create_and_add_task(
+            #    create_image,
+            #    task_owner=ctx.author,
+            #    kwargs=dict(image=image, sd_api=Sd.api),
+            # )
+            # image.image = await task.wait_result()
+            # image.image: ImageFile = Sd.api.generate_image(
+            #    prompt=image.prompt,
+            #    negativeprompt=image.negative_prompt,
+            #    seed=image.seed,
+            #    sub_seed=image.sub_seed,
+            #    variation_strength=image.variation_strength,
+            #    width=image.width,
+            #    height=image.height,
+            #    sd_model=model_def.sd_model,
+            #    workflow=image.workflow,
+            #    workflow_map=image.workflow_map,
+            # )
+            task = asyncio.to_thread(create_image, image, Sd.api)
+            image.image = await task
 
             cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
             percent = int((i + 1) / model_def.n_images * 100)

@@ -17,6 +17,7 @@ Settings.reload(dot_env=dotenv_path, json_file=settings_path)
 
 from app.commands.bot_handler import Bot
 from app.sd_apis.api_handler import Sd
+from app.utils.task_queue import TaskQueue
 from app.commands.txt2img_cmds import Txt2ImageCommands
 
 # Set the URL of the SD API host, initialize the API
@@ -47,6 +48,11 @@ if model_def.upscaler_model is not None and not Sd.api.set_upscaler_model(
 ):
     logger.error(f"Failed to set upscaler on SD host. Please check your settings.")
     sys.exit(1)
+
+# check task queue
+logger.info(
+    f"TaskQueue started with n_workers={TaskQueue.num_workers}, max_jobs={TaskQueue.max_jobs}"
+)
 
 # Initialize the bot, organization is as follows:
 # Layers:
