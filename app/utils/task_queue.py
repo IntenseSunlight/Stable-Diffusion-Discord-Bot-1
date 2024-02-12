@@ -93,7 +93,7 @@ class Task:
             self.state = TaskState.FAILED
             return None
 
-    def wait_result(self, timeout: float = 3.0):
+    async def wait_result(self, timeout: float = 3.0):
         while True:
             with self._cond:
                 self._cond.wait(timeout)
@@ -136,6 +136,13 @@ class _TaskQueue(Queue):
     @max_jobs.setter
     def max_jobs(self, value: int):
         self._max_jobs = value
+
+    @property
+    def num_workers(self) -> int:
+        return len(self._workers)
+
+    def is_busy(self) -> bool:
+        return self.qsize() > 0
 
     def snapshot(self):
         with self.mutex:
