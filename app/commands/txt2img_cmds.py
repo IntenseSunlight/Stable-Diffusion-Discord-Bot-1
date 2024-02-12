@@ -1,13 +1,14 @@
 import os
 import json
 import discord
+import asyncio
 from typing import Tuple, Dict, List
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
 from app.utils.helpers import random_seed, get_base_dir, CARDINALS
 from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.sd_apis.api_handler import Sd
 from app.utils.image_file import ImageFile, ImageContainer
-from app.views.generate_image import GenerateView
+from app.views.generate_image import GenerateView, create_image
 from .abstract_command import AbstractCommand
 
 
@@ -89,24 +90,19 @@ class Txt2ImageCommands(AbstractCommand):
             else:
                 image.width, image.height = model_def.width, model_def.height
 
-            image.image: ImageFile = Sd.api.generate_image(
-                prompt=image.prompt,
-                negativeprompt=image.negative_prompt,
-                seed=image.seed,
-                sub_seed=image.sub_seed,
-                variation_strength=image.variation_strength,
-                width=image.width,
-                height=image.height,
-                sd_model=model_def.sd_model,
-                workflow=image.workflow,
-                workflow_map=image.workflow_map,
+            image.image: ImageFile = await asyncio.to_thread(
+                create_image, image, Sd.api
             )
 
             cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
             percent = int((i + 1) / model_def.n_images * 100)
-            await response.edit_original_response(
-                content=f"Generated the {cardinal} image...({percent}%)"
-            )
+            try:
+                await response.edit_original_response(
+                    content=f"Generated the {cardinal} image...({percent}%)"
+                )
+            except discord.errors.NotFound:
+                pass
+
             self.logger.info(
                 f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
             )
@@ -134,7 +130,6 @@ class Txt2ImageCommands(AbstractCommand):
             ),
             color=discord.Colour.blurple(),
         )
-        # workflow, workflow_map = self._load_workflow_and_map(model)
 
         message = await ctx.respond(
             f"<@{ctx.author.id}>'s Random Generations:",
@@ -227,23 +222,18 @@ class Txt2ImageCommands(AbstractCommand):
                 workflow_map=workflow_map,
             )
 
-            image.image: ImageFile = Sd.api.generate_image(
-                prompt=final_prompt.prompt,
-                negativeprompt=final_prompt.negativeprompt,
-                seed=image.seed,
-                sub_seed=image.sub_seed,
-                variation_strength=image.variation_strength,
-                width=image.width,
-                height=image.height,
-                sd_model=model_def.sd_model,
-                workflow=image.workflow,
-                workflow_map=image.workflow_map,
+            image.image: ImageFile = await asyncio.to_thread(
+                create_image, image, Sd.api
             )
             cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
             percent = int((i + 1) / model_def.n_images * 100)
-            await response.edit_original_response(
-                content=f"Generated the {cardinal} image...({percent}%)"
-            )
+            try:
+                await response.edit_original_response(
+                    content=f"Generated the {cardinal} image...({percent}%)"
+                )
+            except discord.errors.NotFound:
+                pass
+
             self.logger.info(
                 f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
             )

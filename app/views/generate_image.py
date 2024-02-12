@@ -1,6 +1,7 @@
 import os
 import random
 import discord
+import asyncio
 import logging
 from typing import List
 
@@ -176,7 +177,9 @@ class VariationButton(discord.ui.Button):
         var_image.variation_strength = random.uniform(
             var_strength_min, var_strength_max
         )
-        var_image.image: ImageFile = create_image(var_image, self.sd_api)
+        var_image.image: ImageFile = await asyncio.to_thread(
+            create_image, var_image, self.sd_api
+        )
 
         await interaction.followup.send(
             f"Varied This Generation:",
@@ -218,7 +221,9 @@ class RetryButton(discord.ui.Button):
             new_image.seed = random_seed()
             new_image.sub_seed = random_seed()
             new_image.variation_strength = Settings.txt2img.variation_strength
-            new_image.image: ImageFile = create_image(new_image, self.sd_api)
+            new_image.image: ImageFile = await asyncio.to_thread(
+                create_image, new_image, self.sd_api
+            )
             new_images.append(new_image)
 
             percent = int((i + 1) / model_def.n_images * 100)
@@ -268,7 +273,9 @@ class UpscaleOnlyView(discord.ui.View):
         )
         model_def = Settings.txt2img.models[self.image.model]
         self.sd_api.set_upscaler_model(model_def.upscaler_model)
-        upscaled_image = self.sd_api.upscale_image(self.image.image)
+        upscaled_image = await asyncio.to_thread(
+            self.sd_api.upscale_image, self.image.image
+        )
 
         await interaction.followup.send(
             f"Upscaled This Generation:",
