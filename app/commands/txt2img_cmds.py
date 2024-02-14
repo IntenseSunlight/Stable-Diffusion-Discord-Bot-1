@@ -1,10 +1,9 @@
 import os
-import json
 import discord
 import asyncio
-from typing import Tuple, Dict, List
+from typing import List
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
-from app.utils.helpers import random_seed, get_base_dir, CARDINALS
+from app.utils.helpers import random_seed, CARDINALS
 from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.sd_apis.api_handler import Sd
 from app.utils.image_file import ImageFile, ImageContainer
@@ -22,22 +21,6 @@ class Txt2ImageCommands(AbstractCommand):
         self.bind(self.generate_image, "image", "Generate image from text")
 
     # subcommand functions must be async
-
-    # -------------------------------
-    # helper functions, only for this instance
-    # -------------------------------
-    def _load_workflow_and_map(self, model: str) -> Tuple[Dict, Dict]:
-        model_def = Settings.txt2img.models[model]
-        workflow_folder = os.path.abspath(
-            os.path.join(get_base_dir(), Settings.files.workflows_folder)
-        )
-        with open(os.path.join(workflow_folder, model_def.workflow_api), "r") as f:
-            workflow_api = json.load(f)
-
-        with open(os.path.join(workflow_folder, model_def.workflow_api_map), "r") as f:
-            workflow_map = json.load(f)
-
-        return workflow_api, workflow_map
 
     # -------------------------------
     # Random Image
@@ -68,7 +51,7 @@ class Txt2ImageCommands(AbstractCommand):
             ephemeral=True,
             delete_after=1800,
         )
-        workflow, workflow_map = self._load_workflow_and_map(model)
+        workflow, workflow_map = self._load_workflow_and_map(model_def)
 
         images: List[ImageContainer] = []
         title_prompts: List[str] = []
@@ -183,7 +166,7 @@ class Txt2ImageCommands(AbstractCommand):
             delete_after=1800,
         )
 
-        workflow, workflow_map = self._load_workflow_and_map(model)
+        workflow, workflow_map = self._load_workflow_and_map(model_def)
 
         banned_words = [
             "nude",

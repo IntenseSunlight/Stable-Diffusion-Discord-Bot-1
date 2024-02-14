@@ -18,6 +18,7 @@ Settings.reload(dot_env=dotenv_path, json_file=settings_path)
 from app.commands.bot_handler import Bot
 from app.sd_apis.api_handler import Sd
 from app.commands.txt2img_cmds import Txt2ImageCommands
+from app.commands.img2img_cmds import Img2ImageCommands
 
 # Set the URL of the SD API host, initialize the API
 webui_url = (
@@ -62,10 +63,18 @@ Bot.configure(
 # Add subgroups
 # specific command binding occurs in the individual command files
 # sub_group (sub_group_commands are contained therein)
+
+# txt2img
 txt2img_group = Bot.create_subgroup(
     GroupCommands.txt2img.name, "Create image using prompt"
 )
 Txt2ImageCommands(txt2img_group)
+
+# img2img
+img2img_group = Bot.create_subgroup(
+    GroupCommands.img2img.name, "Create image from image"
+)
+Img2ImageCommands(img2img_group)
 
 logger.info("-" * 80)
 logger.info(f"Bot is running")
