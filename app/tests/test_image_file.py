@@ -62,3 +62,19 @@ class TestImageFile(unittest.TestCase):
         self.assertIsNotNone(new_image_file.image_filename)
         self.assertTrue(os.path.exists(new_image_file.image_filename))
         os.remove(new_image_file.image_filename)
+
+    def test_image_size(self):
+        # Test that get_size method correctly returns image size
+        with open(TEST_INPUT_FILE, "rb") as f:
+            image_bytes = f.read()
+        image_file = ImageFile(image_bytes=image_bytes)
+        size = image_file.size
+        self.assertEqual(size, (74, 73))
+
+    def test_file_size(self):
+        # Test that get_file_size method correctly returns file size
+        with open(TEST_INPUT_FILE, "rb") as f:
+            image_bytes = f.read()
+        image_file = ImageFile(image_bytes=image_bytes)
+        file_size = image_file.file_size
+        self.assertEqual(file_size, 80)
