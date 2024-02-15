@@ -1,9 +1,11 @@
 import os
 import io
+import sys
 import base64
 import random
 import string
 from PIL import Image
+from typing import Tuple
 from typing_extensions import Self
 from dataclasses import dataclass
 from app.settings import Settings
@@ -36,6 +38,21 @@ class ImageFile:
 
     def copy(self):
         return self.__copy__()
+
+    @property
+    def file_size(self) -> int:
+        if self.image_object is None:
+            return 0
+        else:
+            return sys.getsizeof(self.image_object)
+
+    @property
+    def size(self) -> Tuple[int, int]:
+        # returns width, height
+        if self.image_object is None:
+            return 0, 0
+        else:
+            return Image.open(self.image_object).size
 
     @staticmethod
     def _random_filename(extension: str = Settings.files.default_image_type):

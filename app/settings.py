@@ -5,7 +5,14 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, field_serializer, validator
 from typing import Optional, Literal, List, Dict, Union, TextIO
 
-__all__ = ["Settings", "BotCommands"]
+__all__ = [
+    "Settings",
+    "GroupCommands",
+    "Type_SingleModel",
+    "Txt2ImgSingleModel",
+    "Img2ImgSingleModel",
+    "UpscalerSingleModel",
+]
 
 
 class GroupCommands(Enum):
@@ -41,6 +48,13 @@ class FilesModel(BaseModel):
     default_image_type: Literal["jpg", "png", "jpeg"] = "png"
     video_types: List[str] = ["mp4", "gif"]
     default_video_type: Literal["mp4", "gif"] = "gif"
+
+
+class Type_SingleModel(BaseModel):
+    display_name: Optional[str]
+    sd_model: Optional[str]
+    workflow_api: Optional[str]
+    workflow_api_map: Optional[str]
 
 
 class Txt2ImgSingleModel(BaseModel):
@@ -95,8 +109,6 @@ class Img2ImgContainerModel(BaseModel):
 class UpscalerSingleModel(BaseModel):
     display_name: str = "upscaler_4x"
     sd_model: str = "4x_NMKD-Siax_200k.ckpt"
-    width: Optional[int] = 512
-    height: Optional[int] = 512
     workflow_api: Optional[str] = "default_upscaler_api.json"
     workflow_api_map: Optional[str] = "default_upscaler_api_map.json"
 

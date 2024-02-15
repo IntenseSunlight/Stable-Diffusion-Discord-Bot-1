@@ -1,10 +1,9 @@
 import os
-import json
 import discord
 import asyncio
-from typing import Tuple, Dict, List
+from typing import List
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
-from app.utils.helpers import random_seed, get_base_dir, CARDINALS
+from app.utils.helpers import random_seed, CARDINALS
 from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.sd_apis.api_handler import Sd
 # from app.utils.task_queue import TaskQueue, Task
@@ -23,22 +22,6 @@ class Txt2ImageCommands(AbstractCommand):
         self.bind(self.generate_image, "image", "Generate image from text")
 
     # subcommand functions must be async
-
-    # -------------------------------
-    # helper functions, only for this instance
-    # -------------------------------
-    def _load_workflow_and_map(self, model: str) -> Tuple[Dict, Dict]:
-        model_def = Settings.txt2img.models[model]
-        workflow_folder = os.path.abspath(
-            os.path.join(get_base_dir(), Settings.files.workflows_folder)
-        )
-        with open(os.path.join(workflow_folder, model_def.workflow_api), "r") as f:
-            workflow_api = json.load(f)
-
-        with open(os.path.join(workflow_folder, model_def.workflow_api_map), "r") as f:
-            workflow_map = json.load(f)
-
-        return workflow_api, workflow_map
 
     # -------------------------------
     # Random Image
@@ -73,7 +56,7 @@ class Txt2ImageCommands(AbstractCommand):
         except:
             pass
 
-        workflow, workflow_map = self._load_workflow_and_map(model)
+        workflow, workflow_map = self._load_workflow_and_map(model_def)
 
         images: List[ImageContainer] = []
         title_prompts: List[str] = []
@@ -95,32 +78,19 @@ class Txt2ImageCommands(AbstractCommand):
             else:
                 image.width, image.height = model_def.width, model_def.height
 
-            # task = TaskQueue.create_and_add_task(
-            #    create_image,
-            #    task_owner=ctx.author,
-            #    kwargs=dict(image=image, sd_api=Sd.api),
-            # )
-            # image.image = await task.wait_result()
-            # image.image: ImageFile = Sd.api.generate_image(
-            #    prompt=image.prompt,
-            #    negativeprompt=image.negative_prompt,
-            #    seed=image.seed,
-            #    sub_seed=image.sub_seed,
-            #    variation_strength=image.variation_strength,
-            #    width=image.width,
-            #    height=image.height,
-            #    sd_model=model_def.sd_model,
-            #    workflow=image.workflow,
-            #    workflow_map=image.workflow_map,
-            # )
-            task = asyncio.to_thread(create_image, image, Sd.api)
-            image.image = await task
+            image.image: ImageFile = await asyncio.to_thread(
+                create_image, image, Sd.api
+            )
 
             cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
             percent = int((i + 1) / model_def.n_images * 100)
-            await response.edit_original_response(
-                content=f"Generated the {cardinal} image...({percent}%)"
-            )
+            try:
+                await response.edit_original_response(
+                    content=f"Generated the {cardinal} image...({percent}%)"
+                )
+            except discord.errors.NotFound:
+                pass
+
             self.logger.info(
                 f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
             )
@@ -148,7 +118,6 @@ class Txt2ImageCommands(AbstractCommand):
             ),
             color=discord.Colour.blurple(),
         )
-        # workflow, workflow_map = self._load_workflow_and_map(model)
 
         message = await ctx.respond(
             f"<@{ctx.author.id}>'s Random Generations:",
@@ -202,7 +171,7 @@ class Txt2ImageCommands(AbstractCommand):
             delete_after=1800,
         )
 
-        workflow, workflow_map = self._load_workflow_and_map(model)
+        workflow, workflow_map = self._load_workflow_and_map(model_def)
 
         banned_words = [
             "nude",
@@ -241,23 +210,18 @@ class Txt2ImageCommands(AbstractCommand):
                 workflow_map=workflow_map,
             )
 
-            image.image: ImageFile = Sd.api.generate_image(
-                prompt=final_prompt.prompt,
-                negativeprompt=final_prompt.negativeprompt,
-                seed=image.seed,
-                sub_seed=image.sub_seed,
-                variation_strength=image.variation_strength,
-                width=image.width,
-                height=image.height,
-                sd_model=model_def.sd_model,
-                workflow=image.workflow,
-                workflow_map=image.workflow_map,
+            image.image: ImageFile = await asyncio.to_thread(
+                create_image, image, Sd.api
             )
             cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
             percent = int((i + 1) / model_def.n_images * 100)
-            await response.edit_original_response(
-                content=f"Generated the {cardinal} image...({percent}%)"
-            )
+            try:
+                await response.edit_original_response(
+                    content=f"Generated the {cardinal} image...({percent}%)"
+                )
+            except discord.errors.NotFound:
+                pass
+
             self.logger.info(
                 f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
             )
