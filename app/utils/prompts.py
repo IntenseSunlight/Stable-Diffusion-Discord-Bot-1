@@ -161,7 +161,7 @@ class GeneratePrompt:
     @property
     def input_negativeprompt(self):
         return self._input_negativeprompt
-    
+
     @input_negativeprompt.setter
     def input_negativeprompt(self, input_negativeprompt: str):
         self._input_negativeprompt = input_negativeprompt
@@ -199,9 +199,8 @@ class GeneratePrompt:
             input_negativeprompt=self._input_negativeprompt,
             style=style
         )
-           
+
     def _make_prompt(self, input_prompt: str, input_negativeprompt: str, style: str):
-           
         self._prompt = (
             PromptConstants.cast["preprompt"].get(
                 style, 
@@ -241,9 +240,13 @@ class GeneratePrompt:
         input_ids = tokenizer(prompt, return_tensors='pt').input_ids
 
         output = model.generate(
-            input_ids, do_sample=True, temperature=temperature, 
-            top_k=top_k, max_length=max_length, num_return_sequences=num_return_sequences, 
-            repetition_penalty=repitition_penalty, early_stopping=True
+            input_ids,
+            do_sample=True,
+            temperature=temperature,
+            top_k=top_k,
+            max_length=max_length,
+            num_return_sequences=num_return_sequences,
+            repetition_penalty=repitition_penalty,
         )
 
         self._prompt = str(tokenizer.decode(output[0], skip_special_tokens=True) + ", colorful, sharp focus")
