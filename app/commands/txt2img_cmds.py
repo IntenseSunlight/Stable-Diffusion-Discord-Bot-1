@@ -1,11 +1,13 @@
 import os
 import discord
 import asyncio
-from typing import List
+import logging
+from typing import List, cast
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
 from app.utils.helpers import random_seed, CARDINALS
 from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.sd_apis.api_handler import Sd
+from app.utils.task_reference import TaskRef
 from app.utils.image_file import ImageFile, ImageContainer
 from app.views.generate_image import GenerateView, create_image
 from .abstract_command import AbstractCommand
@@ -41,6 +43,28 @@ class Txt2ImageCommands(AbstractCommand):
             description="In which orientation should the image be?",
         ),
     ):
+        # actual image is processed in a separate thread as task
+        async def process_image(
+            i: int,
+            image: ImageContainer,
+            response: discord.ApplicationContext,
+        ):
+            image = image.copy()
+            image.image: ImageFile = await asyncio.to_thread(
+                create_image, image, Sd.api
+            )
+
+            cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
+            percent = int((i + 1) / model_def.n_images * 100)
+            try:
+                await response.edit_original_response(
+                    content=f"Generated the {cardinal} image...({percent}%)"
+                )
+            except discord.errors.NotFound:
+                pass
+
+            return image
+
         if ctx.guild is None and not Settings.server.allow_dm:
             await ctx.respond("This command cannot be used in direct messages.")
             return
@@ -53,8 +77,8 @@ class Txt2ImageCommands(AbstractCommand):
         )
         workflow, workflow_map = self._load_workflow_and_map(model_def)
 
-        images: List[ImageContainer] = []
         title_prompts: List[str] = []
+        tasks = []
         for i in range(model_def.n_images):
             image = ImageContainer(
                 seed=random_seed(),
@@ -73,26 +97,46 @@ class Txt2ImageCommands(AbstractCommand):
             else:
                 image.width, image.height = model_def.width, model_def.height
 
-            image.image: ImageFile = await asyncio.to_thread(
-                create_image, image, Sd.api
-            )
-
-            cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
-            percent = int((i + 1) / model_def.n_images * 100)
-            try:
-                await response.edit_original_response(
-                    content=f"Generated the {cardinal} image...({percent}%)"
+            tasks.append(
+                TaskRef.add_task(
+                    asyncio.create_task(
+                        process_image(i, image, response),
+                        name=f"{ctx.author.id}-{image.seed}",
+                    )
                 )
-            except discord.errors.NotFound:
-                pass
-
-            self.logger.info(
-                f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
             )
-            images.append(image)
+            # image.image: ImageFile = await asyncio.to_thread(
+            #    create_image, image, Sd.api
+            # )
+
+            # cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
+            # percent = int((i + 1) / model_def.n_images * 100)
+            # try:
+            #    await response.edit_original_response(
+            #        content=f"Generated the {cardinal} image...({percent}%)"
+            #    )
+            # except discord.errors.NotFound:
+            #    pass
+
+            # self.logger.info(
+            #    f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
+            # )
+            # images.append(image)
+            # title_prompts.append(
+            #    image.prompt if len(image.prompt) < 150 else image.prompt[:150] + "..."
+            # )
+
+        # wait for all tasks to complete
+        done_tasks, _ = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
+
+        images: List[ImageContainer] = []
+        for task in done_tasks:
+            task = cast(asyncio.Task, task)
+            image: ImageContainer = task.result()
             title_prompts.append(
                 image.prompt if len(image.prompt) < 150 else image.prompt[:150] + "..."
             )
+            images.append(image)
 
         command_name = (
             f"{Settings.server.bot_command}.{GroupCommands.txt2img.name}.random"
