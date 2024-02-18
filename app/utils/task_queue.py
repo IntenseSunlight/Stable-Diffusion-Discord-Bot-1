@@ -93,7 +93,7 @@ class Task:
             self.state = TaskState.FAILED
             return None
 
-    async def wait_result(self, timeout: float = 3.0):
+    def wait_result(self, timeout: float = 3.0):
         while True:
             with self._cond:
                 self._cond.wait(timeout)
