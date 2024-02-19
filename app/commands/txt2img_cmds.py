@@ -58,8 +58,8 @@ class Txt2ImageCommands(AbstractCommand):
             i: int,
             image: ImageContainer,
             response: discord.ApplicationContext,
-        ):
-            image = image.copy()
+        ) -> ImageContainer:
+            # image = image.copy()
             image.image: ImageFile = await asyncio.to_thread(
                 create_image, image, Sd.api
             )
@@ -105,9 +105,9 @@ class Txt2ImageCommands(AbstractCommand):
             if task is not None:
                 tasks.append(task)
             else:
-                self.logger.error(f"Failed to create task {i}, queue full")
+                self.logger.error(f"Failed to create task {i+1}, queue full")
                 await response.edit_original_response(
-                    content=f"Failed to create task {i}, queue full", delete_after=4
+                    content=f"Failed to create task {i+1}, queue full", delete_after=4
                 )
                 return
 
@@ -120,6 +120,9 @@ class Txt2ImageCommands(AbstractCommand):
                 image.prompt if len(image.prompt) < 150 else image.prompt[:150] + "..."
             )
             images.append(image)
+            self.logger.info(
+                f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
+            )
 
         command_name = (
             f"{Settings.server.bot_command}.{GroupCommands.txt2img.name}.random"
