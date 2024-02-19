@@ -14,8 +14,13 @@ def bad_task():
     raise ValueError("bad task")
 
 
+async def async_long_task(delay: int = 5):
+    await asyncio.sleep(delay)
+    return delay
+
+
 # Note: The following cases test individual methods of the AsyncTaskQueue
-# Due to conflicting event loops working with the singleton AsyncTaskQueue,
+# Due to unittest's conflicting event loops working with the singleton AsyncTaskQueue,
 # a seperate `AQ` instance is created for each test case.
 # (the `unittest.IsolatedAsyncioTestCase` class creates a new event loop for each test case,
 #  which is not the case when used with Discord ((uses a single event loop)).  Therefore
@@ -58,6 +63,25 @@ class TestAsyncTaskQueue(unittest.IsolatedAsyncioTestCase):
         AQ._use_logger = True
         t = await AQ.create_and_add_task(
             long_task, task_owner="me", kwargs=dict(delay=3)
+        )
+        await AQ.join()
+        self.assertEqual(t.state, TaskState.COMPLETED)
+        self.assertEqual(t.result, 3)
+
+    async def test_queue_add_async_task(self):
+        AQ = _AsyncTaskQueue()
+        AQ._use_logger = True
+        t = Task(async_long_task, task_owner="me", kwargs=dict(delay=3))
+        await AQ.add_task(t)
+        await AQ.join()
+        self.assertEqual(t.state, TaskState.COMPLETED)
+        self.assertEqual(t.result, 3)
+
+    async def test_queue_create_and_add_async_task(self):
+        AQ = _AsyncTaskQueue()
+        AQ._use_logger = True
+        t = await AQ.create_and_add_task(
+            async_long_task, task_owner="me", kwargs=dict(delay=3)
         )
         await AQ.join()
         self.assertEqual(t.state, TaskState.COMPLETED)

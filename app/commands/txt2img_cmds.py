@@ -1,12 +1,12 @@
 import os
 import discord
 import asyncio
-from typing import List
-from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
-from app.utils.helpers import random_seed, CARDINALS
-from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
+from typing import List, cast
 from app.sd_apis.api_handler import Sd
-# from app.utils.task_queue import TaskQueue, Task
+from app.utils.async_task_queue import AsyncTaskQueue, Task
+from app.utils.helpers import random_seed, CARDINALS
+from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
+from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.utils.image_file import ImageFile, ImageContainer
 from app.views.generate_image import GenerateView, create_image
 from .abstract_command import AbstractCommand
@@ -42,24 +42,43 @@ class Txt2ImageCommands(AbstractCommand):
             description="In which orientation should the image be?",
         ),
     ):
-        try:
-            if ctx.guild is None and not Settings.server.allow_dm:
-                await ctx.respond("This command cannot be used in direct messages.")
-                return
+        if ctx.guild is None and not Settings.server.allow_dm:
+            await ctx.respond("This command cannot be used in direct messages.")
+            return
 
-            model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
-            response = await ctx.respond(
-                f"Generating {model_def.n_images} random images...",
-                ephemeral=True,
-                delete_after=1800,
+        model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
+        response = await ctx.respond(
+            f"Generating {model_def.n_images} random images...waiting to start",
+            ephemeral=True,
+            delete_after=1800,
+        )
+
+        # actual image is processed in a separate thread as task
+        async def process_image(
+            i: int,
+            image: ImageContainer,
+            response: discord.ApplicationContext,
+        ):
+            image = image.copy()
+            image.image: ImageFile = await asyncio.to_thread(
+                create_image, image, Sd.api
             )
-        except:
-            pass
+
+            cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
+            percent = int((i + 1) / model_def.n_images * 100)
+            try:
+                await response.edit_original_response(
+                    content=f"Generated the {cardinal} image...({percent}%)"
+                )
+            except discord.errors.NotFound:
+                pass
+
+            return image
 
         workflow, workflow_map = self._load_workflow_and_map(model_def)
 
-        images: List[ImageContainer] = []
         title_prompts: List[str] = []
+        tasks = []
         for i in range(model_def.n_images):
             image = ImageContainer(
                 seed=random_seed(),
@@ -78,26 +97,29 @@ class Txt2ImageCommands(AbstractCommand):
             else:
                 image.width, image.height = model_def.width, model_def.height
 
-            image.image: ImageFile = await asyncio.to_thread(
-                create_image, image, Sd.api
+            task = await AsyncTaskQueue.create_and_add_task(
+                process_image,
+                args=(i, image, response),
+                task_owner=ctx.author.id,
             )
-
-            cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
-            percent = int((i + 1) / model_def.n_images * 100)
-            try:
+            if task is not None:
+                tasks.append(task)
+            else:
+                self.logger.error(f"Failed to create task {i}, queue full")
                 await response.edit_original_response(
-                    content=f"Generated the {cardinal} image...({percent}%)"
+                    content=f"Failed to create task {i}, queue full", delete_after=4
                 )
-            except discord.errors.NotFound:
-                pass
+                return
 
-            self.logger.info(
-                f"Generated Image {ImageCount.increment()}: {os.path.basename(image.image.image_filename)}"
-            )
-            images.append(image)
+        # wait for all tasks to complete
+        images: List[ImageContainer] = []
+        for task in tasks:
+            task = cast(Task, task)
+            image: ImageContainer = await task.wait_result()
             title_prompts.append(
                 image.prompt if len(image.prompt) < 150 else image.prompt[:150] + "..."
             )
+            images.append(image)
 
         command_name = (
             f"{Settings.server.bot_command}.{GroupCommands.txt2img.name}.random"
@@ -166,7 +188,7 @@ class Txt2ImageCommands(AbstractCommand):
 
         model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
         response = await ctx.respond(
-            f"Generating {model_def.n_images} images...",
+            f"Generating {model_def.n_images} images...waiting to start",
             ephemeral=True,
             delete_after=1800,
         )

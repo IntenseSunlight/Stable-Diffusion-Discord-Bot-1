@@ -39,6 +39,7 @@ class Task:
         self.func = func
         self._task_id = task_id
         self._task_owner = task_owner
+        self._is_async = asyncio.iscoroutinefunction(func)
         self._state: TaskState = TaskState.PENDING
         self._result: Any = None
         self.args: List = args
@@ -92,7 +93,12 @@ class Task:
 
         try:
             self.state = TaskState.RUNNING
-            self.result = await asyncio.to_thread(self.func, *self.args, **self.kwargs)
+            if self._is_async:
+                self.result = await self.func(*self.args, **self.kwargs)
+            else:
+                self.result = await asyncio.to_thread(
+                    self.func, *self.args, **self.kwargs
+                )
             self.state = TaskState.COMPLETED
             async with self._cond:
                 self._cond.notify_all()
@@ -110,11 +116,11 @@ class Task:
         if self.state == TaskState.COMPLETED:
             return self.result
 
-
-# this is the parent object, the access to the queue is through the Singleton below
-# The AsyncTaskQueue provides a method to feed the API with requests in a synchronous manner
-# by multiple users (seperate Discord slash command calls).  This runs a thread to launch workers
-# which process the results with async calls (asyncio is necessary to prevent blocking in discord)
+# Semi-synchronous task queue:
+# - this is the parent object, the access to the queue is through the Singleton below
+# - The AsyncTaskQueue provides a method to feed the API with requests in a synchronous manner
+#   by multiple users (seperate Discord slash command calls).  This runs a thread to launch workers
+#   which process the results with async calls (asyncio is necessary to prevent blocking in discord)
 class _AsyncTaskQueue(asyncio.Queue):
     def __init__(
         self,
@@ -174,7 +180,11 @@ class _AsyncTaskQueue(asyncio.Queue):
         kwargs: Dict = {},
     ) -> Task:
         task = Task(
-            func, task_owner=task_owner, task_id=self.new_id, args=args, kwargs=kwargs
+            func,
+            task_owner=task_owner,
+            task_id=self.new_id,
+            args=args,
+            kwargs=kwargs,
         )
         ok = await self.add_task(task)
         if ok:
@@ -202,13 +212,7 @@ class _AsyncTaskQueue(asyncio.Queue):
         for _ in range(self._num_workers):
             worker = asyncio.create_task(self._worker())
             self._workers.append(worker)
-            # worker = threading.Thread(
-            #    target=asyncio.run, args=(self._worker(),), daemon=True
-            # )
-            # worker.start()
-            # self._workers.append(worker)
 
-    #
     async def _worker(self):
         while True:
             task: Task = await self.get()
