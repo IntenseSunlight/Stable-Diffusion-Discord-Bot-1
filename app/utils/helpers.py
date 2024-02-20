@@ -8,6 +8,7 @@ import logging
 
 CARDINALS = ["first", "second", "third", "fourth", "fifth", "sixth", "umpteenth"]
 
+
 # return a random seed
 def random_seed():
     return random.randint(0, 1_000_000_000_000)
@@ -47,3 +48,12 @@ def get_env_and_settings_paths():
         Settings.save_json(settings_path)
 
     return dotenv_path, settings_path
+
+
+def idler_text():
+    dots = ["", ".", "..", "...", "...."]
+    symbols = ["🌼", "🌞", "🍂", "❄"]
+    while True:
+        for d in dots:
+            for s in symbols:
+                yield d + s

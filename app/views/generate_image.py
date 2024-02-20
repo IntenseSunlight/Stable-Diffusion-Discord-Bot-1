@@ -29,6 +29,16 @@ def create_image(image: ImageContainer, sd_api: AbstractAPI) -> ImageFile:
         workflow_map=image.workflow_map,
     )
 
+# Some text to show idle action
+async def idler_message(main_meassage: str, interaction: discord.Interaction):
+    dots = ["", ".", "..", "...", "...."]
+    symbols = ["🌱", "🌞", "🍂", "❄"]
+    await asyncio.sleep(1)
+    while True:
+        for d in dots:
+            for s in symbols:
+                await interaction.edit_original_response(content=f"{main_meassage}{d}{s}")
+                await asyncio.sleep(1)
 
 # The top level view for generating an image
 # Variation generates almost the same image again using same settings / seed. In addition, this uses an variation strength.
@@ -133,8 +143,9 @@ class UpscaleButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.send_message(
-            f"Upscaling the image...", ephemeral=True, delete_after=30
+            f"Upscaling the image...", ephemeral=True, delete_after=1800
         )
+        itask = asyncio.create_task(idler_message("Upscaling the image...", interaction))
 
         model_def = Settings.txt2img.models[self.image.model]
         def process_image(image: ImageFile, sd_api: AbstractAPI) -> ImageFile:
@@ -150,12 +161,14 @@ class UpscaleButton(discord.ui.Button):
             self._logger.error(
                 f"Failed to create task for image, queue full." 
             )
+            itask.cancel()
             await interaction.edit_original_response(
                 content=f"Failed to create task for image, queue full.", delete_after=4
             )
             return
 
         upscaled_image: ImageFile = await task.wait_result()
+        itask.cancel()
         self._logger.info(
             f"Generated Image {ImageCount.increment()}: {os.path.basename(upscaled_image.image_filename)}"
         )
@@ -167,11 +180,7 @@ class UpscaleButton(discord.ui.Button):
                 os.path.basename(upscaled_image.image_filename),
             ),
         )
-        self._logger.info(
-            f"Upscaled Image {ImageCount.increment()}: {os.path.basename(self.image.image.image_filename)}"
-        )
         await interaction.delete_original_response()
-
 
 # ----------------------------------------------
 # Variation button class
@@ -191,11 +200,13 @@ class VariationButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.send_message(
-            f"Creating a variation of the image...", ephemeral=True, delete_after=30
+            f"Creating a variation of the image...", 
+            ephemeral=True, 
+            delete_after=1800,
         )
+        itask = asyncio.create_task(idler_message("Creating a variation of the image...", interaction))
 
         var_image = self.image.copy()
-
         var_strength_min = 0.2 * var_image.variation_strength
         var_strength_max = min(var_image.variation_strength * 3, 1.0)
         var_image.variation_strength = random.uniform(
@@ -210,12 +221,14 @@ class VariationButton(discord.ui.Button):
             self._logger.error(
                 f"Failed to create task for image, queue full." 
             )
+            itask.cancel()
             await interaction.edit_original_response(
                 content=f"Failed to create task for image, queue full.", delete_after=4
             )
             return
 
         var_image.image: ImageFile = await task.wait_result()
+        itask.cancel()
         self._logger.info(
             f"Generated Image {ImageCount.increment()}: {os.path.basename(var_image.image.image_filename)}"
         )
@@ -229,6 +242,7 @@ class VariationButton(discord.ui.Button):
             ),
             view=UpscaleOnlyView(var_image, sd_api=self.sd_api, logger=self._logger),
         )
+        await interaction.delete_original_response()
 
 
 # ----------------------------------------------
@@ -249,7 +263,7 @@ class RetryButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.send_message(
-            f"Regenerating the image using the same settings...",
+            f"Regenerating the image using the same settings...waiting to start",
             ephemeral=True,
             delete_after=1800,
         )
@@ -295,19 +309,6 @@ class RetryButton(discord.ui.Button):
                 )
                 return
 
-            #new_image.image: ImageFile = await asyncio.to_thread(
-            #    create_image, new_image, self.sd_api
-            #)
-            #new_images.append(new_image)
-
-            #percent = int((i + 1) / model_def.n_images * 100)
-            #cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
-            #try:
-            #    await interaction.edit_original_response(
-            #        content=f"Generated the {cardinal} image...({percent}%)"
-            #    )
-            #except discord.NotFound:
-            #    pass
 
         # wait for all tasks to complete
         new_images: List[ImageContainer] = []
@@ -356,8 +357,11 @@ class UpscaleOnlyView(discord.ui.View):
     @discord.ui.button(label="Upscale", style=discord.ButtonStyle.primary, emoji="🖼️")
     async def button_upscale(self, button, interaction: discord.Interaction):
         await interaction.response.send_message(
-            f"Upscaling the image...", ephemeral=True, delete_after=30
+            f"Upscaling the image...", 
+            ephemeral=True, 
+            delete_after=1800,
         )
+        itask = asyncio.create_task(idler_message("Upscaling the image...", interaction))
         model_def = Settings.txt2img.models[self.image.model]
 
         def process_image(image: ImageFile, sd_api: AbstractAPI) -> ImageFile:
@@ -373,12 +377,14 @@ class UpscaleOnlyView(discord.ui.View):
             self._logger.error(
                 f"Failed to create task for image, queue full." 
             )
+            itask.cancel()
             await interaction.edit_original_response(
                 content=f"Failed to create task for image, queue full.", delete_after=4
             )
             return
 
         upscaled_image: ImageFile = await task.wait_result()
+        itask.cancel()
         self._logger.info(
             f"Generated Image {ImageCount.increment()}: {os.path.basename(upscaled_image.image_filename)}"
         )
@@ -390,3 +396,4 @@ class UpscaleOnlyView(discord.ui.View):
                 os.path.basename(upscaled_image.image_filename).split(".")[0] + "-upscaled.png"
             ),
         )
+        await interaction.delete_original_response()
