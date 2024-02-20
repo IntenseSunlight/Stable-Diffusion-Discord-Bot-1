@@ -2,18 +2,15 @@ import os
 import io
 import discord
 import asyncio
-from typing import List
-from app.utils import GeneratePrompt, Orientation, ImageCount
-from app.utils.helpers import random_seed, CARDINALS
+from app.utils import ImageCount
 from app.settings import (
     Settings,
-    GroupCommands,
     UpscalerSingleModel,
-    Img2ImgSingleModel,
 )
 from app.sd_apis.api_handler import Sd
-from app.utils.image_file import ImageFile, ImageContainer
-from app.views.generate_image import GenerateView, create_image
+from app.utils.async_task_queue import AsyncTaskQueue, Task
+from app.utils.image_file import ImageFile
+from app.views.generate_image import idler_message
 from .abstract_command import AbstractCommand
 
 
@@ -56,14 +53,17 @@ class Img2ImageCommands(AbstractCommand):
         response = await ctx.respond(
             f"Upscaling image...",
             ephemeral=True,
-            delete_after=30,
+            delete_after=1800,
         )
+        itask = asyncio.create_task(idler_message("Upscaling image...", response))
+
         image_props = image_in.to_dict()
         content_type = image_props["content_type"]
         if (
             not "image" in content_type
             or not content_type.split("/")[1] in Settings.files.image_types
         ):
+            itask.cancel()
             await response.edit_original_response(
                 content=f"Please provide an image file. Provided type was '{content_type}'",
                 delete_after=4,
@@ -78,6 +78,7 @@ class Img2ImageCommands(AbstractCommand):
 
         width, height = image.size
         if width * height > 1200**2:
+            itask.cancel()
             await response.edit_original_response(
                 content=f"Input image is too large to upscale. W,H= {width},{height}",
                 delete_after=4,
@@ -85,14 +86,27 @@ class Img2ImageCommands(AbstractCommand):
             return
 
         model_def: UpscalerSingleModel = Settings.upscaler.models[model]
-        upscaled_image = await asyncio.to_thread(upscale_image, image, model_def)
+        task = await AsyncTaskQueue.create_and_add_task(
+            upscale_image, ctx.author.id, args=(image, model_def)
+        )
+        if task is None:
+            itask.cancel()
+            await response.edit_original_response(
+                content="Task queue is full. Please try again later.",
+                delete_after=4,
+            )
+            return
+
+        upscaled_image: ImageFile = await task.wait_result()
         if upscaled_image.file_size > 25 * 2**20:
+            itask.cancel()
             await response.edit_original_response(
                 content=f"Upscaled image is too large to send. Size: {upscaled_image.file_size/ 2**20:.3f}MB",
                 delete_after=4,
             )
             return
 
+        itask.cancel()
         await response.delete_original_response()
         await ctx.followup.send(
             f"Upscaled image: final w,h= {upscaled_image.size}, "
