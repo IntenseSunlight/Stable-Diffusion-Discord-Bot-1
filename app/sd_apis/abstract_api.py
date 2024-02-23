@@ -3,7 +3,7 @@ import requests
 import random
 import logging
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, List
 from PIL import Image, PngImagePlugin
 
 from app.settings import Settings
@@ -16,6 +16,14 @@ class AbstractAPI(ABC):
     def __init__(self, webui_url: str, logger: logging.Logger = logging):
         self._logger = LogOnce(logger)
         self.webui_url = webui_url
+
+    @abstractmethod
+    def get_checkpoint_names(self) -> List[str]:
+        pass
+
+    @abstractmethod
+    def get_lora_names(self) -> List[str]:
+        pass
 
     @abstractmethod
     def set_upscaler_model(self, upscaler_model: str) -> bool:

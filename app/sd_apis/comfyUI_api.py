@@ -2,10 +2,10 @@ import os
 import json
 import uuid
 import logging
+from typing import Dict, List
 import urllib.request
 import urllib.parse
 import websocket  # NOTE: websocket-client (https://github.com/websocket-client/websocket-client)
-from typing import Union, Dict
 from PIL import Image, PngImagePlugin
 
 from . import AbstractAPI
@@ -171,10 +171,10 @@ class ComfyUIAPI(AbstractAPI):
     def __init__(
         self,
         webui_url: str,
-        workflow_json: Union[str, os.PathLike] = DEFAULT_WORKFLOW,
-        workflow_map: Union[str, os.PathLike] = DEFAULT_WORKFLOW_MAP,
-        upscaler_workflow_json: Union[str, os.PathLike] = DEFAULT_UPSCALER_WORKFLOW,
-        upscaler_workflow_map: Union[str, os.PathLike] = DEFAULT_UPSCALER_WORKFLOW_MAP,
+        workflow_json: str | os.PathLike = DEFAULT_WORKFLOW,
+        workflow_map: str | os.PathLike = DEFAULT_WORKFLOW_MAP,
+        upscaler_workflow_json: str | os.PathLike = DEFAULT_UPSCALER_WORKFLOW,
+        upscaler_workflow_map: str | os.PathLike = DEFAULT_UPSCALER_WORKFLOW_MAP,
         logger: logging.Logger = logging,
         **kwargs,
     ):
@@ -184,7 +184,7 @@ class ComfyUIAPI(AbstractAPI):
         self.upscaler_workflow = upscaler_workflow_json
         self.upscaler_workflow_map = upscaler_workflow_map
 
-    def _load_json(self, json_input: Union[str, os.PathLike]) -> Dict:
+    def _load_json(self, json_input: str | os.PathLike) -> Dict:
         if os.path.isfile(json_input):
             with open(json_input, "r") as f:
                 return json.load(f)
@@ -198,7 +198,7 @@ class ComfyUIAPI(AbstractAPI):
         return self._workflow
 
     @workflow.setter
-    def workflow(self, workflow: Union[str, os.PathLike, Dict]):
+    def workflow(self, workflow: str | os.PathLike | Dict):
         if isinstance(workflow, dict):
             self._workflow = workflow
         else:
@@ -209,7 +209,7 @@ class ComfyUIAPI(AbstractAPI):
         return self._workflow_map
 
     @workflow_map.setter
-    def workflow_map(self, workflow_map: Union[str, os.PathLike, Dict]) -> Dict:
+    def workflow_map(self, workflow_map: str | os.PathLike | Dict) -> Dict:
         if isinstance(workflow_map, dict):
             self._workflow_map = workflow_map
         else:
@@ -221,7 +221,7 @@ class ComfyUIAPI(AbstractAPI):
 
     @upscaler_workflow.setter
     def upscaler_workflow(
-        self, upscaler_workflow: Union[str, os.PathLike, Dict]
+        self, upscaler_workflow: str | os.PathLike | Dict
     ) -> Dict:
         if isinstance(upscaler_workflow, dict):
             self._upscaler_workflow = upscaler_workflow
@@ -234,7 +234,7 @@ class ComfyUIAPI(AbstractAPI):
 
     @upscaler_workflow_map.setter
     def upscaler_workflow_map(
-        self, upscaler_workflow_map: Union[str, os.PathLike, Dict]
+        self, upscaler_workflow_map: str | os.PathLike | Dict
     ) -> Dict:
         if isinstance(upscaler_workflow_map, dict):
             self._upscaler_workflow_map = upscaler_workflow_map
@@ -317,6 +317,20 @@ class ComfyUIAPI(AbstractAPI):
                 output_images[node_id] = images_output
 
         return output_images
+
+    def get_checkpoint_names(self) -> List[str]:
+        with urllib.request.urlopen(
+            f"http://{self.webui_url}/object_info/CheckpointLoaderSimple"
+        ) as response:
+            res = json.loads(response.read())
+            return res["CheckpointLoaderSimple"]["input"]["required"]["ckpt_name"][0]
+
+    def get_lora_names(self) -> List[str]:
+        with urllib.request.urlopen(
+            f"http://{self.webui_url}/object_info/LoraLoader"
+        ) as response:
+            res = json.loads(response.read())
+            return res["LoraLoader"]["input"]["required"]["lora_name"][0]
 
     def generate_image(
         self,

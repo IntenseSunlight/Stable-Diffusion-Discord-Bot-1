@@ -66,3 +66,24 @@ class TestComfyUIAPI(unittest.TestCase):
         input_image = ImageFile(image_filename=TEST_IMAGE)
         output_image = api.upscale_image(input_image)
         self.assertIsNotNone(output_image)
+
+    def test_get_checkpoint_names(self):
+        # Test that the checkpoint names are retrieved correctly
+        api = ComfyUIAPI(DEFAULT_URL)
+        if not api.check_sd_host():
+            self.skipTest("SD host is not available")
+
+        checkpoint_names = api.get_checkpoint_names()
+        self.assertIsNotNone(checkpoint_names)
+        self.assertGreater(len(checkpoint_names), 0)
+
+    def test_get_lora_names(self):
+        # Test that the lora names are retrieved correctly
+        api = ComfyUIAPI(DEFAULT_URL)
+        if not api.check_sd_host():
+            self.skipTest("SD host is not available")
+
+        lora_names = api.get_lora_names()
+        self.assertIsNotNone(lora_names)
+        if not lora_names:
+            print("No Lora names found")

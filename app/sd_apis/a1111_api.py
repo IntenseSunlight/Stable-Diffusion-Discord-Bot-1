@@ -1,7 +1,7 @@
 import io
 import requests
 import base64
-from typing import Tuple
+from typing import List, Tuple
 from PIL import Image, PngImagePlugin
 
 from . import AbstractAPI
@@ -11,6 +11,12 @@ from app.utils.image_file import ImageFile
 
 # Defines the SD API handler for A1111
 class A1111API(AbstractAPI):
+    def get_checkpoint_names(self) -> List[str]:
+        raise NotImplementedError("API function incomplete") 
+
+    def get_lora_names(self) -> List[str]:
+        raise NotImplementedError("API function incomplete")
+
     def generate_image(
         self,
         prompt: str,

@@ -3,7 +3,7 @@ import json
 from enum import Enum
 from dotenv import load_dotenv
 from pydantic import BaseModel, field_serializer, validator
-from typing import Optional, Literal, List, Dict, Union, TextIO
+from typing import Optional, Literal, List, Dict, TextIO
 
 __all__ = [
     "Settings",
@@ -42,8 +42,8 @@ class ServerModel(BaseModel):
 
 # Default image file settings
 class FilesModel(BaseModel):
-    image_folder: Union[str, os.PathLike] = "./GeneratedImages"
-    workflows_folder: Union[str, os.PathLike] = "./app/sd_apis/comfyUI_workflows"
+    image_folder: str | os.PathLike = "./GeneratedImages"
+    workflows_folder: str | os.PathLike = "./app/sd_apis/comfyUI_workflows"
     image_types: List[str] = ["jpg", "png", "jpeg"]
     default_image_type: Literal["jpg", "png", "jpeg"] = "png"
     video_types: List[str] = ["mp4", "gif"]
@@ -136,8 +136,8 @@ class _Settings(BaseModel):
     def __init__(
         self,
         *args,
-        dot_env: Union[str, os.PathLike, TextIO] = None,
-        json_file: Union[str, os.PathLike, TextIO] = None,
+        dot_env: str | os.PathLike | TextIO = None,
+        json_file: str | os.PathLike | TextIO = None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -166,8 +166,8 @@ class _Settings(BaseModel):
 
     def reload(
         self,
-        dot_env: Union[str, os.PathLike, TextIO] = None,
-        json_file: Union[str, os.PathLike, TextIO] = None,
+        dot_env: str | os.PathLike | TextIO = None,
+        json_file: str | os.PathLike | TextIO = None,
     ):
         self.reset()
         if json_file is not None:
@@ -178,7 +178,7 @@ class _Settings(BaseModel):
 
     def load_json(
         self,
-        json_file: Union[str, os.PathLike, TextIO] = None,
+        json_file: str | os.PathLike | TextIO = None,
         json_str: Optional[str] = None,
     ):
         if json_str is not None:
@@ -201,7 +201,7 @@ class _Settings(BaseModel):
 
         recurse_update(self, new_self)
 
-    def load_dotenv(self, dotenv_path: Union[str, os.PathLike, TextIO]):
+    def load_dotenv(self, dotenv_path: str | os.PathLike | TextIO):
         load_dotenv(dotenv_path=dotenv_path, override=True)
 
         # legacy support for .env file
@@ -213,7 +213,7 @@ class _Settings(BaseModel):
             os.getenv("SD_VARIATION_STRENGTH", self.txt2img.variation_strength)
         )
 
-    def save_json(self, json_file: Union[str, os.PathLike, TextIO]):
+    def save_json(self, json_file: str | os.PathLike | TextIO):
         if isinstance(json_file, (str, os.PathLike)):
             with open(json_file, "w") as f:
                 f.write(self.model_dump_json(indent=4))
