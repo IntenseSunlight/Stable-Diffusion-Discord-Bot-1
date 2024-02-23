@@ -107,7 +107,6 @@ class Img2ImageCommands(AbstractCommand):
             return
 
         itask.cancel()
-        await response.delete_original_response()
         await ctx.followup.send(
             f"Upscaled image: final w,h= {upscaled_image.size}, "
             f"final size= {upscaled_image.file_size/2**20:.3f}MB:",
@@ -116,6 +115,7 @@ class Img2ImageCommands(AbstractCommand):
                 os.path.basename(upscaled_image.image_filename),
             ),
         )
+        await response.delete_original_response()
         self.logger.info(
             f"Upscaled Image {ImageCount.increment()}: {os.path.basename(image.image_filename)}"
         )
