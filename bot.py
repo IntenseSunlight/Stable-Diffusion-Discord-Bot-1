@@ -15,18 +15,35 @@ from app.utils.helpers import get_env_and_settings_paths
 dotenv_path, settings_path = get_env_and_settings_paths()
 Settings.reload(dot_env=dotenv_path, json_file=settings_path)
 
-from app.commands.bot_handler import Bot
-from app.sd_apis.api_handler import Sd
-from app.utils.task_queue import TaskQueue
-from app.commands.txt2img_cmds import Txt2ImageCommands
-from app.commands.img2img_cmds import Img2ImageCommands
-
 # Set the URL of the SD API host, initialize the API
+# (this required first to check models before TypeDefs
+#  are initialized in the commands modules)
+from app.sd_apis.api_handler import Sd
+
 webui_url = (
     f"{Settings.server.host}:{Settings.server.port}"  # URL/Port of the SD API host
 )
 Sd.api_configure(webui_url, Settings.server.sd_api_type)
 logger.info(f"Started App, using api={Sd.api_type}")
+
+# check for valid model and workflow definitions
+if not Settings.check_for_valid_models(
+    valid_checkpoints=Sd.get_valid_checkpoints(),
+    valid_loras=Sd.get_valid_loras(),
+    valid_upscalers=Sd.get_valid_upscalers(),
+):
+    logger.warning(f"Invalid model definition in settings.json, models removed")
+
+if not Settings.check_for_valid_workflows(
+    workflow_folder=Settings.files.workflows_folder
+):
+    logger.warning(f"Invalid workflow definition in settings.json, models removed")
+
+from app.commands.bot_handler import Bot
+from app.utils.task_queue import TaskQueue
+from app.commands.txt2img_cmds import Txt2ImageCommands
+from app.commands.img2img_cmds import Img2ImageCommands
+
 
 # upfront checks
 # check for bot key

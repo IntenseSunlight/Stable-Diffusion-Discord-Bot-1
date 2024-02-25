@@ -17,6 +17,9 @@ class A1111API(AbstractAPI):
     def get_lora_names(self) -> List[str]:
         raise NotImplementedError("API function incomplete")
 
+    def get_upscaler_names(self) -> List[str]:
+        raise NotImplementedError("API function incomplete")
+
     def generate_image(
         self,
         prompt: str,

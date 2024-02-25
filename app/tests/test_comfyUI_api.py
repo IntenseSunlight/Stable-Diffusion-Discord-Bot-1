@@ -87,3 +87,13 @@ class TestComfyUIAPI(unittest.TestCase):
         self.assertIsNotNone(lora_names)
         if not lora_names:
             print("No Lora names found")
+
+    def test_get_upscaler_names(self):
+        # Test that the upscaler names are retrieved correctly
+        api = ComfyUIAPI(DEFAULT_URL)
+        if not api.check_sd_host():
+            self.skipTest("SD host is not available")
+
+        upscaler_names = api.get_upscaler_names()
+        self.assertIsNotNone(upscaler_names)
+        self.assertGreater(len(upscaler_names), 0)

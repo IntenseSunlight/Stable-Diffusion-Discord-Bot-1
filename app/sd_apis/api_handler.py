@@ -31,5 +31,14 @@ class _Sd:
     def get_api_list(self):
         return ["a1111", "comfyUI"]
 
+    def get_valid_checkpoints(self):
+        return self.api.get_checkpoint_names()
+
+    def get_valid_loras(self):
+        return self.api.get_lora_names()
+
+    def get_valid_upscalers(self):
+        return self.api.get_upscaler_names()
+
 
 Sd = _Sd()

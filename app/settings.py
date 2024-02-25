@@ -1,9 +1,10 @@
 import os
 import json
+import logging
 from enum import Enum
 from dotenv import load_dotenv
-from pydantic import BaseModel, field_serializer, validator
-from typing import Optional, Literal, List, Dict, TextIO
+from pydantic import BaseModel, Field, field_serializer, validator
+from typing import Optional, Literal, List, Dict, TextIO, cast
 
 __all__ = [
     "Settings",
@@ -21,6 +22,12 @@ class GroupCommands(Enum):
     txt2vid = "txt2vid"
     img2vid = "img2vid"
     faceswap = "faceswap"
+    upscaler = "upscaler"
+
+
+class ModelType(Enum):
+    checkpoint = "checkpoint"
+    lora = "lora"
     upscaler = "upscaler"
 
 
@@ -76,6 +83,9 @@ class Txt2ImgSingleModel(BaseModel):
 
 class Txt2ImgContainerModel(BaseModel):
     group_command: GroupCommands = GroupCommands.txt2img
+    modeltype: ModelType = Field(
+        default=ModelType.checkpoint, frozen=True, exclude=True
+    )
     variation_strength: float = 0.065
     models: Dict[str, Txt2ImgSingleModel] = {
         Txt2ImgSingleModel().display_name: Txt2ImgSingleModel()
@@ -84,6 +94,9 @@ class Txt2ImgContainerModel(BaseModel):
     def add_model(self, model_dict: Dict):
         model = Txt2ImgSingleModel(**model_dict)
         self.models.update({model.display_name: model})
+
+    def remove_model(self, model_name: str):
+        self.models.pop(model_name)
 
 
 class Img2ImgSingleModel(BaseModel):
@@ -97,6 +110,7 @@ class Img2ImgSingleModel(BaseModel):
 
 class Img2ImgContainerModel(BaseModel):
     group_command: GroupCommands = GroupCommands.img2img
+    modeltype: ModelType = Field(default=ModelType.upscaler, frozen=True, exclude=True)
     models: Dict[str, Img2ImgSingleModel] = {
         Img2ImgSingleModel().display_name: Img2ImgSingleModel()
     }
@@ -104,6 +118,9 @@ class Img2ImgContainerModel(BaseModel):
     def add_model(self, model_dict: Dict):
         model = Img2ImgSingleModel(**model_dict)
         self.models.update({model.display_name: model})
+
+    def remove_model(self, model_name: str):
+        self.models.pop(model_name)
 
 
 class UpscalerSingleModel(BaseModel):
@@ -115,6 +132,7 @@ class UpscalerSingleModel(BaseModel):
 
 class UpscalerContainerModel(BaseModel):
     group_command: GroupCommands = GroupCommands.upscaler
+    modeltype: ModelType = Field(default=ModelType.upscaler, frozen=True, exclude=True)
     models: Dict[str, UpscalerSingleModel] = {
         UpscalerSingleModel().display_name: UpscalerSingleModel()
     }
@@ -122,6 +140,9 @@ class UpscalerContainerModel(BaseModel):
     def add_model(self, model_dict: Dict):
         model = UpscalerSingleModel(**model_dict)
         self.models.update({model.display_name: model})
+
+    def remove_model(self, model_name: str):
+        self.models.pop(model_name)
 
 
 # Main Settings Model
@@ -160,6 +181,72 @@ class _Settings(BaseModel):
                     )
 
                 commands[v.value] = k
+
+    def check_for_valid_models(
+        self,
+        valid_checkpoints: Optional[List[str]],
+        valid_loras: Optional[List[str]] = [],
+        valid_upscalers: Optional[List[str]] = [],
+        purge_and_warn: bool = True,
+    ) -> bool:
+        logger = logging.getLogger(__name__)
+        messages = {}
+        for k in self.__dict__.keys():
+            if hasattr(self.__dict__[k], "models"):
+                modeltype: ModelType = self.__dict__[k].modeltype
+                check_list = {
+                    ModelType.checkpoint: valid_checkpoints,
+                    ModelType.lora: valid_loras,
+                    ModelType.upscaler: valid_upscalers,
+                }[modeltype]
+
+                for name, model in self.__dict__[k].models.items():
+                    model: Type_SingleModel = cast(Type_SingleModel, model)
+                    if not model.sd_model in check_list:
+                        messages[(k, name)] = (
+                            f"Model {k}.{model.display_name} has no sd_model: {model.sd_model}"
+                        )
+        if messages:
+            if purge_and_warn:
+                for (k, name), message in messages.items():
+                    logger.warn(f"{message}, removing from list of models.")
+                    self.__dict__[k].models.pop(name)
+            else:
+                raise ValueError("\n".join(messages.values()))
+            return False
+        return True
+
+    def check_for_valid_workflows(
+        self, workflow_folder: str | os.PathLike, purge_and_warn: bool = True
+    ) -> bool:
+        logger = logging.getLogger(__name__)
+        messages = {}
+        for k in self.__dict__.keys():
+            if hasattr(self.__dict__[k], "models"):
+                for name, model in self.__dict__[k].models.items():
+                    model: Type_SingleModel = cast(Type_SingleModel, model)
+                    if not os.path.exists(
+                        os.path.join(workflow_folder, model.workflow_api)
+                    ):
+                        messages[(k, name)] = (
+                            f"Model {name}.{model.display_name} workflow_api did not exist: {model.workflow_api}"
+                        )
+
+                    if not os.path.exists(
+                        os.path.join(workflow_folder, model.workflow_api_map)
+                    ):
+                        messages[(k, name)] = (
+                            f"Model {name}.{model.display_name} workflow_api_map did not exist: {model.workflow_api_map}"
+                        )
+        if messages:
+            if purge_and_warn:
+                for (k, name), message in messages.items():
+                    logger.warn(f"WARNING: {message}, removing from list of models.")
+                    self.__dict__[k].models.pop(name)
+            else:
+                raise ValueError("\n".join(messages.values()))
+            return False
+        return True
 
     def reset(self):
         self.__dict__.update(self.__class__().__dict__)

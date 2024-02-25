@@ -332,6 +332,13 @@ class ComfyUIAPI(AbstractAPI):
             res = json.loads(response.read())
             return res["LoraLoader"]["input"]["required"]["lora_name"][0]
 
+    def get_upscaler_names(self) -> List[str]:
+        with urllib.request.urlopen(
+            f"http://{self.webui_url}/object_info/UpscaleModelLoader"
+        ) as response:
+            res = json.loads(response.read())
+            return res["UpscaleModelLoader"]["input"]["required"]["model_name"][0]
+
     def generate_image(
         self,
         prompt: str,

@@ -26,6 +26,10 @@ class AbstractAPI(ABC):
         pass
 
     @abstractmethod
+    def get_upscaler_names(self) -> List[str]:
+        pass
+
+    @abstractmethod
     def set_upscaler_model(self, upscaler_model: str) -> bool:
         pass
 

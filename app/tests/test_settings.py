@@ -1,9 +1,9 @@
 import os
 import re
 import json
-from typing import Any
 import unittest
-from app.settings import Settings
+from typing import Any
+from app.settings import Settings, _Settings
 
 ENV_TEST = """
 SD_HOST="127.0.0.2"
@@ -56,6 +56,28 @@ class TestSettings(unittest.TestCase):
         self.assertIsNotNone(Settings.txt2img.models.get("test_model"))
         self.assertEqual(len(Settings.txt2img.models), 2)
 
+    def test_remove_image_model(self):
+        settings = _Settings()  # cannot test on singleton due thread collisions
+        model = {
+            "display_name": "test_model",
+            "sd_model": "test_model.ckpt",
+            "width": 256,
+            "height": 256,
+            "workflow_api": "test_api.json",
+            "workflow_api_map": "test_api_map.json",
+        }
+        for i in range(10):
+            model["display_name"] = f"test_model_{i}"
+            settings.txt2img.add_model(model)
+
+        self.assertEqual(len(settings.txt2img.models), 11)
+
+        settings.txt2img.remove_model("test_model_1")
+        settings.txt2img.remove_model("test_model_2")
+        self.assertIsNone(settings.txt2img.models.get("test_model_1"))
+        self.assertIsNone(settings.txt2img.models.get("test_model_2"))
+        self.assertEqual(len(settings.txt2img.models), 9)
+
     def test_settings_model(self):
         # test change of value
         orig_json_schema = Settings.model_dump_json(indent=4)
@@ -96,11 +118,11 @@ class TestSettings(unittest.TestCase):
         self.assertEqual(Settings.server.discord_bot_key, "1234abcd56789")
 
     def test_optional_parameters(self):
-        schema = json.loads(Settings.model_dump_json())
+        settings = _Settings()  # cannot test on singleton due thread collisions
+        schema = json.loads(settings.model_dump_json())
         del schema["upscaler"]
-        Settings.load_json(json_str=json.dumps(schema))
-        # sometimes this fails, since someone else might have added the upscaler
-        self.assertNotIn("upscaler", Settings.model_fields_set)
+        settings.load_json(json_str=json.dumps(schema))
+        self.assertNotIn("upscaler", settings.model_fields_set)
 
     def test_n_images(self):
         schema = json.loads(Settings.model_dump_json())
