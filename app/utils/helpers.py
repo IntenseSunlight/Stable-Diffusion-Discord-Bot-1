@@ -41,10 +41,12 @@ def get_env_and_settings_paths():
         logger.info(f".env.deploy file not found. JSON settings will be used")
         dotenv_path = None
 
-    # determine if settings.json exists
-    settings_path = os.path.join(get_base_dir(), "settings.json")
+    # determine if bot_settings.json exists
+    settings_path = os.path.join(get_base_dir(), "bot_settings.json")
     if not os.path.exists(settings_path):
-        logger.info(f"settings.json not found. Creating default 'settings.json'")
+        logger.info(
+            f"bot_settings.json not found. Creating default 'bot_settings.json'"
+        )
         Settings.save_json(settings_path)
 
     return dotenv_path, settings_path

@@ -32,12 +32,12 @@ if not Settings.check_for_valid_models(
     valid_loras=Sd.get_valid_loras(),
     valid_upscalers=Sd.get_valid_upscalers(),
 ):
-    logger.warning(f"Invalid model definition in settings.json, models removed")
+    logger.warning(f"Invalid model definition in bot_settings.json, models removed")
 
 if not Settings.check_for_valid_workflows(
     workflow_folder=Settings.files.workflows_folder
 ):
-    logger.warning(f"Invalid workflow definition in settings.json, models removed")
+    logger.warning(f"Invalid workflow definition in bot_settings.json, models removed")
 
 from app.commands.bot_handler import Bot
 from app.utils.task_queue import TaskQueue
@@ -50,7 +50,7 @@ from app.commands.img2img_cmds import Img2ImageCommands
 assert (
     Settings.server.discord_bot_key is not None
     and not Settings.server.discord_bot_key.startswith("**")
-), "Invalid specification: BOT_KEY must be defined in settings.json or .env.XXXX file"
+), "Invalid specification: BOT_KEY must be defined in bot_settings.json or .env.XXXX file"
 
 # check SD URL
 if not Sd.api.check_sd_host():

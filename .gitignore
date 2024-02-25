@@ -8,4 +8,4 @@ GeneratedImages/*.mp4
 .env.development
 .vscode/launch.json
 current_requests.txt
-settings.json
+bot_settings.json

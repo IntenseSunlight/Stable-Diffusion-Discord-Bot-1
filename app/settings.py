@@ -67,7 +67,7 @@ class Type_SingleModel(BaseModel):
 class Txt2ImgSingleModel(BaseModel):
     display_name: str = "default_v1.5"
     sd_model: str = "v1-5-pruned-emaonly.ckpt"
-    upscaler_model: str = "4x_NMKD-Siax_200k.ckpt"
+    upscaler_model: str = "4x_NMKD-Siax_200k.pth"
     n_images: int = 4  # number of images to generate per request
     width: Optional[int] = 512
     height: Optional[int] = 512
@@ -101,7 +101,7 @@ class Txt2ImgContainerModel(BaseModel):
 
 class Img2ImgSingleModel(BaseModel):
     display_name: str = "upscaler_4x"
-    sd_model: str = "4x_NMKD-Siax_200k.ckpt"
+    sd_model: str = "4x_NMKD-Siax_200k.pth"
     width: Optional[int] = 512
     height: Optional[int] = 512
     workflow_api: Optional[str] = "default_upscaler_api.json"
@@ -125,7 +125,7 @@ class Img2ImgContainerModel(BaseModel):
 
 class UpscalerSingleModel(BaseModel):
     display_name: str = "upscaler_4x"
-    sd_model: str = "4x_NMKD-Siax_200k.ckpt"
+    sd_model: str = "4x_NMKD-Siax_200k.pth"
     workflow_api: Optional[str] = "default_upscaler_api.json"
     workflow_api_map: Optional[str] = "default_upscaler_api_map.json"
 
@@ -204,13 +204,23 @@ class _Settings(BaseModel):
                     model: Type_SingleModel = cast(Type_SingleModel, model)
                     if not model.sd_model in check_list:
                         messages[(k, name)] = (
-                            f"Model {k}.{model.display_name} has no sd_model: {model.sd_model}"
+                            f"Model {k}.{model.display_name} has no sd_model: '{model.sd_model}'"
                         )
+                    if hasattr(model, "upscaler_model"):
+                        if not model.upscaler_model in valid_upscalers:
+                            messages[(k, name)] = (
+                                f"Model {k}.{model.display_name} has no upscaler_model: '{model.upscaler_model}'"
+                            )
+
         if messages:
             if purge_and_warn:
                 for (k, name), message in messages.items():
                     logger.warn(f"{message}, removing from list of models.")
                     self.__dict__[k].models.pop(name)
+                if not self.__dict__[k].models:
+                    raise ValueError(
+                        f"Failure: No valid models remain in '{k}' command."
+                    )
             else:
                 raise ValueError("\n".join(messages.values()))
             return False
@@ -229,20 +239,25 @@ class _Settings(BaseModel):
                         os.path.join(workflow_folder, model.workflow_api)
                     ):
                         messages[(k, name)] = (
-                            f"Model {name}.{model.display_name} workflow_api did not exist: {model.workflow_api}"
+                            f"Model {name}.{model.display_name} workflow_api did not exist: '{model.workflow_api}'"
                         )
 
                     if not os.path.exists(
                         os.path.join(workflow_folder, model.workflow_api_map)
                     ):
                         messages[(k, name)] = (
-                            f"Model {name}.{model.display_name} workflow_api_map did not exist: {model.workflow_api_map}"
+                            f"Model {name}.{model.display_name} workflow_api_map did not exist: '{model.workflow_api_map}'"
                         )
         if messages:
             if purge_and_warn:
                 for (k, name), message in messages.items():
                     logger.warn(f"WARNING: {message}, removing from list of models.")
                     self.__dict__[k].models.pop(name)
+
+                if not self.__dict__[k].models:
+                    raise ValueError(
+                        f"Failure: No valid models remain in '{k}' command."
+                    )
             else:
                 raise ValueError("\n".join(messages.values()))
             return False
