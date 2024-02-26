@@ -1,12 +1,9 @@
 import os
 import sys
-import logging
+from app.utils.logger import logger
 
-# Logging, suppresses the discord.py logging
+# Clear terminal
 os.system("clear")
-logging.getLogger("discord").setLevel(logging.CRITICAL)
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-logger = logging.getLogger(__name__)
 
 # load settings first, since it is required by the other modules
 from app.settings import Settings, GroupCommands
@@ -26,6 +23,13 @@ webui_url = (
 Sd.api_configure(webui_url, Settings.server.sd_api_type)
 logger.info(f"Started App, using api={Sd.api_type}")
 
+# check SD URL
+if not Sd.api.check_sd_host():
+    logger.error(
+        f"Could not establish connection to SD host. Please check your settings."
+    )
+    sys.exit(1)
+
 # check for valid model and workflow definitions
 if not Settings.check_for_valid_models(
     valid_checkpoints=Sd.get_valid_checkpoints(),
@@ -40,7 +44,7 @@ if not Settings.check_for_valid_workflows(
     logger.warning(f"Invalid workflow definition in bot_settings.json, models removed")
 
 from app.commands.bot_handler import Bot
-from app.utils.task_queue import TaskQueue
+from app.utils.async_task_queue import AsyncTaskQueue
 from app.commands.txt2img_cmds import Txt2ImageCommands
 from app.commands.img2img_cmds import Img2ImageCommands
 
@@ -52,13 +56,6 @@ assert (
     and not Settings.server.discord_bot_key.startswith("**")
 ), "Invalid specification: BOT_KEY must be defined in bot_settings.json or .env.XXXX file"
 
-# check SD URL
-if not Sd.api.check_sd_host():
-    logger.error(
-        f"Could not establish connection to SD host. Please check your settings."
-    )
-    sys.exit(1)
-
 # check for an upscaler name (default to first)
 model_def = Settings.txt2img.models[list(Settings.txt2img.models.keys())[0]]
 if model_def.upscaler_model is not None and not Sd.api.set_upscaler_model(
@@ -69,7 +66,7 @@ if model_def.upscaler_model is not None and not Sd.api.set_upscaler_model(
 
 # check task queue
 logger.info(
-    f"TaskQueue started with n_workers={TaskQueue.num_workers}, max_jobs={TaskQueue.max_jobs}"
+    f"TaskQueue started with n_workers={AsyncTaskQueue.num_workers}, max_jobs={AsyncTaskQueue.max_jobs}"
 )
 
 # Initialize the bot, organization is as follows:

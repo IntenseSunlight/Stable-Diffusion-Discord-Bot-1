@@ -1,6 +1,5 @@
 # Defines the abstract base class for SD API handlers
 import requests
-import random
 import logging
 from abc import ABC, abstractmethod
 from typing import Tuple, List
@@ -10,10 +9,12 @@ from app.settings import Settings
 from app.utils.image_file import ImageFile
 from app.utils.image_count import ImageCount
 from app.utils.log_helper import LogOnce
+from app.utils.logger import logger
 
 
 class AbstractAPI(ABC):
-    def __init__(self, webui_url: str, logger: logging.Logger = logging):
+
+    def __init__(self, webui_url: str, logger: logging.Logger = logger):
         self._logger = LogOnce(logger)
         self.webui_url = webui_url
 

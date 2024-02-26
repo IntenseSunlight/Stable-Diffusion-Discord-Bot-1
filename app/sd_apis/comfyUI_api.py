@@ -2,6 +2,7 @@ import os
 import json
 import uuid
 import logging
+from app.utils.logger import logger
 from typing import Dict, List
 import urllib.request
 import urllib.parse
@@ -168,6 +169,7 @@ DEFAULT_UPSCALER_WORKFLOW_MAP = """
 
 # Defines the SD API handler for A1111
 class ComfyUIAPI(AbstractAPI):
+
     def __init__(
         self,
         webui_url: str,
@@ -175,7 +177,7 @@ class ComfyUIAPI(AbstractAPI):
         workflow_map: str | os.PathLike = DEFAULT_WORKFLOW_MAP,
         upscaler_workflow_json: str | os.PathLike = DEFAULT_UPSCALER_WORKFLOW,
         upscaler_workflow_map: str | os.PathLike = DEFAULT_UPSCALER_WORKFLOW_MAP,
-        logger: logging.Logger = logging,
+        logger: logging.Logger = logger,
         **kwargs,
     ):
         super().__init__(webui_url, logger, **kwargs)

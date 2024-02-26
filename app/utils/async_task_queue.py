@@ -1,7 +1,7 @@
 import discord
-import logging
 import atexit
 import asyncio
+from app.utils.logger import logger
 from typing import Callable, Any, List, Dict, cast
 
 from app.settings import Settings
@@ -131,7 +131,7 @@ class _AsyncTaskQueue(asyncio.Queue):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
         self._use_logger = use_log
         self._num_workers = num_workers
         self._max_jobs = max_jobs

@@ -1,7 +1,7 @@
 import os
 import discord
 import json
-import logging
+from app.utils.logger import logger
 from typing import Callable, Tuple, Dict
 from app.utils.helpers import get_base_dir
 from app.settings import Settings, Type_SingleModel
@@ -10,7 +10,7 @@ from app.settings import Settings, Type_SingleModel
 class AbstractCommand:
     def __init__(self, sub_group: discord.SlashCommandGroup = None):
         self._sub_group = sub_group
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
 
     # -------------------------------
     # helper functions

@@ -1,11 +1,11 @@
 import threading
 import discord
-import logging
 import atexit
 import random
 from queue import Queue
 from typing import Callable, Any, List, Dict, cast
 
+from app.utils.logger import logger
 from app.settings import Settings
 
 __all__ = ["TaskState", "Task", "TaskQueue"]
@@ -115,7 +115,7 @@ class _TaskQueue(Queue):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
         self._use_logger = use_log
         self._num_workers = num_workers
         self._max_jobs = max_jobs

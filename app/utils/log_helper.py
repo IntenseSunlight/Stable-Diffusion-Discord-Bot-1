@@ -16,10 +16,13 @@ class LogOnce:
     def info(self, msg, *args, **kwargs):
         self._logger.info(msg, *args, **kwargs)
 
-    def warn(self, msg, *args, **kwargs):
+    def warning(self, msg, *args, **kwargs):
         if msg not in self._have_logged:
             self._have_logged.add(msg)
-            self._logger.warn(msg, *args, **kwargs)
+            self._logger.warning(msg, *args, **kwargs)
+
+    def warn(self, msg, *args, **kwargs):
+        self.warning(msg, *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
         self._logger.debug(msg, *args, **kwargs)

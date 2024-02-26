@@ -6,6 +6,7 @@ import logging
 from typing import List, cast
 
 from app.settings import Settings
+from app.utils.logger import logger
 from app.utils.async_task_queue import AsyncTaskQueue, Task 
 from app.utils.image_file import ImageFile, ImageContainer
 from app.utils.image_count import ImageCount
@@ -52,7 +53,7 @@ class GenerateView(discord.ui.View):
         *,
         images: List[ImageContainer],
         sd_api: AbstractAPI = None,
-        logger: logging.Logger = logging,
+        logger: logging.Logger = logger,
         **kwargs,
     ):
         super().__init__(**kwargs)

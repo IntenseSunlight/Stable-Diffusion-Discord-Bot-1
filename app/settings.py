@@ -1,6 +1,6 @@
 import os
 import json
-import logging
+from app.utils.logger import logger
 from enum import Enum
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, field_serializer, validator
@@ -189,7 +189,6 @@ class _Settings(BaseModel):
         valid_upscalers: Optional[List[str]] = [],
         purge_and_warn: bool = True,
     ) -> bool:
-        logger = logging.getLogger(__name__)
         messages = {}
         for k in self.__dict__.keys():
             if hasattr(self.__dict__[k], "models"):
@@ -215,7 +214,7 @@ class _Settings(BaseModel):
         if messages:
             if purge_and_warn:
                 for (k, name), message in messages.items():
-                    logger.warn(f"{message}, removing from list of models.")
+                    logger.warning(f"{message}, removing from list of models.")
                     self.__dict__[k].models.pop(name)
                 if not self.__dict__[k].models:
                     raise ValueError(
@@ -229,7 +228,6 @@ class _Settings(BaseModel):
     def check_for_valid_workflows(
         self, workflow_folder: str | os.PathLike, purge_and_warn: bool = True
     ) -> bool:
-        logger = logging.getLogger(__name__)
         messages = {}
         for k in self.__dict__.keys():
             if hasattr(self.__dict__[k], "models"):
@@ -251,7 +249,7 @@ class _Settings(BaseModel):
         if messages:
             if purge_and_warn:
                 for (k, name), message in messages.items():
-                    logger.warn(f"WARNING: {message}, removing from list of models.")
+                    logger.warning(f"WARNING: {message}, removing from list of models.")
                     self.__dict__[k].models.pop(name)
 
                 if not self.__dict__[k].models:
