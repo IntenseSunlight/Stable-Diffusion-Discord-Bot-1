@@ -1,0 +1,11 @@
+{
+    "sd_model": [ "15", "inputs", "ckpt_name"],
+	"image_file":     [ "23", "inputs", "image"],
+    "seed":   [ "91", "inputs", "seed"], 
+	"variation_strength": ["91", "inputs", "variation_strength"],
+    "subseed": ["91", "inputs", "variation_seed"],
+	"video_format": ["26", "inputs", "format"],
+	"loop_count": ["26", "inputs", "loop_count"],
+	"ping_pong": ["26", "inputs", "pingpong"],
+	"frame_rate": ["26", "inputs", "frame_rate"]
+}

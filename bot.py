@@ -47,6 +47,7 @@ from app.commands.bot_handler import Bot
 from app.utils.async_task_queue import AsyncTaskQueue
 from app.commands.txt2img_cmds import Txt2ImageCommands
 from app.commands.img2img_cmds import Img2ImageCommands
+from app.commands.img2vid_cmds import Img2VideoCommands
 
 
 # upfront checks
@@ -95,6 +96,12 @@ img2img_group = Bot.create_subgroup(
     GroupCommands.img2img.name, "Create image from image"
 )
 Img2ImageCommands(img2img_group)
+
+# img2vid
+img2vid_group = Bot.create_subgroup(
+    GroupCommands.img2vid.name, "Create video from image"
+)
+Img2VideoCommands(img2vid_group)
 
 logger.info("-" * 80)
 logger.info(f"Bot is running")

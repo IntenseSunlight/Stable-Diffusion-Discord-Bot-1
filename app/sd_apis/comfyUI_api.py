@@ -3,7 +3,7 @@ import json
 import uuid
 import logging
 from app.utils.logger import logger
-from typing import Dict, List
+from typing import Dict, List, Optional
 import urllib.request
 import urllib.parse
 import websocket  # NOTE: websocket-client (https://github.com/websocket-client/websocket-client)
@@ -343,28 +343,44 @@ class ComfyUIAPI(AbstractAPI):
 
     def generate_image(
         self,
-        prompt: str,
-        negativeprompt: str,
-        seed: int,
-        sub_seed: int = random_seed(),
-        variation_strength: float = 0.0,
-        width: int = 512,
-        height: int = 512,
-        sd_model: str = "v1-5-pruned-emaonly.ckpt",
-        workflow: Dict = None,
-        workflow_map: Dict = None,
+        *,
+        prompt: Optional[str] = None,
+        negativeprompt: Optional[str] = None,
+        seed: Optional[int] = None,
+        sub_seed: Optional[int] = None,
+        variation_strength: Optional[float] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        sd_model: Optional[str] = None,
+        image_file: Optional[str] = None,
+        video_format: Optional[str] = None,
+        loop_count: Optional[int] = None,
+        ping_pong: Optional[bool] = None,
+        frame_rate: Optional[int] = None,
+        workflow: Optional[Dict] = None,
+        workflow_map: Optional[Dict] = None,
     ) -> ImageFile:
-        out_workflow = self._apply_settings(
-            {
+        settings = {
+            k: v
+            for k, v in {
                 "sd_model": sd_model,
                 "prompt": prompt,
                 "negativeprompt": negativeprompt,
                 "width": width,
                 "height": height,
                 "seed": seed,
-                "variation_strength": variation_strength,
                 "subseed": sub_seed,
-            },
+                "variation_strength": variation_strength,
+                "image_file": image_file,
+                "video_format": video_format,
+                "loop_count": loop_count,
+                "ping_pong": ping_pong,
+                "frame_rate": frame_rate,
+            }.items()
+            if v is not None
+        }
+        out_workflow = self._apply_settings(
+            settings,
             workflow=workflow,
             workflow_map=workflow_map,
         )

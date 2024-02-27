@@ -2,7 +2,7 @@
 import requests
 import logging
 from abc import ABC, abstractmethod
-from typing import Tuple, List
+from typing import Tuple, List, Optional, Dict
 from PIL import Image, PngImagePlugin
 
 from app.settings import Settings
@@ -37,14 +37,22 @@ class AbstractAPI(ABC):
     @abstractmethod
     def generate_image(
         self,
-        prompt: str,
-        negativeprompt: str,
-        seed: int,
-        sub_seed: int,
-        variation_strength: float = 0.0,
-        width: int = 512,
-        height: int = 512,
-        sd_model: str = "v1-5-pruned-emaonly.ckpt",
+        *,
+        prompt: Optional[str] = None,
+        negativeprompt: Optional[str] = None,
+        seed: Optional[int] = None,
+        sub_seed: Optional[int] = None,
+        variation_strength: Optional[float] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        sd_model: Optional[str] = None,
+        image_file: Optional[str] = None,
+        video_format: Optional[str] = None,
+        loop_count: Optional[int] = None,
+        ping_pong: Optional[bool] = None,
+        frame_rate: Optional[int] = None,
+        workflow: Optional[Dict] = None,
+        workflow_map: Optional[Dict] = None,
     ) -> ImageFile:
         pass
 

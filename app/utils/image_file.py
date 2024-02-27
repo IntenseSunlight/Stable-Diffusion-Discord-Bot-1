@@ -125,3 +125,13 @@ class ImageContainer:
     model: str = None
     workflow: str = None
     workflow_map: str = None
+
+
+@dataclass
+class VideoContainer(ImageContainer):
+    image_in: ImageFile = None
+    image: ImageFile = None
+    video_format: str = None
+    loop_count: int = None
+    ping_pong: bool = None
+    frame_rate: int = None

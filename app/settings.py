@@ -53,8 +53,8 @@ class FilesModel(BaseModel):
     workflows_folder: str | os.PathLike = "./app/sd_apis/comfyUI_workflows"
     image_types: List[str] = ["jpg", "png", "jpeg"]
     default_image_type: Literal["jpg", "png", "jpeg"] = "png"
-    video_types: List[str] = ["mp4", "gif"]
-    default_video_type: Literal["mp4", "gif"] = "gif"
+    video_types: List[str] = ["gif", "mp4"]
+    default_video_type: Literal["gif", "mp4"] = "gif"
 
 
 class Type_SingleModel(BaseModel):
@@ -145,6 +145,33 @@ class UpscalerContainerModel(BaseModel):
         self.models.pop(model_name)
 
 
+class Img2VidSingleModel(BaseModel):
+    display_name: str = "svd"
+    sd_model: str = "svd.safetensors"
+    frame_rate: Optional[int] = 12
+    loop_count: Optional[int] = 0
+    workflow_api: Optional[str] = "svd_workflow_api.json"
+    workflow_api_map: Optional[str] = "svd_workflow_api_map.json"
+
+
+class Img2VidContainerModel(BaseModel):
+    group_command: GroupCommands = GroupCommands.img2vid
+    modeltype: ModelType = Field(
+        default=ModelType.checkpoint, frozen=True, exclude=True
+    )
+    variation_strength: float = 0.065
+    models: Dict[str, Img2VidSingleModel] = {
+        Img2VidSingleModel().display_name: Img2VidSingleModel()
+    }
+
+    def add_model(self, model_dict: Dict):
+        model = Img2VidSingleModel(**model_dict)
+        self.models.update({model.display_name: model})
+
+    def remove_model(self, model_name: str):
+        self.models.pop(model_name)
+
+
 # Main Settings Model
 # - Capabilities are added here as the bot is expanded
 class _Settings(BaseModel):
@@ -152,6 +179,7 @@ class _Settings(BaseModel):
     files: FilesModel = FilesModel()
     txt2img: Txt2ImgContainerModel = Txt2ImgContainerModel()
     upscaler: Optional[UpscalerContainerModel] = UpscalerContainerModel()
+    img2vid: Optional[Img2VidContainerModel] = Img2VidContainerModel()
     # img2img: Optional[Img2ImgContainerModel] = Img2ImgContainerModel()   # not implemented
 
     def __init__(
