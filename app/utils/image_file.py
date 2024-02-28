@@ -102,7 +102,14 @@ class ImageFile:
         self, filename: str = None, extension: str = Settings.files.default_image_type
     ):
         self.image_type = extension or self.image_type
-        self.image_filename = filename or self.image_filename or self._random_filename()
+        fname = filename or self.image_filename or self._random_filename()
+        self.image_filename = os.path.abspath(
+            os.path.join(
+                os.path.dirname(fname),
+                os.path.basename(fname).split(".")[0] + "." + self.image_type,
+            )
+        )
+        self.image_object.seek(0)
 
         with open(self.image_filename, "wb") as f:
             f.write(self.image_object.getbuffer())

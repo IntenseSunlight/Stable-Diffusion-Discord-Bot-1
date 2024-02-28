@@ -278,7 +278,15 @@ class ComfyUIAPI(AbstractAPI):
         subfolder: str,
         folder_type: str,
     ):
-        data = {"filename": filename, "subfolder": subfolder, "type": folder_type}
+        data = {
+            k: v
+            for k, v in {
+                "filename": filename,
+                "subfolder": subfolder,
+                "type": folder_type,
+            }.items()
+            if v
+        }
         url_values = urllib.parse.urlencode(data)
         with urllib.request.urlopen(
             f"http://{self.webui_url}/view?{url_values}"
@@ -306,19 +314,21 @@ class ComfyUIAPI(AbstractAPI):
                 continue  # previews are binary data
 
         history = self._get_history(prompt_id)[prompt_id]
-        for _ in history["outputs"]:
-            for node_id in history["outputs"]:
-                node_output = history["outputs"][node_id]
-                if "images" in node_output:
-                    images_output = []
-                    for image in node_output["images"]:
-                        image_data = self._get_image(
-                            image["filename"], image["subfolder"], image["type"]
-                        )
-                        images_output.append(image_data)
+        for node_id in history["outputs"]:
+            node_output = history["outputs"][node_id]
+            if out_type := list(
+                set(node_output.keys()).intersection({"images", "gifs"})
+            ):
+                images_output = []
+                for image in node_output[out_type[0]]:
+                    image_data = self._get_image(
+                        image["filename"], image["subfolder"], image["type"]
+                    )
+                    images_output.append(image_data)
                 output_images[node_id] = images_output
+                output_format = "image" if out_type[0] == "images" else "gif"
 
-        return output_images
+        return output_images, output_format
 
     def get_checkpoint_names(self) -> List[str]:
         with urllib.request.urlopen(
@@ -388,12 +398,12 @@ class ComfyUIAPI(AbstractAPI):
         client_id = str(uuid.uuid4())
         ws = websocket.WebSocket()
         ws.connect(f"ws://{self.webui_url}/ws?clientId={client_id}")
-        images = self._get_images(ws, out_workflow, client_id)
+        images, output_format = self._get_images(ws, out_workflow, client_id)
         image_bytes = [
             image_data for node_id in images for image_data in images[node_id]
         ][0]
         image = ImageFile(image_bytes=image_bytes)
-        image.save()
+        image.save(extension="png" if output_format == "image" else "gif")
         ws.close()
 
         return image
@@ -423,7 +433,7 @@ class ComfyUIAPI(AbstractAPI):
         client_id = str(uuid.uuid4())
         ws = websocket.WebSocket()
         ws.connect(f"ws://{self.webui_url}/ws?clientId={client_id}")
-        images = self._get_images(ws, workflow, client_id)
+        images, _ = self._get_images(ws, workflow, client_id)
         image_bytes = [
             image_data for node_id in images for image_data in images[node_id]
         ][0]

@@ -128,8 +128,7 @@ class Img2VideoCommands(AbstractCommand):
         task = await AsyncTaskQueue.create_and_add_task(
             create_video, ctx.author.id, args=(video_container,)
         )
-        # create_video(video_container)
-        # task = None
+        # video_output = create_video(video_container)
         if task is None:
             itask.cancel()
             await response.edit_original_response(
