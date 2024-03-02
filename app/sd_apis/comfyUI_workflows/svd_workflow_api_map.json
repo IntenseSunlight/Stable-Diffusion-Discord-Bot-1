@@ -1,8 +1,15 @@
 {
     "frame_rate": [
-        "26",
-        "inputs",
-        "frame_rate"
+		[
+        	"26",
+        	"inputs",
+        	"frame_rate"
+		],
+		[
+			"12",
+			"inputs",
+			"fps"
+		]
     ],
     "image_file": [
         "23",
