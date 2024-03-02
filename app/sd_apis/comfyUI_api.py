@@ -3,7 +3,7 @@ import json
 import uuid
 import logging
 from app.utils.logger import logger
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import urllib.request
 import urllib.parse
 import websocket  # NOTE: websocket-client (https://github.com/websocket-client/websocket-client)
@@ -246,9 +246,16 @@ class ComfyUIAPI(AbstractAPI):
     def _apply_settings(
         self, model_vals: Dict, workflow: Dict = None, workflow_map: Dict = None
     ) -> Dict:
-        def set_recursive(stack, workflow, val):
+
+        def set_recursive(stack: List, workflow: Dict, val: Any):
             if len(stack) == 1:
-                workflow[stack[0]] = val
+                s = stack[0]
+                if isinstance(s, dict):
+                    # here, 'val' is a key from a selection component
+                    # which reconfigures the workflow (e.g. 'gif' or 'mp4' settings)
+                    workflow.update(s[val])
+                else:
+                    workflow[s] = val
             else:
                 set_recursive(stack[1:], workflow[stack[0]], val)
 
@@ -257,7 +264,11 @@ class ComfyUIAPI(AbstractAPI):
         for sd_var, setting in model_vals.items():
             if sd_var in wf_map:
                 stack = wf_map[sd_var]
-                set_recursive(stack, wf, setting)
+                if not isinstance(stack[0], (list, tuple)):
+                    stack = [stack]
+
+                for s in stack:
+                    set_recursive(s, wf, setting)
             else:
                 self._logger.warn(f"Warning: {sd_var} not in workflow_map")
         return wf
@@ -324,11 +335,11 @@ class ComfyUIAPI(AbstractAPI):
                     image_data = self._get_image(
                         image["filename"], image["subfolder"], image["type"]
                     )
-                    images_output.append(image_data)
+                    extension = image["filename"].split(".")[-1]
+                    images_output.append((image_data, extension))
                 output_images[node_id] = images_output
-                output_format = "image" if out_type[0] == "images" else "gif"
 
-        return output_images, output_format
+        return output_images
 
     def get_checkpoint_names(self) -> List[str]:
         with urllib.request.urlopen(
@@ -364,9 +375,11 @@ class ComfyUIAPI(AbstractAPI):
         sd_model: Optional[str] = None,
         image_file: Optional[str] = None,
         video_format: Optional[str] = None,
-        loop_count: Optional[int] = None,
-        ping_pong: Optional[bool] = None,
         frame_rate: Optional[int] = None,
+        loop_count: Optional[int] = None,
+        video_frames: Optional[int] = None,
+        motion_bucket_id: Optional[int] = None,
+        ping_pong: Optional[bool] = None,
         workflow: Optional[Dict] = None,
         workflow_map: Optional[Dict] = None,
     ) -> ImageFile:
@@ -383,9 +396,11 @@ class ComfyUIAPI(AbstractAPI):
                 "variation_strength": variation_strength,
                 "image_file": image_file,
                 "video_format": video_format,
-                "loop_count": loop_count,
-                "ping_pong": ping_pong,
                 "frame_rate": frame_rate,
+                "loop_count": loop_count,
+                "video_frames": video_frames,
+                "motion_bucket_id": motion_bucket_id,
+                "ping_pong": ping_pong,
             }.items()
             if v is not None
         }
@@ -395,15 +410,18 @@ class ComfyUIAPI(AbstractAPI):
             workflow_map=workflow_map,
         )
 
+        # dump the workflow to a file, debugging
+        # with open("debug_workflow.json", "w") as f:
+        #    json.dump(out_workflow, f)
+
         client_id = str(uuid.uuid4())
         ws = websocket.WebSocket()
         ws.connect(f"ws://{self.webui_url}/ws?clientId={client_id}")
-        images, output_format = self._get_images(ws, out_workflow, client_id)
-        image_bytes = [
-            image_data for node_id in images for image_data in images[node_id]
-        ][0]
+        images = self._get_images(ws, out_workflow, client_id)
+        image_data = list(images.values())[0][0]
+        image_bytes, extension = image_data
         image = ImageFile(image_bytes=image_bytes)
-        image.save(extension="png" if output_format == "image" else "gif")
+        image.save(extension=extension)
         ws.close()
 
         return image
@@ -433,12 +451,11 @@ class ComfyUIAPI(AbstractAPI):
         client_id = str(uuid.uuid4())
         ws = websocket.WebSocket()
         ws.connect(f"ws://{self.webui_url}/ws?clientId={client_id}")
-        images, _ = self._get_images(ws, workflow, client_id)
-        image_bytes = [
-            image_data for node_id in images for image_data in images[node_id]
-        ][0]
+        images = self._get_images(ws, workflow, client_id)
+        image_data = list(images.values())[0][0]
+        image_bytes, extension = image_data
         image = ImageFile(image_bytes=image_bytes)
-        image.save()
+        image.save(extension=extension)
         ws.close()
 
         return image

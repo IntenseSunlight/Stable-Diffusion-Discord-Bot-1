@@ -26,7 +26,7 @@
         1
       ],
       "video_frames": 24,
-      "motion_bucket_id": 40,
+      "motion_bucket_id": 100,
       "fps": 12,
       "augmentation_level": 0.05,
       "clip_vision": [
@@ -62,7 +62,7 @@
   },
   "15": {
     "inputs": {
-      "ckpt_name": "svd.safetensors"
+      "ckpt_name": "svd_xt.safetensors"
     },
     "class_type": "ImageOnlyCheckpointLoader",
     "_meta": {
@@ -86,20 +86,7 @@
       "filename_prefix": "SVD-",
       "format": "image/gif",
       "pingpong": false,
-      "save_image": true,
-      "crf": 20,
-      "save_metadata": true,
-      "audio_file": "",
-      "videopreview": {
-        "hidden": false,
-        "paused": false,
-        "params": {
-          "filename": "SVD-_00003.gif",
-          "subfolder": "",
-          "type": "output",
-          "format": "image/gif"
-        }
-      },
+      "save_output": true,
       "images": [
         "8",
         0
@@ -107,7 +94,7 @@
     },
     "class_type": "VHS_VideoCombine",
     "_meta": {
-      "title": "Video Combine 🎥🅥🅗🅢"
+      "title": "Video Combine VHS"
     }
   },
   "84": {
@@ -133,7 +120,7 @@
   },
   "91": {
     "inputs": {
-      "seed": 490548931901057,
+      "seed": 883797021738403,
       "steps": 27,
       "cfg": 5.5,
       "sampler_name": "euler",

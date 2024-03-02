@@ -1,11 +1,67 @@
 {
-    "sd_model": [ "15", "inputs", "ckpt_name"],
-	"image_file":     [ "23", "inputs", "image"],
-    "seed":   [ "91", "inputs", "seed"], 
-	"variation_strength": ["91", "inputs", "variation_strength"],
-    "subseed": ["91", "inputs", "variation_seed"],
-	"video_format": ["26", "inputs", "format"],
-	"loop_count": ["26", "inputs", "loop_count"],
-	"ping_pong": ["26", "inputs", "pingpong"],
-	"frame_rate": ["26", "inputs", "frame_rate"]
+    "frame_rate": [
+        "26",
+        "inputs",
+        "frame_rate"
+    ],
+    "image_file": [
+        "23",
+        "inputs",
+        "image"
+    ],
+    "loop_count": [
+        "26",
+        "inputs",
+        "loop_count"
+    ],
+    "motion_bucket_id": [
+        "12",
+        "inputs",
+        "motion_bucket_id"
+    ],
+    "ping_pong": [
+        "26",
+        "inputs",
+        "pingpong"
+    ],
+    "sd_model": [
+        "15",
+        "inputs",
+        "ckpt_name"
+    ],
+    "seed": [
+        "91",
+        "inputs",
+        "seed"
+    ],
+    "subseed": [
+        "91",
+        "inputs",
+        "variation_seed"
+    ],
+    "variation_strength": [
+        "91",
+        "inputs",
+        "variation_strength"
+    ],
+    "video_format": [
+        "26",
+        "inputs",
+        {
+            "gif": {
+                "format": "image/gif"
+            },
+            "mp4": {
+                "format": "video/h264-mp4",
+                "crf": 19,
+                "pix_fmt": "yuv420p",
+                "save_metadata": true
+            }
+        }
+    ],
+    "video_frames": [
+        "12",
+        "inputs",
+        "video_frames"
+    ]
 }

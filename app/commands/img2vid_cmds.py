@@ -57,6 +57,18 @@ class Img2VideoCommands(AbstractCommand):
             default=list(Settings.img2vid.models.keys())[0],
             description="Which SVD model should be used?",
         ),
+        motion_amount: discord.Option(
+            int,
+            choices=[50, 75, 100, 125, 150, 200, 250, 300, 400, 500],
+            default=50,
+            description="How much motion should be added?",
+        ),
+        number_of_frames: discord.Option(
+            int,
+            choices=[15, 20, 25],
+            default=25,
+            description="How many frames should be used?",
+        ),
         video_format: discord.Option(
             str,
             choices=Settings.files.video_types,
@@ -78,7 +90,9 @@ class Img2VideoCommands(AbstractCommand):
             ephemeral=True,
             delete_after=1800,
         )
-        itask = asyncio.create_task(idler_message("Creating video...", response))
+        itask = asyncio.create_task(
+            idler_message("Creating video...", response, interval=2)
+        )
 
         image_props = image_in.to_dict()
         content_type = image_props["content_type"]
@@ -110,7 +124,6 @@ class Img2VideoCommands(AbstractCommand):
 
         model_def: Img2VidSingleModel = Settings.img2vid.models[model]
         workflow, workflow_map = self._load_workflow_and_map(model_def)
-        v_format = {"gif": "image/gif", "mp4": "video/h264-mp4"}[video_format]
 
         video_container = VideoContainer(
             image_in=image,
@@ -118,17 +131,19 @@ class Img2VideoCommands(AbstractCommand):
             sub_seed=random_seed(),
             variation_strength=Settings.img2vid.variation_strength,
             model=model_def.sd_model,
-            video_format=v_format,
+            video_format=video_format,
             ping_pong=use_ping_pong,
             frame_rate=model_def.frame_rate,
             loop_count=model_def.loop_count,
+            video_frames=number_of_frames,
+            motion_bucket_id=motion_amount,
             workflow=workflow,
             workflow_map=workflow_map,
         )
         task = await AsyncTaskQueue.create_and_add_task(
             create_video, ctx.author.id, args=(video_container,)
         )
-        # video_output = create_video(video_container)
+        # video_output = create_video(video_container)  # for synchronous testing
         if task is None:
             itask.cancel()
             await response.edit_original_response(

@@ -25,6 +25,76 @@ class TestComfyUIAPI(unittest.TestCase):
 
         self.assertTrue(api.check_sd_host())
 
+    def test_set_workflow_values(self):
+        # Test that the workflow values are set correctly
+        api = ComfyUIAPI(
+            DEFAULT_URL,
+            workflow_json=TEST_WORKFLOW_FILE,
+            workflow_map=TEST_WORKFLOW_MAP_FILE,
+        )
+        self.assertIsNotNone(api.workflow)
+        self.assertIsNotNone(api.workflow_map)
+
+        # single assignments
+        new_workflow = api._apply_settings(
+            model_vals={"sd_model": "test_model", "seed": 1234},
+            workflow=api.workflow,
+            workflow_map=api.workflow_map,
+        )
+
+        self.assertEqual(
+            new_workflow["prompt"]["4"]["inputs"]["ckpt_name"],
+            "test_model",
+        )
+        self.assertEqual(new_workflow["prompt"]["3"]["inputs"]["seed"], 1234)
+
+        # multiple assignments (example is for testing purposes only)
+        wf_map = {**api.workflow_map}
+        wf_map.pop("negativeprompt")
+        wf_map.update(
+            {
+                "prompt": [
+                    ["prompt", "6", "inputs", "text"],
+                    ["prompt", "7", "inputs", "text"],
+                ]
+            }
+        )
+        new_workflow = api._apply_settings(
+            model_vals={"prompt": "testing this prompt"},
+            workflow=api.workflow,
+            workflow_map=wf_map,
+        )
+
+        self.assertEqual(
+            new_workflow["prompt"]["6"]["inputs"]["text"],
+            "testing this prompt",
+        )
+        self.assertEqual(
+            new_workflow["prompt"]["7"]["inputs"]["text"],
+            "testing this prompt",
+        )
+
+        # test dictionary assignment to workflow, this is fake data
+        model_vals = {"prompt": "good"}
+        wf_map = {**api.workflow_map}
+        wf_map["prompt"][-1] = {
+            "good": {"text": "this was a good prompt", "expression": "smile"},
+            "bad": {"text": "this was a bad prompt", "expression": "frown"},
+        }
+        new_workflow = api._apply_settings(
+            model_vals=model_vals,
+            workflow=api.workflow,
+            workflow_map=wf_map,
+        )
+        self.assertEqual(
+            new_workflow["prompt"]["6"]["inputs"]["text"],
+            "this was a good prompt",
+        )
+        self.assertEqual(
+            new_workflow["prompt"]["6"]["inputs"]["expression"],
+            "smile",
+        )
+
     def test_default_workflow(self):
         # Test that the default workflow is loaded correctly
         api = ComfyUIAPI(DEFAULT_URL)

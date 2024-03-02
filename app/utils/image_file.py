@@ -142,3 +142,5 @@ class VideoContainer(ImageContainer):
     loop_count: int = None
     ping_pong: bool = None
     frame_rate: int = None
+    video_frames: int = None
+    motion_bucket_id: int = None

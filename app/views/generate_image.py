@@ -31,7 +31,7 @@ def create_image(image: ImageContainer, sd_api: AbstractAPI) -> ImageFile:
     )
 
 # Some text to show idle action
-async def idler_message(main_meassage: str, interaction: discord.Interaction):
+async def idler_message(main_meassage: str,  interaction: discord.Interaction, interval: int = 1):
     dots = ["", ".", "..", "...", "...."]
     symbols = ["🌱", "🌞", "🍂", "❄"]
     await asyncio.sleep(1)
@@ -39,7 +39,7 @@ async def idler_message(main_meassage: str, interaction: discord.Interaction):
         for d in dots:
             for s in symbols:
                 await interaction.edit_original_response(content=f"{main_meassage}{d}{s}")
-                await asyncio.sleep(1)
+                await asyncio.sleep(interval)
 
 # The top level view for generating an image
 # Variation generates almost the same image again using same settings / seed. In addition, this uses an variation strength.
