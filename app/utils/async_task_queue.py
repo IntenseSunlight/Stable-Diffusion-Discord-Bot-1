@@ -154,6 +154,10 @@ class _AsyncTaskQueue(asyncio.Queue):
 
     @property
     def num_workers(self) -> int:
+        return self._num_workers
+
+    @property
+    def num_active_workers(self) -> int:
         return len(self._workers)
 
     def is_busy(self) -> bool:

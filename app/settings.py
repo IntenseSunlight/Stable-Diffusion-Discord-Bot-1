@@ -91,6 +91,9 @@ class Txt2ImgContainerModel(BaseModel):
         Txt2ImgSingleModel().display_name: Txt2ImgSingleModel()
     }
 
+    def default_model(self) -> Txt2ImgSingleModel:
+        return Txt2ImgSingleModel()
+
     def add_model(self, model_dict: Dict):
         model = Txt2ImgSingleModel(**model_dict)
         self.models.update({model.display_name: model})
@@ -115,6 +118,9 @@ class Img2ImgContainerModel(BaseModel):
         Img2ImgSingleModel().display_name: Img2ImgSingleModel()
     }
 
+    def default_model(self) -> Img2ImgSingleModel:
+        return Img2ImgSingleModel()
+
     def add_model(self, model_dict: Dict):
         model = Img2ImgSingleModel(**model_dict)
         self.models.update({model.display_name: model})
@@ -137,6 +143,9 @@ class UpscalerContainerModel(BaseModel):
         UpscalerSingleModel().display_name: UpscalerSingleModel()
     }
 
+    def default_model(self) -> UpscalerSingleModel:
+        return UpscalerSingleModel()
+
     def add_model(self, model_dict: Dict):
         model = UpscalerSingleModel(**model_dict)
         self.models.update({model.display_name: model})
@@ -149,6 +158,7 @@ class Img2VidSingleModel(BaseModel):
     display_name: str = "svd"
     sd_model: str = "svd.safetensors"
     frame_rate: Optional[int] = 12
+    frame_count: Optional[int] = 20
     loop_count: Optional[int] = 0
     workflow_api: Optional[str] = "svd_workflow_api.json"
     workflow_api_map: Optional[str] = "svd_workflow_api_map.json"
@@ -163,6 +173,9 @@ class Img2VidContainerModel(BaseModel):
     models: Dict[str, Img2VidSingleModel] = {
         Img2VidSingleModel().display_name: Img2VidSingleModel()
     }
+
+    def default_model(self) -> Img2VidSingleModel:
+        return Img2VidSingleModel()
 
     def add_model(self, model_dict: Dict):
         model = Img2VidSingleModel(**model_dict)

@@ -63,17 +63,23 @@ class Img2VideoCommands(AbstractCommand):
             default=50,
             description="How much motion should be added?",
         ),
-        number_of_frames: discord.Option(
-            int,
-            choices=[15, 20, 25],
-            default=25,
-            description="How many frames should be used?",
-        ),
         video_format: discord.Option(
             str,
             choices=Settings.files.video_types,
             default=Settings.files.default_video_type,  # gif
             description="What format should the video be?",
+        ),
+        number_of_frames: discord.Option(
+            int,
+            choices=[15, 20, 25],
+            default=Settings.img2vid.default_model().frame_count,
+            description="How many frames should be used?",
+        ),
+        frame_rate: discord.Option(
+            int,
+            choices=[5, 10, 12, 15, 20, 25, 30],
+            default=Settings.img2vid.default_model().frame_rate,
+            description="What frame rate (fps) should be used?",
         ),
         use_ping_pong: discord.Option(
             bool,
@@ -133,7 +139,7 @@ class Img2VideoCommands(AbstractCommand):
             model=model_def.sd_model,
             video_format=video_format,
             ping_pong=use_ping_pong,
-            frame_rate=model_def.frame_rate,
+            frame_rate=frame_rate,
             loop_count=model_def.loop_count,
             video_frames=number_of_frames,
             motion_bucket_id=motion_amount,
