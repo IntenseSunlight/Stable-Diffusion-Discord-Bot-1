@@ -8,9 +8,9 @@ from app.settings import (
     UpscalerSingleModel,
 )
 from app.sd_apis.api_handler import Sd
-from app.utils.async_task_queue import AsyncTaskQueue, Task
+from app.utils.async_task_queue import AsyncTaskQueue
 from app.utils.image_file import ImageFile
-from app.views.generate_image import idler_message
+from app.utils.helpers import idler_message
 from .abstract_command import AbstractCommand
 
 

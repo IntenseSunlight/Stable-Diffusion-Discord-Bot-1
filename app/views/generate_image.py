@@ -10,12 +10,14 @@ from app.utils.logger import logger
 from app.utils.async_task_queue import AsyncTaskQueue, Task 
 from app.utils.image_file import ImageFile, ImageContainer
 from app.utils.image_count import ImageCount
-from app.utils.helpers import random_seed, CARDINALS
+from app.utils.helpers import random_seed, idler_message, CARDINALS
 
 from app.sd_apis.abstract_api import AbstractAPI
 
 
-# Helper function to create an image
+# -------------------------------
+# Helper functions
+# -------------------------------
 def create_image(image: ImageContainer, sd_api: AbstractAPI) -> ImageFile:
     return sd_api.generate_image(
         prompt=image.prompt,
@@ -30,16 +32,6 @@ def create_image(image: ImageContainer, sd_api: AbstractAPI) -> ImageFile:
         workflow_map=image.workflow_map,
     )
 
-# Some text to show idle action
-async def idler_message(main_meassage: str,  interaction: discord.Interaction, interval: int = 1):
-    dots = ["", ".", "..", "...", "...."]
-    symbols = ["🌱", "🌞", "🍂", "❄"]
-    await asyncio.sleep(1)
-    while True:
-        for d in dots:
-            for s in symbols:
-                await interaction.edit_original_response(content=f"{main_meassage}{d}{s}")
-                await asyncio.sleep(interval)
 
 # The top level view for generating an image
 # Variation generates almost the same image again using same settings / seed. In addition, this uses an variation strength.
@@ -47,7 +39,7 @@ async def idler_message(main_meassage: str,  interaction: discord.Interaction, i
 # ----------------------------------------------
 # The main view
 # ----------------------------------------------
-class GenerateView(discord.ui.View):
+class GenerateImageView(discord.ui.View):
     def __init__(
         self,
         *,
@@ -335,7 +327,7 @@ class RetryButton(discord.ui.Button):
         await interaction.followup.send(
             embed=embed,
             files=[discord.File(img.image.image_filename) for img in new_images],
-            view=GenerateView(images=new_images, sd_api=self.sd_api),
+            view=GenerateImageView(images=new_images, sd_api=self.sd_api),
         )
         await interaction.delete_original_response()
 

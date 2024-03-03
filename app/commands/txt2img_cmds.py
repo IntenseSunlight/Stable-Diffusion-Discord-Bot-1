@@ -8,7 +8,7 @@ from app.utils.helpers import random_seed, CARDINALS
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
 from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.utils.image_file import ImageFile, ImageContainer
-from app.views.generate_image import GenerateView, create_image
+from app.views.generate_image import GenerateImageView, create_image
 from .abstract_command import AbstractCommand
 
 
@@ -147,7 +147,7 @@ class Txt2ImageCommands(AbstractCommand):
         message = await ctx.respond(
             f"<@{ctx.author.id}>'s Random Generations:",
             files=[discord.File(img.image.image_filename) for img in images],
-            view=GenerateView(
+            view=GenerateImageView(
                 images=images,
                 sd_api=Sd.api,
             ),
@@ -278,7 +278,7 @@ class Txt2ImageCommands(AbstractCommand):
         message = await ctx.respond(
             f"<@{ctx.author.id}>'s Generations:",
             files=[discord.File(img.image.image_filename) for img in images],
-            view=GenerateView(
+            view=GenerateImageView(
                 images=images,
                 sd_api=Sd.api,
             ),

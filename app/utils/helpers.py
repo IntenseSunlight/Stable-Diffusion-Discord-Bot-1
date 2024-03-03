@@ -2,6 +2,8 @@
 
 import os
 import random
+import asyncio
+import discord
 from datetime import datetime
 from app.settings import Settings
 import logging
@@ -59,3 +61,16 @@ def idler_text():
         for d in dots:
             for s in symbols:
                 yield d + s
+
+
+# Some text to show idle action
+async def idler_message(
+    main_meassage: str, interaction: discord.Interaction, interval: int = 1
+):
+    idler = idler_text()
+    await asyncio.sleep(1)
+    while True:
+        await interaction.edit_original_response(
+            content=f"{main_meassage}{next(idler)}"
+        )
+        await asyncio.sleep(interval)

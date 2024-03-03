@@ -10,28 +10,9 @@ from app.settings import (
 from app.sd_apis.api_handler import Sd
 from app.utils.async_task_queue import AsyncTaskQueue, Task
 from app.utils.image_file import ImageFile, VideoContainer
-from app.utils.helpers import random_seed
-from app.views.generate_image import idler_message
+from app.utils.helpers import random_seed, idler_message
+from app.views.generate_video import GenerateVideoView, create_video
 from .abstract_command import AbstractCommand
-
-
-# -------------------------------
-# Helper functions
-# -------------------------------
-def create_video(video_def: VideoContainer) -> ImageFile:
-    return Sd.api.generate_image(
-        image_file=video_def.image_in.image_filename,
-        sd_model=video_def.model,
-        seed=video_def.seed,
-        sub_seed=video_def.sub_seed,
-        variation_strength=video_def.variation_strength,
-        video_format=video_def.video_format,
-        loop_count=video_def.loop_count,
-        ping_pong=video_def.ping_pong,
-        frame_rate=video_def.frame_rate,
-        workflow=video_def.workflow,
-        workflow_map=video_def.workflow_map,
-    )
 
 
 class Img2VideoCommands(AbstractCommand):
@@ -147,7 +128,7 @@ class Img2VideoCommands(AbstractCommand):
             workflow_map=workflow_map,
         )
         task = await AsyncTaskQueue.create_and_add_task(
-            create_video, ctx.author.id, args=(video_container,)
+            create_video, ctx.author.id, args=(video_container, Sd.api)
         )
         # video_output = create_video(video_container)  # for synchronous testing
         if task is None:
@@ -158,23 +139,45 @@ class Img2VideoCommands(AbstractCommand):
             )
             return
 
-        video_output: ImageFile = await task.wait_result()
-        if video_output.file_size > 25 * 2**20:
+        video_container.image: ImageFile = await task.wait_result()
+        if video_container.image.file_size > 25 * 2**20:
             itask.cancel()
             await response.edit_original_response(
-                content=f"Video is too large to send. Size: {video_output.file_size/ 2**20:.3f}MB",
+                content=f"Video is too large to send. Size: {video_container.image.file_size/ 2**20:.3f}MB",
                 delete_after=4,
             )
             return
 
-        itask.cancel()
-        await ctx.followup.send(
-            f"Video result, final size= {video_output.file_size/2**20:.3f}MB:",
-            file=discord.File(
-                video_output.image_filename,
-                os.path.basename(video_output.image_filename),
+        embed = discord.Embed(
+            title="Video Result",
+            description=(
+                f"Model: `{model}`\n"
+                f"Motion Amount: `{motion_amount}`\n"
+                f"Number of frames: `{number_of_frames}`\n"
+                f"Frame rate: `{frame_rate}`\n"
+                f"Use ping-pong: `{use_ping_pong}`\n"
+                f"Video ({video_format}), final size= `{video_container.image.file_size/2**20:.3f} MB`\n"
+                f"Total generated images: `{ImageCount.get_count()}`\n\n"
             ),
+            color=discord.Colour.blurple(),
         )
+
+        itask.cancel()
+        message = await ctx.respond(
+            f"<@{ctx.author.id}>'s Generations:",
+            file=discord.File(
+                video_container.image.image_filename,
+                os.path.basename(video_container.image.image_filename),
+            ),
+            view=GenerateVideoView(
+                image=video_container,
+                sd_api=Sd.api,
+            ),
+            embed=embed,
+        )
+
+        await message.add_reaction("👍")
+        await message.add_reaction("👎")
         await response.delete_original_response()
         self.logger.info(
             f"Created video {ImageCount.increment()}: {os.path.basename(video_output.image_filename)}"
