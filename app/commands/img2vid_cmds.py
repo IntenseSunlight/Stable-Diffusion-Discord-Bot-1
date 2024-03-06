@@ -40,8 +40,8 @@ class Img2VideoCommands(AbstractCommand):
         ),
         motion_amount: discord.Option(
             int,
-            choices=[50, 75, 100, 125, 150, 200, 250, 300, 400, 500],
-            default=50,
+            choices=Settings.img2vid.default_model().motion_amount_choices,
+            default=Settings.img2vid.default_model().motion_amount,
             description="How much motion should be added?",
         ),
         video_format: discord.Option(
@@ -52,13 +52,13 @@ class Img2VideoCommands(AbstractCommand):
         ),
         number_of_frames: discord.Option(
             int,
-            choices=[15, 20, 25],
+            choices=Settings.img2vid.default_model().frame_count_choices,
             default=Settings.img2vid.default_model().frame_count,
             description="How many frames should be used?",
         ),
         frame_rate: discord.Option(
             int,
-            choices=[5, 10, 12, 15, 20, 25, 30],
+            choices=Settings.img2vid.default_model().frame_rate_choices,
             default=Settings.img2vid.default_model().frame_rate,
             description="What frame rate (fps) should be used?",
         ),
@@ -180,5 +180,5 @@ class Img2VideoCommands(AbstractCommand):
         await message.add_reaction("👎")
         await response.delete_original_response()
         self.logger.info(
-            f"Created video {ImageCount.increment()}: {os.path.basename(video_output.image_filename)}"
+            f"Created video {ImageCount.increment()}: {os.path.basename(video_container.image.image_filename)}"
         )

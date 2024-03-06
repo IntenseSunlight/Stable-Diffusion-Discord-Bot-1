@@ -159,6 +159,12 @@ class Img2VidSingleModel(BaseModel):
     sd_model: str = "svd.safetensors"
     frame_rate: Optional[int] = 12
     frame_count: Optional[int] = 20
+    motion_amount: Optional[int] = 50
+    frame_rate_choices: Optional[List[int]] = [5, 10, 12, 15, 20, 25, 30]
+    frame_count_choices: Optional[List[int]] = [15, 20, 25]
+    motion_amount_choices: Optional[List[int]] = [
+        50, 75, 100, 125, 150, 200, 250, 300, 400, 500,  # fmt: skip
+    ]
     loop_count: Optional[int] = 0
     workflow_api: Optional[str] = "svd_workflow_api.json"
     workflow_api_map: Optional[str] = "svd_workflow_api_map.json"

@@ -3,7 +3,7 @@ import random
 import discord
 import asyncio
 import logging
-from typing import List, cast
+from typing import Callable, List, cast
 
 from app.settings import Settings
 from app.utils.logger import logger
@@ -29,6 +29,8 @@ def create_video(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFile:
         loop_count=video_def.loop_count,
         ping_pong=video_def.ping_pong,
         frame_rate=video_def.frame_rate,
+        video_frames=video_def.video_frames,
+        motion_bucket_id=video_def.motion_bucket_id,
         workflow=video_def.workflow,
         workflow_map=video_def.workflow_map,
     )
@@ -54,27 +56,101 @@ class GenerateVideoView(discord.ui.View):
         self.sd_api = sd_api
         self._logger = logger
 
-        # row 0: variation buttons
+        # row 0: select motion amount
+        def set_motion_amount(value: int):
+            self.image.motion_bucket_id = value
+
+        self.add_item(
+            ItemSelect(
+                placeholder="Select the amount of motion",
+                options=[
+                    discord.SelectOption(
+                        label=f"{motion_amount} motion",
+                        value=str(motion_amount),
+                        default=motion_amount == self.image.motion_bucket_id,
+                    )
+                    for motion_amount in Settings.img2vid.default_model().motion_amount_choices
+                ],
+                row=0,
+                result_callback=set_motion_amount,
+            )
+        )
+
+        # row 1: select number of frames
+        def set_n_frames(value: int):
+            self.image.video_frames = value
+
+        self.add_item(
+            ItemSelect(
+                placeholder="Select the number of frames",
+                options=[
+                    discord.SelectOption(
+                        label=f"{n_frames} frames",
+                        value=str(n_frames),
+                        default=n_frames == self.image.video_frames,
+                    )
+                    for n_frames in Settings.img2vid.default_model().frame_count_choices
+                ],
+                row=1,
+                result_callback=set_n_frames,
+            )
+        )
+
+        # row 2: select frame rate
+        def set_frame_rate(value: int):
+            self.image.frame_rate = value
+
+        self.add_item(
+            ItemSelect(
+                placeholder="Select the frame rate",
+                options=[
+                    discord.SelectOption(
+                        label=f"{frame_rate} fps",
+                        value=str(frame_rate),
+                        default=frame_rate == self.image.frame_rate,
+                    )
+                    for frame_rate in Settings.img2vid.default_model().frame_rate_choices
+                ],
+                row=2,
+                result_callback=set_frame_rate,
+            )
+        )
+
+        # row 3: variation button, weak
         self.add_item(
             VariationButton(
                 image=image,
-                label="Variation",
+                label="V~",
                 sd_api=self.sd_api,
                 logger=self._logger,
-                row=0,
+                vary_weak=True,
+                row=3,
                 style=discord.ButtonStyle.primary,
                 emoji="🌱",
             )
         )
 
-        # row 1: retry buttons
+        # row 3: variation button, strong
+        self.add_item(
+            VariationButton(
+                image=image,
+                label="V+",
+                sd_api=self.sd_api,
+                logger=self._logger,
+                vary_weak=False,
+                row=3,
+                style=discord.ButtonStyle.primary,
+                emoji="🌳",
+            )
+        )
+
+        # row 3: retry buttons
         self.add_item(
             RetryButton(
                 image=image,
                 sd_api=self.sd_api,
                 logger=self._logger,
-                label="Retry",
-                row=1,
+                row=3,
                 style=discord.ButtonStyle.primary,
                 emoji="🔄",
             )
@@ -82,20 +158,40 @@ class GenerateVideoView(discord.ui.View):
 
 
 # ----------------------------------------------
+# Item Select class
+# ----------------------------------------------
+class ItemSelect(discord.ui.Select):
+    def __init__(self, result_callback: Callable, **kwargs):
+        super().__init__(**kwargs)
+        self.result_callback = result_callback
+
+    async def callback(self, interaction: discord.Interaction):
+        self.result_callback(int(self.values[0]))
+        await interaction.response.send_message(
+            content=f"Value updated to {self.values[0]}",
+            ephemeral=True,
+            delete_after=2,
+        )
+
+
+# ----------------------------------------------
 # Variation button class
 # ----------------------------------------------
 class VariationButton(discord.ui.Button):
+
     def __init__(
         self,
         image: VideoContainer,
         sd_api: AbstractAPI,
         logger: logging.Logger,
+        vary_weak: bool = True,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self._logger = logger
         self.image = image
         self.sd_api = sd_api
+        self.vary_weak = vary_weak
 
     async def callback(self, interaction: discord.Interaction):
         message = "Creating a variation of the video..."
@@ -108,11 +204,16 @@ class VariationButton(discord.ui.Button):
 
         var_image = self.image.copy()
         var_image.image.create_file_name()
-        var_strength_min = 0.2 * var_image.variation_strength
-        var_strength_max = min(var_image.variation_strength * 3, 1.0)
-        var_image.variation_strength = random.uniform(
-            var_strength_min, var_strength_max
-        )
+        if self.vary_weak:
+            var_strength_min = 0.2 * var_image.variation_strength
+            var_strength_max = min(var_image.variation_strength * 3, 1.0)
+            var_image.variation_strength = random.uniform(
+                var_strength_min, var_strength_max
+            )
+        else:
+            var_image.seed = random_seed()
+            var_image.sub_seed = random_seed()
+
         task = await AsyncTaskQueue.create_and_add_task(
             create_video,
             args=(var_image, self.sd_api),
@@ -132,6 +233,20 @@ class VariationButton(discord.ui.Button):
             f"Generated Image {ImageCount.increment()}: {os.path.basename(var_image.image.image_filename)}"
         )
 
+        embed = discord.Embed(
+            title="Video Result",
+            description=(
+                f"Model: `{var_image.model}`\n"
+                f"Motion Amount: `{var_image.motion_bucket_id}`\n"
+                f"Number of frames: `{var_image.video_frames}`\n"
+                f"Frame rate: `{var_image.frame_rate}`\n"
+                f"Use ping-pong: `{var_image.ping_pong}`\n"
+                f"Video ({var_image.video_format}), final size= `{var_image.image.file_size/2**20:.3f} MB`\n"
+                f"Total generated images: `{ImageCount.get_count()}`\n\n"
+            ),
+            color=discord.Colour.blurple(),
+        )
+
         await interaction.followup.send(
             f"Varied This Generation:",
             file=discord.File(
@@ -141,6 +256,7 @@ class VariationButton(discord.ui.Button):
             view=GenerateVideoView(
                 image=var_image, sd_api=self.sd_api, logger=self._logger
             ),
+            embed=embed,
         )
         await interaction.delete_original_response()
 
@@ -149,6 +265,7 @@ class VariationButton(discord.ui.Button):
 # Retry button class
 # ----------------------------------------------
 class RetryButton(discord.ui.Button):
+
     def __init__(
         self,
         image: VideoContainer,
@@ -172,8 +289,7 @@ class RetryButton(discord.ui.Button):
 
         var_image = self.image.copy()
         var_image.image.create_file_name()
-        var_image.seed = random_seed()
-        var_image.sub_seed = random_seed()
+
         task = await AsyncTaskQueue.create_and_add_task(
             create_video,
             args=(var_image, self.sd_api),
@@ -193,6 +309,20 @@ class RetryButton(discord.ui.Button):
             f"Generated Image {ImageCount.increment()}: {os.path.basename(var_image.image.image_filename)}"
         )
 
+        embed = discord.Embed(
+            title="Video Result",
+            description=(
+                f"Model: `{var_image.model}`\n"
+                f"Motion Amount: `{var_image.motion_bucket_id}`\n"
+                f"Number of frames: `{var_image.video_frames}`\n"
+                f"Frame rate: `{var_image.frame_rate}`\n"
+                f"Use ping-pong: `{var_image.ping_pong}`\n"
+                f"Video ({var_image.video_format}), final size= `{var_image.image.file_size/2**20:.3f} MB`\n"
+                f"Total generated images: `{ImageCount.get_count()}`\n\n"
+            ),
+            color=discord.Colour.blurple(),
+        )
+
         await interaction.followup.send(
             f"Retried this Generation:",
             file=discord.File(
@@ -202,5 +332,6 @@ class RetryButton(discord.ui.Button):
             view=GenerateVideoView(
                 image=var_image, sd_api=self.sd_api, logger=self._logger
             ),
+            embed=embed,
         )
         await interaction.delete_original_response()

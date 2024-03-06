@@ -48,9 +48,11 @@ class AbstractAPI(ABC):
         sd_model: Optional[str] = None,
         image_file: Optional[str] = None,
         video_format: Optional[str] = None,
-        loop_count: Optional[int] = None,
-        ping_pong: Optional[bool] = None,
         frame_rate: Optional[int] = None,
+        loop_count: Optional[int] = None,
+        video_frames: Optional[int] = None,
+        motion_bucket_id: Optional[int] = None,
+        ping_pong: Optional[bool] = None,
         workflow: Optional[Dict] = None,
         workflow_map: Optional[Dict] = None,
     ) -> ImageFile:
