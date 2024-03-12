@@ -191,6 +191,55 @@ class Img2VidContainerModel(BaseModel):
         self.models.pop(model_name)
 
 
+class Txt2VidSingleModel(BaseModel):
+    display_name: str = "animatediff"
+    sd_model: str = "v1-5-pruned-emaonly.ckpt"
+    animation_model: str = "mm_sd_v14.ckpt"
+    motion_lora_model: Optional[str] = "v2_lora_PanRight.ckpt" 
+    frame_rate: Optional[int] = 8 
+    frame_count: Optional[int] = 48
+    frame_rate_choices: Optional[List[int]] = [5, 8, 10, 12, 15, 20, 25, 30]
+    frame_count_choices: Optional[List[int]] = [20, 25, 30, 48, 60]
+    loop_count: Optional[int] = 0
+    workflow_api: Optional[str] = "animated_diff_txt2vid_api.json"
+    workflow_api_map: Optional[str] = "animated_diff_txt2vid_api_map.json"
+
+
+class Txt2VidContainerModel(BaseModel):
+    group_command: GroupCommands = GroupCommands.txt2vid
+    modeltype: ModelType = Field(
+        default=ModelType.checkpoint, frozen=True, exclude=True
+    )
+    variation_strength: float = 0.065
+    models: Dict[str, Txt2VidSingleModel] = {
+        Txt2VidSingleModel().display_name: Txt2VidSingleModel()
+    }
+    preview_models: Dict[str, Txt2ImgSingleModel] = {
+        Txt2ImgSingleModel().display_name: Txt2ImgSingleModel()
+    }
+
+    def default_model(self) -> Txt2VidSingleModel:
+        return Txt2VidSingleModel()
+
+    def default_preview_model(self) -> Txt2ImgSingleModel:
+        return Txt2ImgSingleModel()
+
+    def add_model(self, model_dict: Dict):
+        model = Txt2VidSingleModel(**model_dict)
+        self.models.update({model.display_name: model})
+
+    def add_preview_model(self, model_dict: Dict):
+        model = Txt2ImgSingleModel(**model_dict)
+        self.preview_models.update({model.display_name: model})
+
+    def remove_model(self, model_name: str):
+        self.models.pop(model_name)
+
+    def remove_preview_model(self, model_name: str):
+        self.preview_models.pop(model_name)
+
+
+
 # Main Settings Model
 # - Capabilities are added here as the bot is expanded
 class _Settings(BaseModel):
@@ -199,6 +248,7 @@ class _Settings(BaseModel):
     txt2img: Txt2ImgContainerModel = Txt2ImgContainerModel()
     upscaler: Optional[UpscalerContainerModel] = UpscalerContainerModel()
     img2vid: Optional[Img2VidContainerModel] = Img2VidContainerModel()
+    txt2vid: Optional[Txt2VidContainerModel] = Txt2VidContainerModel()
     # img2img: Optional[Img2ImgContainerModel] = Img2ImgContainerModel()   # not implemented
 
     def __init__(
