@@ -157,6 +157,8 @@ class UpscalerContainerModel(BaseModel):
 class Img2VidSingleModel(BaseModel):
     display_name: str = "svd"
     sd_model: str = "svd.safetensors"
+    width: Optional[int] = None 
+    height: Optional[int] = None 
     frame_rate: Optional[int] = 12
     frame_count: Optional[int] = 20
     motion_amount: Optional[int] = 50
@@ -346,12 +348,12 @@ class _Settings(BaseModel):
         if messages:
             if purge_and_warn:
                 for (k, name), message in messages.items():
-                    logger.warning(f"WARNING: {message}, removing from list of models.")
+                    logger.warning(f"{message}, removing from list of models.")
                     self.__dict__[k].models.pop(name)
 
                 if not self.__dict__[k].models:
-                    raise ValueError(
-                        f"Failure: No valid models remain in '{k}' command."
+                    logger.warning(
+                        f"Failure: No valid models remain in '{k}' command, removing"
                     )
             else:
                 raise ValueError("\n".join(messages.values()))
