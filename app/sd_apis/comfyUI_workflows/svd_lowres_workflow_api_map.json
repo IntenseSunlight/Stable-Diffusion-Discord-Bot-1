@@ -1,0 +1,84 @@
+{
+    "frame_rate": [
+		[
+        	"26",
+        	"inputs",
+        	"frame_rate"
+		],
+		[
+			"12",
+			"inputs",
+			"fps"
+		]
+    ],
+    "image_file": [
+        "23",
+        "inputs",
+        "image"
+    ],
+    "loop_count": [
+        "26",
+        "inputs",
+        "loop_count"
+    ],
+    "motion_bucket_id": [
+        "12",
+        "inputs",
+        "motion_bucket_id"
+    ],
+    "ping_pong": [
+        "26",
+        "inputs",
+        "pingpong"
+    ],
+    "sd_model": [
+        "15",
+        "inputs",
+        "ckpt_name"
+    ],
+    "seed": [
+        "91",
+        "inputs",
+        "seed"
+    ],
+    "subseed": [
+        "91",
+        "inputs",
+        "variation_seed"
+    ],
+    "variation_strength": [
+        "91",
+        "inputs",
+        "variation_strength"
+    ],
+    "video_format": [
+        "26",
+        "inputs",
+        {
+            "gif": {
+                "format": "image/gif"
+            },
+            "mp4": {
+                "format": "video/h264-mp4",
+                "crf": 19,
+                "pix_fmt": "yuv420p",
+                "save_metadata": true
+            }
+        }
+    ],
+    "video_frames": [
+        "12",
+        "inputs",
+        "video_frames"
+    ],
+	"width": [
+		"12",
+		"inputs",
+		"width"
+	],
+	"height": [
+		"12",
+		"inputs",
+		"height"
+	]
+}
