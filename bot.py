@@ -86,22 +86,25 @@ Bot.configure(
 # sub_group (sub_group_commands are contained therein)
 
 # txt2img
-txt2img_group = Bot.create_subgroup(
-    GroupCommands.txt2img.name, "Create image using prompt"
-)
-Txt2ImageCommands(txt2img_group)
+if hasattr(Settings, "txt2img"):
+    txt2img_group = Bot.create_subgroup(
+        GroupCommands.txt2img.name, "Create image using prompt"
+    )
+    Txt2ImageCommands(txt2img_group)
 
 # img2img
-img2img_group = Bot.create_subgroup(
-    GroupCommands.img2img.name, "Create image from image"
-)
-Img2ImageCommands(img2img_group)
+if hasattr(Settings, "img2img"):
+    img2img_group = Bot.create_subgroup(
+        GroupCommands.img2img.name, "Create image from image"
+    )
+    Img2ImageCommands(img2img_group)
 
 # img2vid
-img2vid_group = Bot.create_subgroup(
-    GroupCommands.img2vid.name, "Create video from image"
-)
-Img2VideoCommands(img2vid_group)
+if hasattr(Settings, "img2vid"):
+    img2vid_group = Bot.create_subgroup(
+        GroupCommands.img2vid.name, "Create video from image"
+    )
+    Img2VideoCommands(img2vid_group)
 
 logger.info("-" * 80)
 logger.info(f"Bot is running")
