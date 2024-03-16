@@ -107,6 +107,8 @@ class Img2ImgSingleModel(BaseModel):
     sd_model: str = "4x_NMKD-Siax_200k.pth"
     width: Optional[int] = 512
     height: Optional[int] = 512
+    max_width: Optional[int] = 1200
+    max_height: Optional[int] = 1200
     workflow_api: Optional[str] = "default_upscaler_api.json"
     workflow_api_map: Optional[str] = "default_upscaler_api_map.json"
 
@@ -132,6 +134,8 @@ class Img2ImgContainerModel(BaseModel):
 class UpscalerSingleModel(BaseModel):
     display_name: str = "upscaler_4x"
     sd_model: str = "4x_NMKD-Siax_200k.pth"
+    max_width: Optional[int] = 1200
+    max_height: Optional[int] = 1200
     workflow_api: Optional[str] = "default_upscaler_api.json"
     workflow_api_map: Optional[str] = "default_upscaler_api_map.json"
 
@@ -159,6 +163,8 @@ class Img2VidSingleModel(BaseModel):
     sd_model: str = "svd.safetensors"
     width: Optional[int] = None 
     height: Optional[int] = None 
+    max_width: Optional[int] = None 
+    max_height: Optional[int] = None 
     frame_rate: Optional[int] = 12
     frame_count: Optional[int] = 20
     motion_amount: Optional[int] = 50

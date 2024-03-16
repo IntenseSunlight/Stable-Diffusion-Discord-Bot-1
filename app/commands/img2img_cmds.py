@@ -76,8 +76,15 @@ class Img2ImageCommands(AbstractCommand):
             image = ImageFile(image_bytes=f.read())
             image.save()
 
+        model_def: UpscalerSingleModel = Settings.upscaler.models[model]
+
         width, height = image.size
-        if width * height > 1200**2:
+        max_size = (
+            (model_def.max_width or model_def.max_height or (width + 1)) *  # fmt: skip
+            (model_def.max_height or model_def.max_width or (height + 1))  # fmt: skip
+        )
+
+        if width * height > max_size:
             itask.cancel()
             await response.edit_original_response(
                 content=f"Input image is too large to upscale. W,H= {width},{height}",
@@ -85,7 +92,6 @@ class Img2ImageCommands(AbstractCommand):
             )
             return
 
-        model_def: UpscalerSingleModel = Settings.upscaler.models[model]
         task = await AsyncTaskQueue.create_and_add_task(
             upscale_image, ctx.author.id, args=(image, model_def)
         )

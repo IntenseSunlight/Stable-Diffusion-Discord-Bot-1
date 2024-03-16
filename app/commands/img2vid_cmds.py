@@ -47,7 +47,7 @@ class Img2VideoCommands(AbstractCommand):
         video_format: discord.Option(
             str,
             choices=Settings.files.video_types,
-            default=Settings.files.default_video_type,  # gif
+            default=Settings.files.default_video_type,  # mp4
             description="What format should the video be?",
         ),
         number_of_frames: discord.Option(
@@ -100,8 +100,15 @@ class Img2VideoCommands(AbstractCommand):
             image = ImageFile(image_bytes=f.read())
             image.save()
 
+        model_def: Img2VidSingleModel = Settings.img2vid.models[model]
+
         width, height = image.size
-        if width * height > 1200**2:
+        max_size = (
+            (model_def.max_width or model_def.max_height or (width + 1)) *  # fmt: skip
+            (model_def.max_height or model_def.max_width or (height + 1))  # fmt: skip
+        )
+
+        if width * height > max_size:
             itask.cancel()
             await response.edit_original_response(
                 content=f"Input image is too large for SVD. W,H= {width},{height}",
@@ -109,7 +116,6 @@ class Img2VideoCommands(AbstractCommand):
             )
             return
 
-        model_def: Img2VidSingleModel = Settings.img2vid.models[model]
         workflow, workflow_map = self._load_workflow_and_map(model_def)
 
         video_container = VideoContainer(
@@ -118,6 +124,8 @@ class Img2VideoCommands(AbstractCommand):
             sub_seed=random_seed(),
             variation_strength=Settings.img2vid.variation_strength,
             model=model_def.sd_model,
+            width=model_def.width,
+            height=model_def.height,
             video_format=video_format,
             ping_pong=use_ping_pong,
             frame_rate=frame_rate,

@@ -25,6 +25,8 @@ def create_video(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFile:
         seed=video_def.seed,
         sub_seed=video_def.sub_seed,
         variation_strength=video_def.variation_strength,
+        width=video_def.width,
+        height=video_def.height,
         video_format=video_def.video_format,
         loop_count=video_def.loop_count,
         ping_pong=video_def.ping_pong,
