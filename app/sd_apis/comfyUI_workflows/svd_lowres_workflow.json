@@ -1,6 +1,6 @@
 {
-  "last_node_id": 93,
-  "last_link_id": 176,
+  "last_node_id": 100,
+  "last_link_id": 180,
   "nodes": [
     {
       "id": 14,
@@ -14,7 +14,7 @@
         "1": 58
       },
       "flags": {},
-      "order": 9,
+      "order": 7,
       "mode": 0,
       "inputs": [
         {
@@ -91,7 +91,7 @@
       ],
       "size": [
         493.3846435546875,
-        681.3846435546875
+        576.1880560980903
       ],
       "flags": {},
       "order": 13,
@@ -139,7 +139,7 @@
           "hidden": false,
           "paused": false,
           "params": {
-            "filename": "SVD-_00003.gif",
+            "filename": "SVD-_00008.gif",
             "subfolder": "",
             "type": "output",
             "format": "image/gif"
@@ -210,7 +210,7 @@
         "Node name for S&R": "LoadImage"
       },
       "widgets_values": [
-        "PpaoVWJbseLO8xJeACrJ1Pmw.png",
+        "cHf7rxbqoqVuPnrzsblWIJoW.png",
         "image"
       ],
       "color": "#223",
@@ -309,7 +309,7 @@
         "Node name for S&R": "KSampler //Inspire"
       },
       "widgets_values": [
-        881964601329762,
+        962744109898936,
         "randomize",
         27,
         5.5,
@@ -347,56 +347,6 @@
       "bgcolor": "#000"
     },
     {
-      "id": 15,
-      "type": "ImageOnlyCheckpointLoader",
-      "pos": [
-        -70,
-        -150
-      ],
-      "size": {
-        "0": 410,
-        "1": 100
-      },
-      "flags": {},
-      "order": 4,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "MODEL",
-          "type": "MODEL",
-          "links": [
-            134
-          ],
-          "shape": 3,
-          "slot_index": 0
-        },
-        {
-          "name": "CLIP_VISION",
-          "type": "CLIP_VISION",
-          "links": [
-            24
-          ],
-          "shape": 3,
-          "slot_index": 1
-        },
-        {
-          "name": "VAE",
-          "type": "VAE",
-          "links": [],
-          "shape": 3,
-          "slot_index": 2
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ImageOnlyCheckpointLoader"
-      },
-      "widgets_values": [
-        "svd_xt-fp16.safetensors"
-      ],
-      "color": "#432",
-      "bgcolor": "#653"
-    },
-    {
       "id": 12,
       "type": "SVD_img2vid_Conditioning",
       "pos": [
@@ -430,7 +380,7 @@
         {
           "name": "width",
           "type": "INT",
-          "link": 175,
+          "link": 178,
           "widget": {
             "name": "width"
           },
@@ -439,7 +389,7 @@
         {
           "name": "height",
           "type": "INT",
-          "link": 176,
+          "link": 180,
           "widget": {
             "name": "height"
           },
@@ -498,84 +448,6 @@
       "bgcolor": "#335"
     },
     {
-      "id": 84,
-      "type": "CM_NearestSDXLResolution",
-      "pos": [
-        11,
-        100
-      ],
-      "size": {
-        "0": 210,
-        "1": 46
-      },
-      "flags": {},
-      "order": 8,
-      "mode": 2,
-      "inputs": [
-        {
-          "name": "image",
-          "type": "IMAGE",
-          "link": 161
-        }
-      ],
-      "outputs": [
-        {
-          "name": "width",
-          "type": "INT",
-          "links": [],
-          "shape": 3,
-          "slot_index": 0
-        },
-        {
-          "name": "height",
-          "type": "INT",
-          "links": [],
-          "shape": 3,
-          "slot_index": 1
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "CM_NearestSDXLResolution"
-      },
-      "color": "#323",
-      "bgcolor": "#535"
-    },
-    {
-      "id": 92,
-      "type": "PrimitiveNode",
-      "pos": [
-        38,
-        188
-      ],
-      "size": {
-        "0": 210,
-        "1": 82
-      },
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "INT",
-          "type": "INT",
-          "links": [
-            175
-          ],
-          "slot_index": 0,
-          "widget": {
-            "name": "width"
-          }
-        }
-      ],
-      "properties": {
-        "Run widget replace on values": false
-      },
-      "widgets_values": [
-        512,
-        "fixed"
-      ]
-    },
-    {
       "id": 89,
       "type": "VAELoader",
       "pos": [
@@ -587,7 +459,7 @@
         "1": 58
       },
       "flags": {},
-      "order": 6,
+      "order": 4,
       "mode": 0,
       "outputs": [
         {
@@ -611,38 +483,190 @@
       "bgcolor": "#653"
     },
     {
-      "id": 93,
-      "type": "PrimitiveNode",
+      "id": 15,
+      "type": "ImageOnlyCheckpointLoader",
       "pos": [
-        44,
-        308
+        -70,
+        -150
+      ],
+      "size": {
+        "0": 410,
+        "1": 100
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            134
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "CLIP_VISION",
+          "type": "CLIP_VISION",
+          "links": [
+            24
+          ],
+          "shape": 3,
+          "slot_index": 1
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [],
+          "shape": 3,
+          "slot_index": 2
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageOnlyCheckpointLoader"
+      },
+      "widgets_values": [
+        "svd_xt-fp16.safetensors"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 84,
+      "type": "CM_NearestSDXLResolution",
+      "pos": [
+        -200,
+        88
       ],
       "size": {
         "0": 210,
-        "1": 82
+        "1": 46
       },
       "flags": {},
-      "order": 7,
+      "order": 6,
       "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 161
+        }
+      ],
+      "outputs": [
+        {
+          "name": "width",
+          "type": "INT",
+          "links": [
+            177
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": [
+            179
+          ],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CM_NearestSDXLResolution"
+      },
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 99,
+      "type": "CM_IntBinaryOperation",
+      "pos": [
+        42,
+        78
+      ],
+      "size": {
+        "0": 315,
+        "1": 106
+      },
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "INT",
+          "link": 177,
+          "widget": {
+            "name": "a"
+          }
+        }
+      ],
       "outputs": [
         {
           "name": "INT",
           "type": "INT",
           "links": [
-            176
+            178
           ],
-          "slot_index": 0,
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Divide by 2",
+      "properties": {
+        "Node name for S&R": "CM_IntBinaryOperation"
+      },
+      "widgets_values": [
+        "Shr",
+        0,
+        1
+      ]
+    },
+    {
+      "id": 100,
+      "type": "CM_IntBinaryOperation",
+      "pos": [
+        47,
+        233
+      ],
+      "size": {
+        "0": 315,
+        "1": 106
+      },
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "INT",
+          "link": 179,
           "widget": {
-            "name": "height"
+            "name": "a"
           }
         }
       ],
+      "outputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            180
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Divide by 2",
       "properties": {
-        "Run widget replace on values": false
+        "Node name for S&R": "CM_IntBinaryOperation"
       },
       "widgets_values": [
-        512,
-        "fixed"
+        "Shr",
+        0,
+        1
       ]
     }
   ],
@@ -760,16 +784,32 @@
       "LATENT"
     ],
     [
-      175,
-      92,
+      177,
+      84,
+      0,
+      99,
+      0,
+      "INT"
+    ],
+    [
+      178,
+      99,
       0,
       12,
       3,
       "INT"
     ],
     [
-      176,
-      93,
+      179,
+      84,
+      1,
+      100,
+      0,
+      "INT"
+    ],
+    [
+      180,
+      100,
       0,
       12,
       4,

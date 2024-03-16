@@ -17,8 +17,14 @@
   },
   "12": {
     "inputs": {
-      "width": 512,
-      "height": 512,
+      "width": [
+        "99",
+        0
+      ],
+      "height": [
+        "100",
+        0
+      ],
       "video_frames": 27,
       "motion_bucket_id": 40,
       "fps": 12,
@@ -65,7 +71,7 @@
   },
   "23": {
     "inputs": {
-      "image": "PpaoVWJbseLO8xJeACrJ1Pmw.png",
+      "image": "cHf7rxbqoqVuPnrzsblWIJoW.png",
       "upload": "image"
     },
     "class_type": "LoadImage",
@@ -91,6 +97,18 @@
       "title": "Video Combine VHS"
     }
   },
+  "84": {
+    "inputs": {
+      "image": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "CM_NearestSDXLResolution",
+    "_meta": {
+      "title": "NearestSDXLResolution"
+    }
+  },
   "89": {
     "inputs": {
       "vae_name": "vae-ft-mse-840000-ema-pruned.safetensors"
@@ -102,7 +120,7 @@
   },
   "91": {
     "inputs": {
-      "seed": 881964601329762,
+      "seed": 962744109898936,
       "steps": 27,
       "cfg": 5.5,
       "sampler_name": "euler",
@@ -132,6 +150,34 @@
     "class_type": "KSampler //Inspire",
     "_meta": {
       "title": "KSampler (inspire)"
+    }
+  },
+  "99": {
+    "inputs": {
+      "op": "Shr",
+      "a": [
+        "84",
+        0
+      ],
+      "b": 1
+    },
+    "class_type": "CM_IntBinaryOperation",
+    "_meta": {
+      "title": "Divide by 2"
+    }
+  },
+  "100": {
+    "inputs": {
+      "op": "Shr",
+      "a": [
+        "84",
+        1
+      ],
+      "b": 1
+    },
+    "class_type": "CM_IntBinaryOperation",
+    "_meta": {
+      "title": "Divide by 2"
     }
   }
 }

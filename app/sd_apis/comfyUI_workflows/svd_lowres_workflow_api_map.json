@@ -70,15 +70,5 @@
         "12",
         "inputs",
         "video_frames"
-    ],
-	"width": [
-		"12",
-		"inputs",
-		"width"
-	],
-	"height": [
-		"12",
-		"inputs",
-		"height"
-	]
+    ]
 }
