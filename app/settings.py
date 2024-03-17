@@ -273,6 +273,9 @@ class _Settings(BaseModel):
         if dot_env is not None:
             self.load_dotenv(dot_env)
 
+    def has_command(self, command: GroupCommands) -> bool:
+        return command.name in self.__dict__
+
     @staticmethod
     def _check_commands(new_self: BaseModel):
         commands = {}

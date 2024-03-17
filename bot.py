@@ -46,7 +46,7 @@ if not Settings.check_for_valid_workflows(
 from app.commands.bot_handler import Bot
 from app.utils.async_task_queue import AsyncTaskQueue
 from app.commands.txt2img_cmds import Txt2ImageCommands
-from app.commands.img2img_cmds import Img2ImageCommands
+from app.commands.img2img_cmds import Img2ImageCommands, UpscalerCommands
 from app.commands.img2vid_cmds import Img2VideoCommands
 
 
@@ -86,25 +86,30 @@ Bot.configure(
 # sub_group (sub_group_commands are contained therein)
 
 # txt2img
-if hasattr(Settings, "txt2img"):
+if Settings.has_command(GroupCommands.txt2img):
     txt2img_group = Bot.create_subgroup(
         GroupCommands.txt2img.name, "Create image using prompt"
     )
     Txt2ImageCommands(txt2img_group)
 
 # img2img
-if hasattr(Settings, "img2img"):
+if Settings.has_command(GroupCommands.img2img):
     img2img_group = Bot.create_subgroup(
         GroupCommands.img2img.name, "Create image from image"
     )
     Img2ImageCommands(img2img_group)
 
 # img2vid
-if hasattr(Settings, "img2vid"):
+if Settings.has_command(GroupCommands.img2vid):
     img2vid_group = Bot.create_subgroup(
         GroupCommands.img2vid.name, "Create video from image"
     )
     Img2VideoCommands(img2vid_group)
+
+# upscaler
+if Settings.has_command(GroupCommands.upscaler):
+    upscale_group = Bot.create_subgroup(GroupCommands.upscaler.name, "Upscale image")
+    UpscalerCommands(upscale_group)
 
 logger.info("-" * 80)
 logger.info(f"Bot is running")

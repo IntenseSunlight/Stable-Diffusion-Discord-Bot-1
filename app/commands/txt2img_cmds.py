@@ -40,13 +40,22 @@ async def process_image(
 # Txt2ImageCommands definition
 # -------------------------------
 class Txt2ImageCommands(AbstractCommand):
-    def __init__(self, sub_group: discord.SlashCommandGroup):
+
+    def __init__(
+        self,
+        sub_group: discord.SlashCommandGroup,
+        commands: List[str] = ["random", "image"],
+    ):
         super().__init__(sub_group)
 
         # subcommands must be bound in the constructor
         # all subcommands must be ascync functions
-        self.bind(self.random_image, "random", "Generate random image")
-        self.bind(self.generate_image, "image", "Generate image from text")
+        if not commands:
+            raise ValueError("No commands specified for Txt2ImageCommands")
+        if "random" in commands:
+            self.bind(self.random_image, "random", "Generate random image")
+        if "image" in commands:
+            self.bind(self.generate_image, "image", "Generate image from text")
 
     # -------------------------------
     # Random Image

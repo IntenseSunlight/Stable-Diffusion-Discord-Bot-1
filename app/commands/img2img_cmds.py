@@ -2,6 +2,7 @@ import os
 import io
 import discord
 import asyncio
+from typing import List
 from app.utils import ImageCount
 from app.settings import (
     Settings,
@@ -23,12 +24,15 @@ def upscale_image(image: ImageFile, model_def: UpscalerSingleModel) -> ImageFile
 
 
 class Img2ImageCommands(AbstractCommand):
-    def __init__(self, sub_group: discord.SlashCommandGroup):
+    def __init__(self, sub_group: discord.SlashCommandGroup, commands: List[str] = ["upscale"]):
         super().__init__(sub_group)
 
         # subcommands must be bound in the constructor
         # all subcommands must be ascync functions
-        self.bind(self.upscale_image, "upscale", "Upscale image")
+        if not commands:
+            raise ValueError("No commands specified for Img2ImageCommands")
+        if "upscale" in commands:
+            self.bind(self.upscale_image, "upscale", "Upscale image")
 
     # subcommand functions must be async
 
@@ -125,3 +129,7 @@ class Img2ImageCommands(AbstractCommand):
         self.logger.info(
             f"Upscaled Image {ImageCount.increment()}: {os.path.basename(image.image_filename)}"
         )
+
+class UpscalerCommands(Img2ImageCommands):
+    def __init__(self, sub_group: discord.SlashCommandGroup, commands: List[str] = ["upscale"]):
+        super().__init__(sub_group, commands=commands)

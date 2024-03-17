@@ -2,6 +2,7 @@ import os
 import io
 import discord
 import asyncio
+from typing import List
 from app.utils import ImageCount
 from app.settings import (
     Settings,
@@ -16,12 +17,15 @@ from .abstract_command import AbstractCommand
 
 
 class Img2VideoCommands(AbstractCommand):
-    def __init__(self, sub_group: discord.SlashCommandGroup):
+    def __init__(self, sub_group: discord.SlashCommandGroup, commands: List[str] = ["svd"]):
         super().__init__(sub_group)
 
         # subcommands must be bound in the constructor
         # all subcommands must be ascync functions
-        self.bind(self.image2video_svd, "svd", "SVD add motion")
+        if not commands:
+            raise ValueError("No commands specified for Img2VideoCommands")
+        if "svd" in commands:
+            self.bind(self.image2video_svd, "svd", "SVD add motion")
 
     # subcommand functions must be async
 
