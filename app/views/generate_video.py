@@ -10,32 +10,10 @@ from app.utils.logger import logger
 from app.utils.async_task_queue import AsyncTaskQueue, Task
 from app.utils.image_file import ImageFile, VideoContainer
 from app.utils.image_count import ImageCount
-from app.utils.helpers import random_seed, idler_message, CARDINALS
+from app.utils.helpers import random_seed
+from app.views.view_helpers import create_video, idler_message, ItemSelect
 
 from app.sd_apis.abstract_api import AbstractAPI
-
-
-# -------------------------------
-# Helper functions
-# -------------------------------
-def create_video(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFile:
-    return sd_api.generate_image(
-        image_file=video_def.image_in.image_filename,
-        sd_model=video_def.model,
-        seed=video_def.seed,
-        sub_seed=video_def.sub_seed,
-        variation_strength=video_def.variation_strength,
-        width=video_def.width,
-        height=video_def.height,
-        video_format=video_def.video_format,
-        loop_count=video_def.loop_count,
-        ping_pong=video_def.ping_pong,
-        frame_rate=video_def.frame_rate,
-        video_frames=video_def.video_frames,
-        motion_bucket_id=video_def.motion_bucket_id,
-        workflow=video_def.workflow,
-        workflow_map=video_def.workflow_map,
-    )
 
 
 # The top level view for generating an image
@@ -120,7 +98,7 @@ class GenerateVideoView(discord.ui.View):
 
         # row 3: variation button, weak
         self.add_item(
-            VariationButton(
+            VaryVideoButton(
                 image=image,
                 label="V~",
                 sd_api=self.sd_api,
@@ -134,7 +112,7 @@ class GenerateVideoView(discord.ui.View):
 
         # row 3: variation button, strong
         self.add_item(
-            VariationButton(
+            VaryVideoButton(
                 image=image,
                 label="V+",
                 sd_api=self.sd_api,
@@ -148,7 +126,7 @@ class GenerateVideoView(discord.ui.View):
 
         # row 3: retry buttons
         self.add_item(
-            RetryButton(
+            RetryVideoButton(
                 image=image,
                 sd_api=self.sd_api,
                 logger=self._logger,
@@ -160,26 +138,9 @@ class GenerateVideoView(discord.ui.View):
 
 
 # ----------------------------------------------
-# Item Select class
-# ----------------------------------------------
-class ItemSelect(discord.ui.Select):
-    def __init__(self, result_callback: Callable, **kwargs):
-        super().__init__(**kwargs)
-        self.result_callback = result_callback
-
-    async def callback(self, interaction: discord.Interaction):
-        self.result_callback(int(self.values[0]))
-        await interaction.response.send_message(
-            content=f"Value updated to {self.values[0]}",
-            ephemeral=True,
-            delete_after=2,
-        )
-
-
-# ----------------------------------------------
 # Variation button class
 # ----------------------------------------------
-class VariationButton(discord.ui.Button):
+class VaryVideoButton(discord.ui.Button):
 
     def __init__(
         self,
@@ -266,7 +227,7 @@ class VariationButton(discord.ui.Button):
 # ----------------------------------------------
 # Retry button class
 # ----------------------------------------------
-class RetryButton(discord.ui.Button):
+class RetryVideoButton(discord.ui.Button):
 
     def __init__(
         self,

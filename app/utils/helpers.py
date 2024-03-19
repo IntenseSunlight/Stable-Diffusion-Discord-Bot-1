@@ -52,25 +52,3 @@ def get_env_and_settings_paths():
         Settings.save_json(settings_path)
 
     return dotenv_path, settings_path
-
-
-def idler_text():
-    dots = ["", ".", "..", "...", "...."]
-    symbols = ["🌼", "🌞", "🍂", "❄"]
-    while True:
-        for d in dots:
-            for s in symbols:
-                yield d + s
-
-
-# Some text to show idle action
-async def idler_message(
-    main_meassage: str, interaction: discord.Interaction, interval: int = 1
-):
-    idler = idler_text()
-    await asyncio.sleep(1)
-    while True:
-        await interaction.edit_original_response(
-            content=f"{main_meassage}{next(idler)}"
-        )
-        await asyncio.sleep(interval)

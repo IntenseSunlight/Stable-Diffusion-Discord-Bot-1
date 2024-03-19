@@ -11,16 +11,8 @@ from app.settings import (
 from app.sd_apis.api_handler import Sd
 from app.utils.async_task_queue import AsyncTaskQueue
 from app.utils.image_file import ImageFile
-from app.utils.helpers import idler_message
+from app.views.view_helpers import upscale_image, idler_message
 from .abstract_command import AbstractCommand
-
-
-# -------------------------------
-# Helper functions
-# -------------------------------
-def upscale_image(image: ImageFile, model_def: UpscalerSingleModel) -> ImageFile:
-    Sd.api.set_upscaler_model(model_def.sd_model)
-    return Sd.api.upscale_image(image)
 
 
 class Img2ImageCommands(AbstractCommand):
@@ -97,7 +89,7 @@ class Img2ImageCommands(AbstractCommand):
             return
 
         task = await AsyncTaskQueue.create_and_add_task(
-            upscale_image, ctx.author.id, args=(image, model_def)
+            upscale_image, ctx.author.id, args=(image, model_def, Sd.api)
         )
         if task is None:
             itask.cancel()

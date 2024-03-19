@@ -11,8 +11,9 @@ from app.settings import (
 from app.sd_apis.api_handler import Sd
 from app.utils.async_task_queue import AsyncTaskQueue, Task
 from app.utils.image_file import ImageFile, VideoContainer
-from app.utils.helpers import random_seed, idler_message
-from app.views.generate_video import GenerateVideoView, create_video
+from app.utils.helpers import random_seed
+from app.views.view_helpers import idler_message, create_video
+from app.views.generate_video import GenerateVideoView
 from .abstract_command import AbstractCommand
 
 

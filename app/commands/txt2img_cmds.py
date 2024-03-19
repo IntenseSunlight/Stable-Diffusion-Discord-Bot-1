@@ -8,7 +8,8 @@ from app.utils.helpers import random_seed, CARDINALS
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
 from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.utils.image_file import ImageFile, ImageContainer
-from app.views.generate_image import GenerateImageView, create_image
+from app.views.generate_image import GenerateImageView
+from app.views.view_helpers import create_image
 from .abstract_command import AbstractCommand
 
 

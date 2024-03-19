@@ -10,27 +10,10 @@ from app.utils.logger import logger
 from app.utils.async_task_queue import AsyncTaskQueue, Task 
 from app.utils.image_file import ImageFile, ImageContainer
 from app.utils.image_count import ImageCount
-from app.utils.helpers import random_seed, idler_message, CARDINALS
+from app.utils.helpers import random_seed, CARDINALS
+from app.views.view_helpers import create_image, idler_message
 
 from app.sd_apis.abstract_api import AbstractAPI
-
-
-# -------------------------------
-# Helper functions
-# -------------------------------
-def create_image(image: ImageContainer, sd_api: AbstractAPI) -> ImageFile:
-    return sd_api.generate_image(
-        prompt=image.prompt,
-        negativeprompt=image.negative_prompt,
-        seed=image.seed,
-        sub_seed=image.sub_seed,
-        variation_strength=image.variation_strength,
-        width=image.width,
-        height=image.height,
-        sd_model=Settings.txt2img.models[image.model].sd_model,
-        workflow=image.workflow,
-        workflow_map=image.workflow_map,
-    )
 
 
 # The top level view for generating an image
@@ -80,7 +63,7 @@ class GenerateImageView(discord.ui.View):
         )
         for label, image in zip(labels, self.images):
             self.add_item(
-                VariationButton(
+                VaryImageButton(
                     image=image,
                     label=label,
                     sd_api=self.sd_api,
@@ -106,7 +89,7 @@ class GenerateImageView(discord.ui.View):
             label = labels[i]
             image = images[i]
             self.add_item(
-                RetryButton(
+                RetryImageButton(
                     image=image,
                     sd_api=self.sd_api,
                     logger=self._logger,
@@ -178,7 +161,7 @@ class UpscaleButton(discord.ui.Button):
 # ----------------------------------------------
 # Variation button class
 # ----------------------------------------------
-class VariationButton(discord.ui.Button):
+class VaryImageButton(discord.ui.Button):
     def __init__(
         self,
         image: ImageContainer,
@@ -241,7 +224,7 @@ class VariationButton(discord.ui.Button):
 # ----------------------------------------------
 # Retry button class
 # ----------------------------------------------
-class RetryButton(discord.ui.Button):
+class RetryImageButton(discord.ui.Button):
     def __init__(
         self,
         image: ImageContainer,
