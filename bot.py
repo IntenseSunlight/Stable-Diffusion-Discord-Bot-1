@@ -48,6 +48,7 @@ from app.utils.async_task_queue import AsyncTaskQueue
 from app.commands.txt2img_cmds import Txt2ImageCommands
 from app.commands.img2img_cmds import Img2ImageCommands, UpscalerCommands
 from app.commands.img2vid_cmds import Img2VideoCommands
+from app.commands.txt2vid_cmds import Txt2VideoCommands
 
 
 # upfront checks
@@ -105,6 +106,13 @@ if Settings.has_command(GroupCommands.img2vid):
         GroupCommands.img2vid.name, "Create video from image"
     )
     Img2VideoCommands(img2vid_group)
+
+# txt2vid
+if Settings.has_command(GroupCommands.txt2vid):
+    txt2vid_group = Bot.create_subgroup(
+        GroupCommands.txt2vid.name, "Create video from text"
+    )
+    Txt2VideoCommands(txt2vid_group)
 
 # upscaler
 if Settings.has_command(GroupCommands.upscaler):

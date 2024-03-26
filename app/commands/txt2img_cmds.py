@@ -1,7 +1,7 @@
 import os
 import discord
 import asyncio
-from typing import List, cast
+from typing import List, Tuple, cast
 from app.sd_apis.api_handler import Sd
 from app.utils.async_task_queue import AsyncTaskQueue, Task
 from app.utils.helpers import random_seed, CARDINALS
@@ -51,8 +51,6 @@ class Txt2ImageCommands(AbstractCommand):
 
         # subcommands must be bound in the constructor
         # all subcommands must be ascync functions
-        if not commands:
-            raise ValueError("No commands specified for Txt2ImageCommands")
         if "random" in commands:
             self.bind(self.random_image, "random", "Generate random image")
         if "image" in commands:
@@ -122,7 +120,8 @@ class Txt2ImageCommands(AbstractCommand):
 
     async def _random_image(
         self, ctx: discord.ApplicationContext, model: str, orientation: str
-    ):
+    ) -> Tuple[List[ImageContainer], List[str], discord.ApplicationContext]:
+
         model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
         response = await ctx.respond(
             f"Generating {model_def.n_images} random images...waiting to start",
@@ -255,7 +254,7 @@ class Txt2ImageCommands(AbstractCommand):
         model: str,
         orientation: str,
         negative_prompt: str,
-    ) -> ImageContainer:
+    ) -> Tuple[ImageContainer, discord.ApplicationContext]:
 
         model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
         response = await ctx.respond(

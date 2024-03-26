@@ -136,8 +136,15 @@ class ImageContainer:
 
 @dataclass
 class VideoContainer(ImageContainer):
+
+    @classmethod
+    def from_image_container(cls, image_container: ImageContainer, **kwargs) -> Self:
+        return cls(**image_container.__dict__, **kwargs)
+
+    def copy(self) -> Self:
+        return self.__class__(**self.__dict__)
+
     image_in: ImageFile = None
-    image: ImageFile = None
     video_format: str = None
     loop_count: int = None
     ping_pong: bool = None
