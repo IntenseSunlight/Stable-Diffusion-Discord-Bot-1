@@ -10,7 +10,7 @@ from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
 from app.utils.image_file import ImageFile, ImageContainer
 from app.commands.txt2img_cmds import process_image, Txt2ImageCommands
 from app.views.generate_animation import GenerateAnimationPreviewView
-from app.views.view_helpers import create_image
+from app.views.view_helpers import create_animation
 
 
 # -------------------------------
@@ -23,7 +23,7 @@ async def process_animation(
     n_images: int,
     response: discord.ApplicationContext,
 ) -> ImageContainer:
-    image.image: ImageFile = await asyncio.to_thread(create_image, image, Sd.api)
+    image.image: ImageFile = await asyncio.to_thread(create_animation, image, Sd.api)
 
     cardinal = CARDINALS[min(i, len(CARDINALS) - 1)]
     percent = int((i + 1) / n_images * 100)
@@ -68,8 +68,8 @@ class Txt2VideoCommands(Txt2ImageCommands):
         ctx: discord.ApplicationContext,
         model: discord.Option(
             str,
-            choices=list(Settings.txt2vid.preview_models.keys()),
-            default=list(Settings.txt2vid.preview_models.keys())[0],
+            choices=list(Settings.txt2vid.models.keys()),
+            default=list(Settings.txt2vid.models.keys())[0],
             description="Which model should be used?",
         ),
         orientation: discord.Option(
@@ -83,8 +83,13 @@ class Txt2VideoCommands(Txt2ImageCommands):
             await ctx.respond("This command cannot be used in direct messages.")
             return
 
+        model_def = Settings.txt2vid.models[model]
         images, title_prompts, response = await self._random_image(
-            ctx, model, orientation
+            ctx=ctx,
+            model_def=model_def,
+            workflow_api_file=model_def.preview_workflow_api,
+            workflow_api_map_file=model_def.preview_workflow_api_map,
+            orientation=orientation,
         )
         if images is None:
             return
@@ -154,8 +159,16 @@ class Txt2VideoCommands(Txt2ImageCommands):
             await ctx.respond("This command cannot be used in direct messages.")
             return
 
+        model_def = Settings.txt2vid.models[model]
         images, response = await self._generate_image(
-            ctx, prompt, style, model, orientation, negative_prompt
+            ctx=ctx,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            style=style,
+            model_def=model_def,
+            workflow_api_file=model_def.preview_workflow_api,
+            workflow_api_map_file=model_def.preview_workflow_api_map,
+            orientation=orientation,
         )
 
         command_name = (

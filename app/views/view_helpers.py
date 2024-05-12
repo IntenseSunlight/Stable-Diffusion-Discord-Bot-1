@@ -61,7 +61,7 @@ def create_image(image: ImageContainer, sd_api: AbstractAPI) -> ImageFile:
         variation_strength=image.variation_strength,
         width=image.width,
         height=image.height,
-        sd_model=Settings.txt2img.models[image.model].sd_model,
+        sd_model=image.model_def.sd_model,
         workflow=image.workflow,
         workflow_map=image.workflow_map,
     )
@@ -70,7 +70,7 @@ def create_image(image: ImageContainer, sd_api: AbstractAPI) -> ImageFile:
 def create_video(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFile:
     return sd_api.generate_image(
         image_file=video_def.image_in.image_filename,
-        sd_model=video_def.model,
+        sd_model=video_def.model_def.sd_model,
         seed=video_def.seed,
         sub_seed=video_def.sub_seed,
         variation_strength=video_def.variation_strength,
@@ -89,11 +89,12 @@ def create_video(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFile:
 
 def create_animation(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFile:
     return sd_api.generate_image(
-        image_file=video_def.image_in.image_filename,
-        sd_model=video_def.model,
+        sd_model=video_def.model_def.sd_model,
         seed=video_def.seed,
         sub_seed=video_def.sub_seed,
         variation_strength=video_def.variation_strength,
+        prompt=video_def.prompt,
+        negativeprompt=video_def.negative_prompt,
         width=video_def.width,
         height=video_def.height,
         video_format=video_def.video_format,

@@ -1,0 +1,131 @@
+{
+    "animation_model": [
+        "31",
+        "inputs",
+        "model_name"
+    ],
+    "frame_rate": [
+        [
+            "28",
+            "inputs",
+            "frame_rate"
+        ],
+        [
+            "29",
+            "inputs",
+            "frame_rate"
+        ]
+    ],
+    "loop_count": [
+        [
+            "28",
+            "inputs",
+            "loop_count"
+        ],
+        [
+            "29",
+            "inputs",
+            "loop_count"
+        ]
+    ],
+    "ping_pong": [
+        [
+            "28",
+            "inputs",
+            "pingpong"
+        ],
+        [
+            "29",
+            "inputs",
+            "pingpong"
+        ]
+    ],
+    "sd_model": [
+        "22",
+        "inputs",
+        "ckpt_name"
+    ],
+    "seed": [
+        [
+            "40",
+            "inputs",
+            "seed"
+        ],
+        [
+            "42",
+            "inputs",
+            "seed"
+        ]
+    ],
+    "subseed": [
+        [
+            "40",
+            "inputs",
+            "variation_seed"
+        ],
+        [
+            "42",
+            "inputs",
+            "variation_seed"
+        ]
+    ],
+    "variation_strength": [
+        [
+            "40",
+            "inputs",
+            "variation_strength"
+        ],
+        [
+            "42",
+            "inputs",
+            "variation_strength"
+        ]
+    ],
+    "video_format": [
+        [
+            "28",
+            "inputs",
+            {
+                "gif": {
+                    "format": "image/gif"
+                },
+                "mp4": {
+                    "crf": 19,
+                    "format": "video/h264-mp4",
+                    "pix_fmt": "yuv420p",
+                    "save_metadata": true
+                }
+            }
+        ],
+        [
+            "29",
+            "inputs",
+            {
+                "gif": {
+                    "format": "image/gif"
+                },
+                "mp4": {
+                    "crf": 19,
+                    "format": "video/h264-mp4",
+                    "pix_fmt": "yuv420p",
+                    "save_metadata": true
+                }
+            }
+        ]
+    ],
+    "video_frames": [
+        "9",
+        "inputs",
+        "batch_size"
+    ],
+	"prompt": [
+		"3",
+		"inputs",
+		"text"
+	],
+	"negativeprompt": [
+		"6",
+		"inputs",
+		"text"
+	]
+}

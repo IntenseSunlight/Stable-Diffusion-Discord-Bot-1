@@ -199,7 +199,7 @@ class VaryVideoButton(discord.ui.Button):
         embed = discord.Embed(
             title="Video Result",
             description=(
-                f"Model: `{var_image.model}`\n"
+                f"Model: `{var_image.model_def.display_name}`\n"
                 f"Motion Amount: `{var_image.motion_bucket_id}`\n"
                 f"Number of frames: `{var_image.video_frames}`\n"
                 f"Frame rate: `{var_image.frame_rate}`\n"
@@ -275,7 +275,7 @@ class RetryVideoButton(discord.ui.Button):
         embed = discord.Embed(
             title="Video Result",
             description=(
-                f"Model: `{var_image.model}`\n"
+                f"Model: `{var_image.model_def.display_name}`\n"
                 f"Motion Amount: `{var_image.motion_bucket_id}`\n"
                 f"Number of frames: `{var_image.video_frames}`\n"
                 f"Frame rate: `{var_image.frame_rate}`\n"

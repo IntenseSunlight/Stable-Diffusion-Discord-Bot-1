@@ -4,9 +4,9 @@ import asyncio
 from typing import List, Tuple, cast
 from app.sd_apis.api_handler import Sd
 from app.utils.async_task_queue import AsyncTaskQueue, Task
-from app.utils.helpers import random_seed, CARDINALS
+from app.utils.helpers import random_seed, load_workflow_and_map, CARDINALS
 from app.utils import GeneratePrompt, Orientation, ImageCount, PromptConstants
-from app.settings import Settings, GroupCommands, Txt2ImgSingleModel
+from app.settings import Settings, GroupCommands, Txt2ImgSingleModel, Txt2VidSingleModel
 from app.utils.image_file import ImageFile, ImageContainer
 from app.views.generate_image import GenerateImageView
 from app.views.view_helpers import create_image
@@ -79,8 +79,13 @@ class Txt2ImageCommands(AbstractCommand):
             await ctx.respond("This command cannot be used in direct messages.")
             return
 
+        model_def = Settings.txt2img.models[model]
         images, title_prompts, response = await self._random_image(
-            ctx, model, orientation
+            ctx=ctx,
+            model_def=model_def,
+            workflow_api_file=model_def.workflow_api,
+            workflow_api_map_file=model_def.workflow_api_map,
+            orientation=orientation,
         )
         if images is None:
             return
@@ -119,26 +124,33 @@ class Txt2ImageCommands(AbstractCommand):
         await response.delete_original_response()
 
     async def _random_image(
-        self, ctx: discord.ApplicationContext, model: str, orientation: str
+        self,
+        ctx: discord.ApplicationContext,
+        model_def: Txt2ImgSingleModel | Txt2VidSingleModel,
+        workflow_api_file: str,
+        workflow_api_map_file: str,
+        orientation: str,
     ) -> Tuple[List[ImageContainer], List[str], discord.ApplicationContext]:
 
-        model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
         response = await ctx.respond(
             f"Generating {model_def.n_images} random images...waiting to start",
             ephemeral=True,
             delete_after=1800,
         )
-        workflow, workflow_map = self._load_workflow_and_map(model_def)
+        workflow, workflow_map = load_workflow_and_map(
+            workflow_api_file=workflow_api_file,
+            workflow_api_map_file=workflow_api_map_file,
+        )
 
         n_images = model_def.n_images
         title_prompts: List[str] = []
         tasks = []
         for i in range(n_images):
             image = ImageContainer(
+                model_def=model_def,
                 seed=random_seed(),
                 sub_seed=random_seed(),
                 variation_strength=Settings.txt2img.variation_strength,
-                model=model,
                 workflow=workflow,
                 workflow_map=workflow_map,
             )
@@ -212,8 +224,16 @@ class Txt2ImageCommands(AbstractCommand):
             await ctx.respond("This command cannot be used in direct messages.")
             return
 
+        model_def = Settings.txt2img.models[model]
         images, response = await self._generate_image(
-            ctx, prompt, style, model, orientation, negative_prompt
+            ctx=ctx,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            style=style,
+            model_def=model_def,
+            workflow_api_file=model_def.workflow_api,
+            workflow_api_map_file=model_def.workflow_api_map,
+            orientation=orientation,
         )
 
         command_name = (
@@ -251,19 +271,23 @@ class Txt2ImageCommands(AbstractCommand):
         ctx: discord.ApplicationContext,
         prompt: str,
         style: str,
-        model: str,
+        model_def: Txt2ImgSingleModel | Txt2VidSingleModel,
+        workflow_api_file: str,
+        workflow_api_map_file: str,
         orientation: str,
         negative_prompt: str,
     ) -> Tuple[ImageContainer, discord.ApplicationContext]:
 
-        model_def: Txt2ImgSingleModel = Settings.txt2img.models[model]
         response = await ctx.respond(
             f"Generating {model_def.n_images} images...waiting to start",
             ephemeral=True,
             delete_after=1800,
         )
 
-        workflow, workflow_map = self._load_workflow_and_map(model_def)
+        workflow, workflow_map = load_workflow_and_map(
+            workflow_api_file=workflow_api_file,
+            workflow_api_map_file=workflow_api_map_file,
+        )
 
         banned_words = [
             "nude",
@@ -291,10 +315,10 @@ class Txt2ImageCommands(AbstractCommand):
         n_images = model_def.n_images
         for i in range(model_def.n_images):
             image = ImageContainer(
+                model_def=model_def,
                 seed=random_seed(),
                 sub_seed=random_seed(),
                 variation_strength=Settings.txt2img.variation_strength,
-                model=model,
                 prompt=final_prompt.prompt,
                 negative_prompt=final_prompt.negativeprompt,
                 width=width,

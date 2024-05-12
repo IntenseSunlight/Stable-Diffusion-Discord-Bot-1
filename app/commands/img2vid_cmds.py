@@ -11,7 +11,7 @@ from app.settings import (
 from app.sd_apis.api_handler import Sd
 from app.utils.async_task_queue import AsyncTaskQueue, Task
 from app.utils.image_file import ImageFile, VideoContainer
-from app.utils.helpers import random_seed
+from app.utils.helpers import random_seed, load_workflow_and_map
 from app.views.view_helpers import idler_message, create_video
 from app.views.generate_video import GenerateVideoView
 from .abstract_command import AbstractCommand
@@ -121,14 +121,14 @@ class Img2VideoCommands(AbstractCommand):
             )
             return
 
-        workflow, workflow_map = self._load_workflow_and_map(model_def)
+        workflow, workflow_map = load_workflow_and_map(model_def)
 
         video_container = VideoContainer(
             image_in=image,
             seed=random_seed(),
             sub_seed=random_seed(),
             variation_strength=Settings.img2vid.variation_strength,
-            model=model_def.sd_model,
+            sd_model=model_def.sd_model,
             width=model_def.width,
             height=model_def.height,
             video_format=video_format,

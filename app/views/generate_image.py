@@ -123,7 +123,7 @@ class UpscaleButton(discord.ui.Button):
         )
         itask = asyncio.create_task(idler_message("Upscaling the image...", interaction))
 
-        model_def = Settings.txt2img.models[self.image.model]
+        model_def = self.image.model_def
         def process_image(image: ImageFile, sd_api: AbstractAPI) -> ImageFile:
             sd_api.set_upscaler_model(model_def.upscaler_model)
             return sd_api.upscale_image(image)
@@ -243,7 +243,7 @@ class RetryImageButton(discord.ui.Button):
             ephemeral=True,
             delete_after=1800,
         )
-        model_def = Settings.txt2img.models[self.image.model]
+        model_def = self.image.model_def
 
         # actual image is processed in separate thread as task
         async def process_image(
@@ -301,7 +301,7 @@ class RetryImageButton(discord.ui.Button):
             description=(
                 f"Prompt: `{self.image.prompt}`\n"
                 f"Negative Prompt: `{self.image.negative_prompt}`\n"
-                f"Model: `{self.image.model}`\n"
+                f"Model: `{self.image.model_def.display_name}`\n"
                 f"Total generated images: `{ImageCount.get_count()}`\n\n"
             ),
             color=discord.Color.blurple(),
@@ -338,7 +338,7 @@ class UpscaleOnlyView(discord.ui.View):
             delete_after=1800,
         )
         itask = asyncio.create_task(idler_message("Upscaling the image...", interaction))
-        model_def = Settings.txt2img.models[self.image.model]
+        model_def = self.image.model_def
 
         def process_image(image: ImageFile, sd_api: AbstractAPI) -> ImageFile:
             sd_api.set_upscaler_model(model_def.upscaler_model)

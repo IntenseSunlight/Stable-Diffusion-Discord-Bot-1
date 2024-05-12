@@ -204,11 +204,16 @@ class Txt2VidSingleModel(BaseModel):
     sd_model: str = "v1-5-pruned-emaonly.ckpt"
     animation_model: str = "mm_sd_v14.ckpt"
     motion_lora_model: Optional[str] = "v2_lora_PanRight.ckpt" 
+    n_images: int = 4  # number of preview images to generate per request
+    width: Optional[int] = 512
+    height: Optional[int] = 512
     frame_rate: Optional[int] = 8 
     frame_count: Optional[int] = 48
     frame_rate_choices: Optional[List[int]] = [5, 8, 10, 12, 15, 20, 25, 30]
     frame_count_choices: Optional[List[int]] = [20, 25, 30, 48, 60]
     loop_count: Optional[int] = 0
+    preview_workflow_api: Optional[str] = "default_api.json"
+    preview_workflow_api_map: Optional[str] = "default_api_map.json"
     workflow_api: Optional[str] = "animated_diff_txt2vid_api.json"
     workflow_api_map: Optional[str] = "animated_diff_txt2vid_api_map.json"
 
@@ -222,30 +227,16 @@ class Txt2VidContainerModel(BaseModel):
     models: Dict[str, Txt2VidSingleModel] = {
         Txt2VidSingleModel().display_name: Txt2VidSingleModel()
     }
-    preview_models: Dict[str, Txt2ImgSingleModel] = {
-        Txt2ImgSingleModel().display_name: Txt2ImgSingleModel()
-    }
 
     def default_model(self) -> Txt2VidSingleModel:
         return Txt2VidSingleModel()
-
-    def default_preview_model(self) -> Txt2ImgSingleModel:
-        return Txt2ImgSingleModel()
 
     def add_model(self, model_dict: Dict):
         model = Txt2VidSingleModel(**model_dict)
         self.models.update({model.display_name: model})
 
-    def add_preview_model(self, model_dict: Dict):
-        model = Txt2ImgSingleModel(**model_dict)
-        self.preview_models.update({model.display_name: model})
-
     def remove_model(self, model_name: str):
         self.models.pop(model_name)
-
-    def remove_preview_model(self, model_name: str):
-        self.preview_models.pop(model_name)
-
 
 
 # Main Settings Model

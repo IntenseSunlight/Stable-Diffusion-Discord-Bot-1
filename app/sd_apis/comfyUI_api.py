@@ -411,14 +411,14 @@ class ComfyUIAPI(AbstractAPI):
         )
 
         # dump the workflow to a file, debugging
-        # with open("debug_workflow.json", "w") as f:
-        #    json.dump(out_workflow, f)
+        with open("debug_workflow.json", "w") as f:
+            json.dump(out_workflow, f)
 
         client_id = str(uuid.uuid4())
         ws = websocket.WebSocket()
         ws.connect(f"ws://{self.webui_url}/ws?clientId={client_id}")
         images = self._get_images(ws, out_workflow, client_id)
-        image_data = list(images.values())[0][0]
+        image_data = list(images.values())[0][-1]
         image_bytes, extension = image_data
         image = ImageFile(image_bytes=image_bytes)
         image.save(extension=extension)
@@ -452,7 +452,7 @@ class ComfyUIAPI(AbstractAPI):
         ws = websocket.WebSocket()
         ws.connect(f"ws://{self.webui_url}/ws?clientId={client_id}")
         images = self._get_images(ws, workflow, client_id)
-        image_data = list(images.values())[0][0]
+        image_data = list(images.values())[0][-1]
         image_bytes, extension = image_data
         image = ImageFile(image_bytes=image_bytes)
         image.save(extension=extension)

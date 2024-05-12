@@ -1,11 +1,11 @@
 # Miscellanous helper functions
 
 import os
+import json
 import random
-import asyncio
-import discord
 from datetime import datetime
-from app.settings import Settings
+from app.settings import Settings, Type_SingleModel
+from typing import Dict, Tuple
 import logging
 
 CARDINALS = ["first", "second", "third", "fourth", "fifth", "sixth", "umpteenth"]
@@ -52,3 +52,32 @@ def get_env_and_settings_paths():
         Settings.save_json(settings_path)
 
     return dotenv_path, settings_path
+
+
+def load_workflow_and_map(
+    *,
+    model_def: Type_SingleModel = None,
+    workflow_api_file: str = None,
+    workflow_api_map_file: str = None,
+) -> Tuple[Dict, Dict]:
+    if model_def is None and (
+        workflow_api_file is None or workflow_api_map_file is None
+    ):
+        raise ValueError(
+            "Either model_def or both workflow_api_file and workflow_api_map_file must be provided"
+        )
+
+    if model_def is not None:
+        workflow_api_file = model_def.workflow_api
+        workflow_api_map_file = model_def.workflow_api_map
+
+    workflow_folder = os.path.abspath(
+        os.path.join(get_base_dir(), Settings.files.workflows_folder)
+    )
+    with open(os.path.join(workflow_folder, workflow_api_file), "r") as f:
+        workflow_api = json.load(f)
+
+    with open(os.path.join(workflow_folder, workflow_api_map_file), "r") as f:
+        workflow_map = json.load(f)
+
+    return workflow_api, workflow_map

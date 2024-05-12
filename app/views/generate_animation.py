@@ -3,9 +3,9 @@ import random
 import discord
 import asyncio
 import logging
-from typing import Callable, List, cast
+from typing import List
 
-from app.settings import Settings
+from app.settings import Settings, Txt2VidSingleModel
 from app.utils.logger import logger
 from app.utils.async_task_queue import AsyncTaskQueue, Task
 from app.utils.image_file import ImageFile, VideoContainer, ImageContainer
@@ -18,7 +18,7 @@ from app.views.view_helpers import (
     idler_message,
     ItemSelect,
 )
-from app.utils.helpers import random_seed
+from app.utils.helpers import random_seed, load_workflow_and_map
 
 from app.sd_apis.abstract_api import AbstractAPI
 
@@ -65,14 +65,12 @@ class GenerateAnimationPreviewView(discord.ui.View):
 
         # row 2: retry buttons
         # some may be repeats (same prompt)
-        # fmt: off
         n_images = len(set([img.prompt for img in images]))
         labels = (
             [""] if n_images < 2
             else ["L", "R"] if n_images == 2
             else [f"{i+1}" for i in range(n_images)]
         )
-        # fmt: on
 
         for i in range(n_images):
             label = labels[i]
@@ -123,13 +121,12 @@ class ToAnimationButton(discord.ui.Button):
         self.sd_api = sd_api
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_message(
-            f"Creating an animation of the image...",
-            ephemeral=True,
-            delete_after=1800,
-        )
+        model_def = self.image.model_def
+        workflow, workflow_map = load_workflow_and_map(model_def=model_def)
+        animation = VideoContainer.from_image_container(image_container=self.image)
+        animation.workflow = workflow 
+        animation.workflow_map = workflow_map 
 
-        animation = VideoContainer.from_image_container()
         await interaction.response.send_message(
             file=discord.File(
                 animation.image.image_object,
@@ -144,7 +141,6 @@ class ToAnimationButton(discord.ui.Button):
 class GenerateAnimationView(discord.ui.View):
     def __init__(
         self,
-        *,
         image: VideoContainer,
         sd_api: AbstractAPI = None,
         logger: logging.Logger = logger,
@@ -318,7 +314,7 @@ class VaryAnimationButton(discord.ui.Button):
         embed = discord.Embed(
             title="Video Result",
             description=(
-                f"Model: `{var_image.model}`\n"
+                f"Model: `{var_image.model_def.display_name}`\n"
                 f"Motion Amount: `{var_image.motion_bucket_id}`\n"
                 f"Number of frames: `{var_image.video_frames}`\n"
                 f"Frame rate: `{var_image.frame_rate}`\n"
@@ -372,11 +368,14 @@ class RetryAnimationButton(discord.ui.Button):
         var_image = self.image.copy()
         var_image.image.create_file_name()
 
-        task = await AsyncTaskQueue.create_and_add_task(
-            create_animation,
-            args=(var_image, self.sd_api),
-            task_owner=interaction.user.id,
-        )
+        var_image.image = create_animation(var_image, self.sd_api)
+        #task = await AsyncTaskQueue.create_and_add_task(
+        #    create_animation,
+        #    args=(var_image, self.sd_api),
+        #    task_owner=interaction.user.id,
+        #)
+
+        task = "ok"
         if task is None:
             self._logger.error(f"Failed to create task for image, queue full.")
             itask.cancel()
@@ -385,7 +384,7 @@ class RetryAnimationButton(discord.ui.Button):
             )
             return
 
-        var_image.image: ImageFile = await task.wait_result()
+        #var_image.image: ImageFile = await task.wait_result()
         itask.cancel()
         self._logger.info(
             f"Generated Image {ImageCount.increment()}: {os.path.basename(var_image.image.image_filename)}"
@@ -394,7 +393,7 @@ class RetryAnimationButton(discord.ui.Button):
         embed = discord.Embed(
             title="Video Result",
             description=(
-                f"Model: `{var_image.model}`\n"
+                f"Model: `{var_image.model_def.display_name}`\n"
                 f"Motion Amount: `{var_image.motion_bucket_id}`\n"
                 f"Number of frames: `{var_image.video_frames}`\n"
                 f"Frame rate: `{var_image.frame_rate}`\n"

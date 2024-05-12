@@ -15,7 +15,7 @@ class TestVideoContainer(unittest.TestCase):
             final_prompt="Test final prompt",
             width=512,
             height=512,
-            model="test_model",
+            sd_model="test_model",
             workflow="test_workflow.json",
             workflow_map="test_workflow_map.json",
         )
@@ -33,7 +33,7 @@ class TestVideoContainer(unittest.TestCase):
         self.assertEqual(img_container.final_prompt, "Test final prompt")
         self.assertEqual(img_container.width, 512)
         self.assertEqual(img_container.height, 512)
-        self.assertEqual(img_container.model, "test_model")
+        self.assertEqual(img_container.sd_model, "test_model")
         self.assertEqual(img_container.workflow, "test_workflow.json")
         self.assertEqual(img_container.workflow_map, "test_workflow_map.json")
 
@@ -60,7 +60,7 @@ class TestVideoContainer(unittest.TestCase):
         self.assertEqual(vid_container.final_prompt, "Test final prompt")
         self.assertEqual(vid_container.width, 512)
         self.assertEqual(vid_container.height, 512)
-        self.assertEqual(vid_container.model, "test_model")
+        self.assertEqual(vid_container.sd_model, "test_model")
         self.assertEqual(vid_container.workflow, "test_workflow.json")
         self.assertEqual(vid_container.workflow_map, "test_workflow_map.json")
         self.assertIsNotNone(vid_container.image_in)

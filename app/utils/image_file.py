@@ -8,7 +8,12 @@ from PIL import Image
 from typing import Tuple
 from typing_extensions import Self
 from dataclasses import dataclass
-from app.settings import Settings
+from app.settings import (
+    Settings,
+    Txt2ImgSingleModel,
+    Txt2VidSingleModel,
+    Img2VidSingleModel,
+)
 from .helpers import get_base_dir
 
 
@@ -120,6 +125,7 @@ class ImageContainer:
     def copy(self) -> Self:
         return self.__class__(**self.__dict__)
 
+    model_def: Txt2ImgSingleModel | Txt2VidSingleModel | Txt2VidSingleModel = None
     image: ImageFile = None
     seed: int = None
     sub_seed: int = None
@@ -129,7 +135,6 @@ class ImageContainer:
     final_prompt: str = None
     width: int = None
     height: int = None
-    model: str = None
     workflow: str = None
     workflow_map: str = None
 
@@ -139,7 +144,9 @@ class VideoContainer(ImageContainer):
 
     @classmethod
     def from_image_container(cls, image_container: ImageContainer, **kwargs) -> Self:
-        return cls(**image_container.__dict__, **kwargs)
+        kwargs_in = image_container.__dict__.copy()
+        kwargs_in.update(kwargs)
+        return cls(**kwargs_in)
 
     def copy(self) -> Self:
         return self.__class__(**self.__dict__)
