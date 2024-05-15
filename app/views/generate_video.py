@@ -37,8 +37,8 @@ class GenerateVideoView(discord.ui.View):
         self._logger = logger
 
         # row 0: select motion amount
-        def set_motion_amount(value: int):
-            self.image.motion_bucket_id = value
+        def set_motion_amount(value: int | str):
+            self.image.motion_bucket_id = int(value)
 
         self.add_item(
             ItemSelect(
@@ -57,8 +57,8 @@ class GenerateVideoView(discord.ui.View):
         )
 
         # row 1: select number of frames
-        def set_n_frames(value: int):
-            self.image.video_frames = value
+        def set_n_frames(value: int | str):
+            self.image.video_frames = int(value)
 
         self.add_item(
             ItemSelect(
@@ -77,8 +77,8 @@ class GenerateVideoView(discord.ui.View):
         )
 
         # row 2: select frame rate
-        def set_frame_rate(value: int):
-            self.image.frame_rate = value
+        def set_frame_rate(value: int | str):
+            self.image.frame_rate = int(value)
 
         self.add_item(
             ItemSelect(

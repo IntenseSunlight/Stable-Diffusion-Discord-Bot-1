@@ -126,6 +126,12 @@ class ToAnimationButton(discord.ui.Button):
         animation = VideoContainer.from_image_container(image_container=self.image)
         animation.workflow = workflow 
         animation.workflow_map = workflow_map 
+        animation.animation_model = model_def.animation_model
+        animation.video_format = Settings.files.default_video_type 
+        animation.frame_rate = Settings.txt2vid.default_model().frame_rate
+        animation.video_frames = Settings.txt2vid.default_model().frame_count
+        animation.ping_pong = False
+        animation.image_in = self.image.image
 
         await interaction.response.send_message(
             file=discord.File(
@@ -151,29 +157,29 @@ class GenerateAnimationView(discord.ui.View):
         self.sd_api = sd_api
         self._logger = logger
 
-        # row 0: select motion amount
-        def set_motion_amount(value: int):
-            self.image.motion_bucket_id = value
+        # row 0: select video format type 
+        def set_format_type(value: str):
+            self.image.video_format = value
 
         self.add_item(
             ItemSelect(
-                placeholder="Select the amount of motion",
+                placeholder="Select the type of file format",
                 options=[
                     discord.SelectOption(
-                        label=f"{motion_amount} motion",
-                        value=str(motion_amount),
-                        default=motion_amount == self.image.motion_bucket_id,
+                        label=f"{format_type} file",
+                        value=format_type,
+                        default=format_type == self.image.video_format 
                     )
-                    for motion_amount in Settings.img2vid.default_model().motion_amount_choices
+                    for format_type in Settings.files.video_types
                 ],
                 row=0,
-                result_callback=set_motion_amount,
+                result_callback=set_format_type,
             )
         )
 
         # row 1: select number of frames
-        def set_n_frames(value: int):
-            self.image.video_frames = value
+        def set_n_frames(value: int|str):
+            self.image.video_frames = int(value)
 
         self.add_item(
             ItemSelect(
@@ -182,9 +188,9 @@ class GenerateAnimationView(discord.ui.View):
                     discord.SelectOption(
                         label=f"{n_frames} frames",
                         value=str(n_frames),
-                        default=n_frames == self.image.video_frames,
+                        default=n_frames == self.image.video_frames 
                     )
-                    for n_frames in Settings.img2vid.default_model().frame_count_choices
+                    for n_frames in Settings.txt2vid.default_model().frame_count_choices
                 ],
                 row=1,
                 result_callback=set_n_frames,
@@ -192,8 +198,8 @@ class GenerateAnimationView(discord.ui.View):
         )
 
         # row 2: select frame rate
-        def set_frame_rate(value: int):
-            self.image.frame_rate = value
+        def set_frame_rate(value: int|str):
+            self.image.frame_rate = int(value)
 
         self.add_item(
             ItemSelect(
@@ -202,16 +208,36 @@ class GenerateAnimationView(discord.ui.View):
                     discord.SelectOption(
                         label=f"{frame_rate} fps",
                         value=str(frame_rate),
-                        default=frame_rate == self.image.frame_rate,
+                        default=frame_rate == self.image.frame_rate 
                     )
-                    for frame_rate in Settings.img2vid.default_model().frame_rate_choices
+                    for frame_rate in Settings.txt2vid.default_model().frame_rate_choices
                 ],
                 row=2,
                 result_callback=set_frame_rate,
             )
         )
 
-        # row 3: variation button, weak
+        # row 3: select ping-pong
+        def set_ping_pong(value: str):
+            self.image.ping_pong = True if value == "enabled" else False
+
+        self.add_item(
+            ItemSelect(
+                placeholder="Select the ping-pong option",
+                options=[
+                    discord.SelectOption(
+                        label=f"Ping-pong {ping_pong}",
+                        value=ping_pong,
+                        default=ping_pong == ("enabled" if self.image.ping_pong else "disabled")
+                    )
+                    for ping_pong in ["enabled", "disabled"]
+                ],
+                row=3,
+                result_callback=set_ping_pong,
+            )
+        )
+
+        # row 4: variation button, weak
         self.add_item(
             VaryAnimationButton(
                 image=image,
@@ -219,13 +245,13 @@ class GenerateAnimationView(discord.ui.View):
                 sd_api=self.sd_api,
                 logger=self._logger,
                 vary_weak=True,
-                row=3,
+                row=4,
                 style=discord.ButtonStyle.primary,
                 emoji="🌱",
             )
         )
 
-        # row 3: variation button, strong
+        # row 4: variation button, strong
         self.add_item(
             VaryAnimationButton(
                 image=image,
@@ -233,21 +259,21 @@ class GenerateAnimationView(discord.ui.View):
                 sd_api=self.sd_api,
                 logger=self._logger,
                 vary_weak=False,
-                row=3,
+                row=4,
                 style=discord.ButtonStyle.primary,
-                emoji="🎥",
+                emoji="🌳",
             )
         )
 
-        # row 3: retry buttons
+        # row 4: retry/animate buttons
         self.add_item(
             RetryAnimationButton(
                 image=image,
                 sd_api=self.sd_api,
                 logger=self._logger,
-                row=3,
+                row=4,
                 style=discord.ButtonStyle.primary,
-                emoji="🔄",
+                emoji="▶️",
             )
         )
 
@@ -368,14 +394,14 @@ class RetryAnimationButton(discord.ui.Button):
         var_image = self.image.copy()
         var_image.image.create_file_name()
 
-        var_image.image = create_animation(var_image, self.sd_api)
-        #task = await AsyncTaskQueue.create_and_add_task(
-        #    create_animation,
-        #    args=(var_image, self.sd_api),
-        #    task_owner=interaction.user.id,
-        #)
+        #var_image.image = create_animation(var_image, self.sd_api)
+        task = await AsyncTaskQueue.create_and_add_task(
+            create_animation,
+            args=(var_image, self.sd_api),
+            task_owner=interaction.user.id,
+        )
 
-        task = "ok"
+        #task = "ok"
         if task is None:
             self._logger.error(f"Failed to create task for image, queue full.")
             itask.cancel()
@@ -384,7 +410,7 @@ class RetryAnimationButton(discord.ui.Button):
             )
             return
 
-        #var_image.image: ImageFile = await task.wait_result()
+        var_image.image: ImageFile = await task.wait_result()
         itask.cancel()
         self._logger.info(
             f"Generated Image {ImageCount.increment()}: {os.path.basename(var_image.image.image_filename)}"
@@ -394,7 +420,7 @@ class RetryAnimationButton(discord.ui.Button):
             title="Video Result",
             description=(
                 f"Model: `{var_image.model_def.display_name}`\n"
-                f"Motion Amount: `{var_image.motion_bucket_id}`\n"
+                f"Motion model: `{var_image.animation_model}`\n"
                 f"Number of frames: `{var_image.video_frames}`\n"
                 f"Frame rate: `{var_image.frame_rate}`\n"
                 f"Use ping-pong: `{var_image.ping_pong}`\n"

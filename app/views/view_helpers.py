@@ -16,7 +16,7 @@ class ItemSelect(discord.ui.Select):
         self.result_callback = result_callback
 
     async def callback(self, interaction: discord.Interaction):
-        self.result_callback(int(self.values[0]))
+        self.result_callback(self.values[0])
         await interaction.response.send_message(
             content=f"Value updated to {self.values[0]}",
             ephemeral=True,

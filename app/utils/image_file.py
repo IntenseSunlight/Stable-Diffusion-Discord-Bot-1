@@ -152,6 +152,7 @@ class VideoContainer(ImageContainer):
         return self.__class__(**self.__dict__)
 
     image_in: ImageFile = None
+    animation_model: str = None
     video_format: str = None
     loop_count: int = None
     ping_pong: bool = None
