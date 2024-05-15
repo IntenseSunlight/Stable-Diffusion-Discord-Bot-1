@@ -55,6 +55,7 @@ class AbstractAPI(ABC):
         ping_pong: Optional[bool] = None,
         workflow: Optional[Dict] = None,
         workflow_map: Optional[Dict] = None,
+        animation_model: Optional[str] = None,
     ) -> ImageFile:
         pass
 

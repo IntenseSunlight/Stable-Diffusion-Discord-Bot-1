@@ -89,6 +89,7 @@ def create_video(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFile:
 
 def create_animation(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFile:
     return sd_api.generate_image(
+        image_file=video_def.image_in.image_filename,
         sd_model=video_def.model_def.sd_model,
         seed=video_def.seed,
         sub_seed=video_def.sub_seed,
@@ -105,6 +106,7 @@ def create_animation(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFil
         motion_bucket_id=video_def.motion_bucket_id,
         workflow=video_def.workflow,
         workflow_map=video_def.workflow_map,
+        animation_model=video_def.animation_model,
     )
 
 

@@ -382,6 +382,7 @@ class ComfyUIAPI(AbstractAPI):
         ping_pong: Optional[bool] = None,
         workflow: Optional[Dict] = None,
         workflow_map: Optional[Dict] = None,
+        animation_model: Optional[str] = None,
     ) -> ImageFile:
         settings = {
             k: v
@@ -401,6 +402,7 @@ class ComfyUIAPI(AbstractAPI):
                 "video_frames": video_frames,
                 "motion_bucket_id": motion_bucket_id,
                 "ping_pong": ping_pong,
+                "animation_model": animation_model,
             }.items()
             if v is not None
         }
