@@ -121,14 +121,14 @@ class Img2VideoCommands(AbstractCommand):
             )
             return
 
-        workflow, workflow_map = load_workflow_and_map(model_def)
+        workflow, workflow_map = load_workflow_and_map(model_def=model_def)
 
         video_container = VideoContainer(
             image_in=image,
             seed=random_seed(),
             sub_seed=random_seed(),
             variation_strength=Settings.img2vid.variation_strength,
-            sd_model=model_def.sd_model,
+            model_def=model_def, 
             width=model_def.width,
             height=model_def.height,
             video_format=video_format,

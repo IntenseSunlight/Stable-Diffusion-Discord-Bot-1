@@ -131,7 +131,7 @@ class ToAnimationButton(discord.ui.Button):
         animation.frame_rate = Settings.txt2vid.default_model().frame_rate
         animation.video_frames = Settings.txt2vid.default_model().frame_count
         animation.ping_pong = False
-        animation.image_in = self.image.image
+        animation.image_in = self.image.image.copy()
 
         await interaction.response.send_message(
             file=discord.File(
@@ -188,9 +188,9 @@ class GenerateAnimationView(discord.ui.View):
                     discord.SelectOption(
                         label=f"{n_frames} frames",
                         value=str(n_frames),
-                        default=n_frames == self.image.video_frames 
+                        default=n_frames == self.image.model_def.frame_count
                     )
-                    for n_frames in Settings.txt2vid.default_model().frame_count_choices
+                    for n_frames in self.image.model_def.frame_count_choices 
                 ],
                 row=1,
                 result_callback=set_n_frames,
@@ -210,7 +210,7 @@ class GenerateAnimationView(discord.ui.View):
                         value=str(frame_rate),
                         default=frame_rate == self.image.frame_rate 
                     )
-                    for frame_rate in Settings.txt2vid.default_model().frame_rate_choices
+                    for frame_rate in self.image.model_def.frame_rate_choices 
                 ],
                 row=2,
                 result_callback=set_frame_rate,
@@ -341,7 +341,7 @@ class VaryAnimationButton(discord.ui.Button):
             title="Video Result",
             description=(
                 f"Model: `{var_image.model_def.display_name}`\n"
-                f"Motion Amount: `{var_image.motion_bucket_id}`\n"
+                f"Motion model: `{var_image.animation_model}`\n"
                 f"Number of frames: `{var_image.video_frames}`\n"
                 f"Frame rate: `{var_image.frame_rate}`\n"
                 f"Use ping-pong: `{var_image.ping_pong}`\n"
@@ -352,7 +352,7 @@ class VaryAnimationButton(discord.ui.Button):
         )
 
         await interaction.followup.send(
-            f"Varied This Generation:",
+            f"Varied this generation:",
             file=discord.File(
                 var_image.image.image_object,
                 os.path.basename(var_image.image.image_filename),
