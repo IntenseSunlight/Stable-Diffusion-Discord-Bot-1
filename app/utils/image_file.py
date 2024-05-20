@@ -4,6 +4,7 @@ import sys
 import base64
 import random
 import string
+import copy
 from PIL import Image
 from typing import Tuple
 from typing_extensions import Self
@@ -37,9 +38,7 @@ class ImageFile:
             self.from_bytes(image_bytes)
 
     def __copy__(self):
-        new_image_file = ImageFile(image_type=self.image_type)
-        new_image_file.from_b64(self.to_b64())
-        return new_image_file
+        return copy.deepcopy(self)
 
     def copy(self):
         return self.__copy__()
@@ -61,12 +60,14 @@ class ImageFile:
 
     @staticmethod
     def _random_filename(extension: str = Settings.files.default_image_type):
-        return os.path.join(
-            get_base_dir(),
-            Settings.files.image_folder,
-            "".join(random.choices(string.ascii_letters + string.digits, k=24))
-            + "."
-            + extension,
+        return os.path.abspath(
+            os.path.join(
+                get_base_dir(),
+                Settings.files.image_folder,
+                "".join(random.choices(string.ascii_letters + string.digits, k=24))
+                + "."
+                + extension,
+            )
         )
 
     def create_file_name(
@@ -123,7 +124,9 @@ class ImageFile:
 @dataclass
 class ImageContainer:
     def copy(self) -> Self:
-        return self.__class__(**self.__dict__)
+        new = self.__class__(**self.__dict__)
+        new.image = self.image.copy()
+        return new
 
     model_def: Txt2ImgSingleModel | Txt2VidSingleModel | Txt2VidSingleModel = None
     image: ImageFile = None

@@ -74,10 +74,14 @@ def load_workflow_and_map(
     workflow_folder = os.path.abspath(
         os.path.join(get_base_dir(), Settings.files.workflows_folder)
     )
-    with open(os.path.join(workflow_folder, workflow_api_file), "r") as f:
+    with open(
+        os.path.join(workflow_folder, workflow_api_file), "r", encoding="utf-8"
+    ) as f:
         workflow_api = json.load(f)
 
-    with open(os.path.join(workflow_folder, workflow_api_map_file), "r") as f:
+    with open(
+        os.path.join(workflow_folder, workflow_api_map_file), "r", encoding="utf-8"
+    ) as f:
         workflow_map = json.load(f)
 
     return workflow_api, workflow_map
