@@ -1,0 +1,521 @@
+{
+  "319": {
+    "inputs": {
+      "stop_at_clip_layer": -2,
+      "clip": [
+        "509",
+        1
+      ]
+    },
+    "class_type": "CLIPSetLastLayer",
+    "_meta": {
+      "title": "CLIP Skip"
+    }
+  },
+  "320": {
+    "inputs": {
+      "text": "(worst quality, low quality:1.4)",
+      "clip": [
+        "319",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative Prompt"
+    }
+  },
+  "321": {
+    "inputs": {
+      "text": "A young woman smiling and waving",
+      "clip": [
+        "319",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Prompt"
+    }
+  },
+  "322": {
+    "inputs": {
+      "vae_name": "vae-ft-mse-840000-ema-pruned.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "325": {
+    "inputs": {
+      "x": 0,
+      "y": 0,
+      "feather": 0,
+      "samples_to": [
+        "497",
+        0
+      ],
+      "samples_from": [
+        "350",
+        0
+      ]
+    },
+    "class_type": "LatentComposite",
+    "_meta": {
+      "title": "Latent Composite"
+    }
+  },
+  "334": {
+    "inputs": {
+      "samples": [
+        "541",
+        0
+      ],
+      "vae": [
+        "476",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "350": {
+    "inputs": {
+      "pixels": [
+        "517",
+        0
+      ],
+      "vae": [
+        "322",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "466": {
+    "inputs": {
+      "pixels": [
+        "471",
+        0
+      ],
+      "vae": [
+        "476",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "467": {
+    "inputs": {
+      "seed": 423860000711998,
+      "steps": 4,
+      "cfg": 7.5,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "karras",
+      "denoise": 0.42,
+      "model": [
+        "513",
+        0
+      ],
+      "positive": [
+        "512",
+        0
+      ],
+      "negative": [
+        "511",
+        0
+      ],
+      "latent_image": [
+        "466",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "Hires.fix"
+    }
+  },
+  "468": {
+    "inputs": {
+      "samples": [
+        "467",
+        0
+      ],
+      "vae": [
+        "476",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "469": {
+    "inputs": {
+      "model_name": "4x_NMKD-Siax_200k.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "Load Upscale Model"
+    }
+  },
+  "470": {
+    "inputs": {
+      "upscale_model": [
+        "469",
+        0
+      ],
+      "image": [
+        "334",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "AI Upscale"
+    }
+  },
+  "471": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "scale_by": 0.35000000000000003,
+      "image": [
+        "470",
+        0
+      ]
+    },
+    "class_type": "ImageScaleBy",
+    "_meta": {
+      "title": "Downscale Image"
+    }
+  },
+  "476": {
+    "inputs": {
+      "vae_name": "vae-ft-mse-840000-ema-pruned.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "485": {
+    "inputs": {
+      "blend_factor": 1,
+      "samples1": [
+        "325",
+        0
+      ],
+      "samples2": [
+        "497",
+        0
+      ]
+    },
+    "class_type": "LatentBlend",
+    "_meta": {
+      "title": "Latent Blend"
+    }
+  },
+  "492": {
+    "inputs": {
+      "image": "ComfyUI_00347_.png",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "497": {
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "batch_size": [
+        "501",
+        2
+      ]
+    },
+    "class_type": "ADE_EmptyLatentImageLarge",
+    "_meta": {
+      "title": "Animation Size"
+    }
+  },
+  "498": {
+    "inputs": {
+      "number_type": "integer",
+      "number": 20
+    },
+    "class_type": "Constant Number",
+    "_meta": {
+      "title": "Desired Interpolated Frame Rate"
+    }
+  },
+  "499": {
+    "inputs": {
+      "number_type": "float",
+      "number": 1.6
+    },
+    "class_type": "Constant Number",
+    "_meta": {
+      "title": "Animation Length in Seconds"
+    }
+  },
+  "500": {
+    "inputs": {
+      "number_type": "integer",
+      "number": 10
+    },
+    "class_type": "Constant Number",
+    "_meta": {
+      "title": "Base Frame Rate (FPS)"
+    }
+  },
+  "501": {
+    "inputs": {
+      "operation": "multiplication",
+      "number_a": [
+        "500",
+        0
+      ],
+      "number_b": [
+        "499",
+        0
+      ]
+    },
+    "class_type": "Number Operation",
+    "_meta": {
+      "title": "Get Latent Count"
+    }
+  },
+  "502": {
+    "inputs": {
+      "operation": "division",
+      "number_a": [
+        "498",
+        0
+      ],
+      "number_b": [
+        "500",
+        0
+      ]
+    },
+    "class_type": "Number Operation",
+    "_meta": {
+      "title": "Get Frame Multiplier"
+    }
+  },
+  "507": {
+    "inputs": {
+      "context_length": 16,
+      "context_stride": 4,
+      "context_overlap": 4,
+      "context_schedule": "uniform",
+      "closed_loop": true,
+      "fuse_method": "flat",
+      "use_on_equal_length": false,
+      "start_percent": 0,
+      "guarantee_steps": 1
+    },
+    "class_type": "ADE_AnimateDiffUniformContextOptions",
+    "_meta": {
+      "title": "Context Options◆Looped Uniform 🎭🅐🅓"
+    }
+  },
+  "509": {
+    "inputs": {
+      "ckpt_name": "protogenX53Photorealism_protogenX53.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "511": {
+    "inputs": {
+      "text": "(worst quality, low quality:1.4)",
+      "clip": [
+        "319",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Hgihres Negative Prompt"
+    }
+  },
+  "512": {
+    "inputs": {
+      "text": "A young woman smiling and waving",
+      "clip": [
+        "319",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Highres prompt"
+    }
+  },
+  "513": {
+    "inputs": {
+      "model_name": "mm_sd_v15.ckpt",
+      "beta_schedule": "sqrt_linear (AnimateDiff)",
+      "motion_scale": 1,
+      "apply_v2_models_properly": true,
+      "model": [
+        "509",
+        0
+      ],
+      "context_options": [
+        "507",
+        0
+      ]
+    },
+    "class_type": "ADE_AnimateDiffLoaderWithContext",
+    "_meta": {
+      "title": "AnimateDiff Loader [Legacy] 🎭🅐🅓①"
+    }
+  },
+  "517": {
+    "inputs": {
+      "mode": "resize",
+      "supersample": "false",
+      "resampling": "lanczos",
+      "rescale_factor": 1,
+      "resize_width": 512,
+      "resize_height": 512,
+      "image": [
+        "492",
+        0
+      ]
+    },
+    "class_type": "Image Resize",
+    "_meta": {
+      "title": "Image Resize"
+    }
+  },
+  "532": {
+    "inputs": {
+      "ckpt_name": "rife47.pth",
+      "clear_cache_after_n_frames": 10,
+      "multiplier": [
+        "502",
+        2
+      ],
+      "fast_mode": true,
+      "ensemble": true,
+      "scale_factor": 1,
+      "frames": [
+        "468",
+        0
+      ]
+    },
+    "class_type": "RIFE VFI",
+    "_meta": {
+      "title": "RIFE VFI (recommend rife47 and rife49)"
+    }
+  },
+  "535": {
+    "inputs": {
+      "frame_rate": 8,
+      "loop_count": 0,
+      "filename_prefix": "AnimateDiff",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "468",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "537": {
+    "inputs": {
+      "frame_rate": 8,
+      "loop_count": 0,
+      "filename_prefix": "AnimateDiff",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 20,
+      "save_metadata": true,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "334",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "541": {
+    "inputs": {
+      "seed": 423860000711998,
+      "steps": 20,
+      "cfg": 7.5,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "denoise": 0.85,
+      "noise_mode": "GPU(=A1111)",
+      "batch_seed_mode": "incremental",
+      "variation_seed": 1,
+      "variation_strength": 0,
+      "model": [
+        "513",
+        0
+      ],
+      "positive": [
+        "321",
+        0
+      ],
+      "negative": [
+        "320",
+        0
+      ],
+      "latent_image": [
+        "485",
+        0
+      ]
+    },
+    "class_type": "KSampler //Inspire",
+    "_meta": {
+      "title": "KSampler (inspire)"
+    }
+  },
+  "548": {
+    "inputs": {
+      "frame_rate": 20,
+      "loop_count": 0,
+      "filename_prefix": "AnimateDiff",
+      "format": "image/gif",
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "532",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  }
+}

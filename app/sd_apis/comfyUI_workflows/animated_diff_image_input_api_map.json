@@ -1,0 +1,156 @@
+{
+    "animation_model": [
+        "513",
+        "inputs",
+        "model_name"
+    ],
+    "frame_rate": [
+        [
+            "535",
+            "inputs",
+            "frame_rate"
+        ],
+        [
+            "537",
+            "inputs",
+            "frame_rate"
+        ],
+		[
+            "548",
+            "inputs",
+            "frame_rate"
+        ]
+    ],
+    "loop_count": [
+        [
+            "535",
+            "inputs",
+            "loop_count"
+        ],
+        [
+            "537",
+            "inputs",
+            "loop_count"
+        ],
+		[
+            "548",
+            "inputs",
+            "loop_count"
+        ]
+    ],
+    "ping_pong": [
+        [
+            "535",
+            "inputs",
+            "pingpong"
+        ],
+        [
+            "537",
+            "inputs",
+            "pingpong"
+        ],
+		[
+            "548",
+            "inputs",
+            "pingpong"
+        ]
+    ],
+    "sd_model": [
+        "509",
+        "inputs",
+        "ckpt_name"
+    ],
+    "seed": [
+        [
+            "467",
+            "inputs",
+            "seed"
+        ],
+        [
+            "541",
+            "inputs",
+            "seed"
+        ]
+    ],
+    "subseed": [
+        [
+            "541",
+            "inputs",
+            "variation_seed"
+        ]
+    ],
+    "variation_strength": [
+        [
+            "541",
+            "inputs",
+            "variation_strength"
+        ]
+    ],
+    "video_format": [
+        [
+            "535",
+            "inputs",
+            {
+                "gif": {
+                    "format": "image/gif"
+                },
+                "mp4": {
+                    "crf": 19,
+                    "format": "video/h264-mp4",
+                    "pix_fmt": "yuv420p",
+                    "save_metadata": true
+                }
+            }
+        ],
+        [
+            "537",
+            "inputs",
+            {
+                "gif": {
+                    "format": "image/gif"
+                },
+                "mp4": {
+                    "crf": 19,
+                    "format": "video/h264-mp4",
+                    "pix_fmt": "yuv420p",
+                    "save_metadata": true
+                }
+            }
+        ],
+		[
+            "548",
+            "inputs",
+            {
+                "gif": {
+                    "format": "image/gif"
+                },
+                "mp4": {
+                    "crf": 19,
+                    "format": "video/h264-mp4",
+                    "pix_fmt": "yuv420p",
+                    "save_metadata": true
+                }
+            }
+        ]
+    ],
+    "video_frames": [
+        "500",
+        "inputs",
+        "number"
+    ],
+	"prompt": [
+		"321",
+		"inputs",
+		"text"
+	],
+	"negativeprompt": [
+		"320",
+		"inputs",
+		"text"
+	],
+	"image_file": [
+        "492",
+        "inputs",
+        "image"
+    ]
+}
