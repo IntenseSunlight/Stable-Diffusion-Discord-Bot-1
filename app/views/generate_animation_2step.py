@@ -5,7 +5,7 @@ import asyncio
 import logging
 from typing import List
 
-from app.settings import Settings, Txt2VidSingleModel
+from app.settings import Settings
 from app.utils.logger import logger
 from app.utils.async_task_queue import AsyncTaskQueue, Task
 from app.utils.image_file import ImageFile, VideoContainer, ImageContainer
@@ -383,7 +383,7 @@ class RetryAnimationButton(discord.ui.Button):
         self._logger = logger
 
     async def callback(self, interaction: discord.Interaction):
-        message = "Regenerating video..."
+        message = "Generating animation..."
         await interaction.response.send_message(
             message,
             ephemeral=True,
