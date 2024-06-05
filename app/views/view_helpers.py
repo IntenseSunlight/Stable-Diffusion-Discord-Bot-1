@@ -89,7 +89,7 @@ def create_video(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFile:
 
 def create_animation(video_def: VideoContainer, sd_api: AbstractAPI) -> ImageFile:
     return sd_api.generate_image(
-        image_file=video_def.image_in.image_filename,
+        image_file=video_def.image_in.image_filename if video_def.image_in else None,
         sd_model=video_def.model_def.sd_model,
         seed=video_def.seed,
         sub_seed=video_def.sub_seed,

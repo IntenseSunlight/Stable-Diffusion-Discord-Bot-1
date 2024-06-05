@@ -12,7 +12,8 @@ from dataclasses import dataclass
 from app.settings import (
     Settings,
     Txt2ImgSingleModel,
-    Txt2VidSingleModel,
+    Txt2Vid1StepSingleModel,
+    Txt2Vid2StepSingleModel,
     Img2VidSingleModel,
 )
 from .helpers import get_base_dir
@@ -128,7 +129,12 @@ class ImageContainer:
         new.image = self.image.copy()
         return new
 
-    model_def: Txt2ImgSingleModel | Txt2VidSingleModel | Txt2VidSingleModel = None
+    model_def: (
+        Txt2ImgSingleModel
+        | Txt2Vid1StepSingleModel
+        | Txt2Vid2StepSingleModel
+        | Img2VidSingleModel
+    ) = None
     image: ImageFile = None
     seed: int = None
     sub_seed: int = None
