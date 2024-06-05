@@ -19,7 +19,8 @@ __all__ = [
 class GroupCommands(Enum):
     txt2img = "txt2img"
     img2img = "img2img"
-    txt2vid = "txt2vid"
+    txt2vid1step = "txt2vid1step"
+    txt2vid2step = "txt2vid2step"
     img2vid = "img2vid"
     faceswap = "faceswap"
     upscaler = "upscaler"
@@ -159,6 +160,7 @@ class UpscalerContainerModel(BaseModel):
 
 
 class Img2VidSingleModel(BaseModel):
+    # fmt: off
     display_name: str = "svd"
     sd_model: str = "svd.safetensors"
     width: Optional[int] = None 
@@ -171,11 +173,12 @@ class Img2VidSingleModel(BaseModel):
     frame_rate_choices: Optional[List[int]] = [5, 10, 12, 15, 20, 25, 30]
     frame_count_choices: Optional[List[int]] = [15, 20, 25]
     motion_amount_choices: Optional[List[int]] = [
-        50, 75, 100, 125, 150, 200, 250, 300, 400, 500,  # fmt: skip
+        50, 75, 100, 125, 150, 200, 250, 300, 400, 500,  
     ]
     loop_count: Optional[int] = 0
     workflow_api: Optional[str] = "svd_workflow_api.json"
     workflow_api_map: Optional[str] = "svd_workflow_api_map.json"
+    # fmt: on
 
 
 class Img2VidContainerModel(BaseModel):
@@ -199,7 +202,23 @@ class Img2VidContainerModel(BaseModel):
         self.models.pop(model_name)
 
 
-class Txt2VidSingleModel(BaseModel):
+class Txt2Vid1StepSingleModel(BaseModel):
+    display_name: str = "animatediff_lightning"
+    sd_model: str = "v1-5-pruned-emaonly.ckpt"
+    animation_model: str = "animatediff_lightning_4step_comfyui.safetensors"
+    n_images: int = 4  # number of preview images to generate per request
+    width: Optional[int] = 512
+    height: Optional[int] = 512
+    frame_rate: Optional[int] = 8
+    frame_count: Optional[int] = 16
+    frame_rate_choices: Optional[List[int]] = [5, 8, 10, 12, 15, 20, 25, 30]
+    frame_count_choices: Optional[List[int]] = [10, 12, 16, 18, 20, 22]
+    loop_count: Optional[int] = 0
+    workflow_api: Optional[str] = "animated_diff_lightning_api.json"
+    workflow_api_map: Optional[str] = "animated_diff_lightning_api_map.json"
+
+
+class Txt2Vid2StepSingleModel(BaseModel):
     display_name: str = "animatediff"
     sd_model: str = "v1-5-pruned-emaonly.ckpt"
     animation_model: str = "mm_sd_v14.ckpt"
@@ -218,21 +237,42 @@ class Txt2VidSingleModel(BaseModel):
     workflow_api_map: Optional[str] = "animated_diff_txt2vid_api_map.json"
 
 
-class Txt2VidContainerModel(BaseModel):
-    group_command: GroupCommands = GroupCommands.txt2vid
+class Txt2Vid1StepContainerModel(BaseModel):
+    group_command: GroupCommands = GroupCommands.txt2vid1step
     modeltype: ModelType = Field(
         default=ModelType.checkpoint, frozen=True, exclude=True
     )
     variation_strength: float = 0.065
-    models: Dict[str, Txt2VidSingleModel] = {
-        Txt2VidSingleModel().display_name: Txt2VidSingleModel()
+    models: Dict[str, Txt2Vid1StepSingleModel] = {
+        Txt2Vid1StepSingleModel().display_name: Txt2Vid1StepSingleModel()
     }
 
-    def default_model(self) -> Txt2VidSingleModel:
-        return Txt2VidSingleModel()
+    def default_model(self) -> Txt2Vid1StepSingleModel:
+        return Txt2Vid1StepSingleModel()
 
     def add_model(self, model_dict: Dict):
-        model = Txt2VidSingleModel(**model_dict)
+        model = Txt2Vid1StepSingleModel(**model_dict)
+        self.models.update({model.display_name: model})
+
+    def remove_model(self, model_name: str):
+        self.models.pop(model_name)
+
+
+class Txt2Vid2StepContainerModel(BaseModel):
+    group_command: GroupCommands = GroupCommands.txt2vid2step
+    modeltype: ModelType = Field(
+        default=ModelType.checkpoint, frozen=True, exclude=True
+    )
+    variation_strength: float = 0.065
+    models: Dict[str, Txt2Vid2StepSingleModel] = {
+        Txt2Vid2StepSingleModel().display_name: Txt2Vid2StepSingleModel()
+    }
+
+    def default_model(self) -> Txt2Vid2StepSingleModel:
+        return Txt2Vid2StepSingleModel()
+
+    def add_model(self, model_dict: Dict):
+        model = Txt2Vid2StepSingleModel(**model_dict)
         self.models.update({model.display_name: model})
 
     def remove_model(self, model_name: str):
@@ -247,7 +287,8 @@ class _Settings(BaseModel):
     txt2img: Txt2ImgContainerModel = Txt2ImgContainerModel()
     upscaler: Optional[UpscalerContainerModel] = UpscalerContainerModel()
     img2vid: Optional[Img2VidContainerModel] = Img2VidContainerModel()
-    txt2vid: Optional[Txt2VidContainerModel] = Txt2VidContainerModel()
+    txt2vid1step: Optional[Txt2Vid1StepContainerModel] = Txt2Vid1StepContainerModel()
+    txt2vid2step: Optional[Txt2Vid2StepContainerModel] = Txt2Vid2StepContainerModel()
     # img2img: Optional[Img2ImgContainerModel] = Img2ImgContainerModel()   # not implemented
 
     def __init__(
