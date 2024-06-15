@@ -1,0 +1,72 @@
+{
+    "animation_model": [
+        "10",
+        "inputs",
+        "model_name"
+    ],
+    "frame_rate": [
+		"11",
+		"inputs",
+		"frame_rate"
+    ],
+    "loop_count": [
+		"11",
+		"inputs",
+		"loop_count"
+	],
+    "ping_pong": [       
+		"11",
+		"inputs",
+		"pingpong"
+	],
+    "sd_model": [
+        "4",
+        "inputs",
+        "ckpt_name"
+    ],
+    "seed": [
+		"14",
+		"inputs",
+		"seed"
+	],
+    "subseed": [
+		"14",
+		"inputs",
+		"variation_seed"
+	],
+    "variation_strength": [
+		"14",
+		"inputs",
+		"variation_strength"
+	],
+    "video_format": [
+		"11",
+		"inputs",
+		{
+			"gif": {
+				"format": "image/gif"
+			},
+			"mp4": {
+				"crf": 19,
+				"format": "video/h264-mp4",
+				"pix_fmt": "yuv420p",
+				"save_metadata": true
+			}
+		}
+	],
+    "video_frames": [
+        "5",
+        "inputs",
+        "batch_size"
+    ],
+	"prompt": [
+		"6",
+		"inputs",
+		"text"
+	],
+	"negativeprompt": [
+		"7",
+		"inputs",
+		"text"
+	]
+}
