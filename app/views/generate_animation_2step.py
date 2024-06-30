@@ -7,13 +7,11 @@ from typing import List
 
 from app.settings import Settings
 from app.utils.logger import logger
-from app.utils.async_task_queue import AsyncTaskQueue, Task
+from app.utils.async_task_queue import AsyncTaskQueue
 from app.utils.image_file import ImageFile, VideoContainer, ImageContainer
 from app.utils.image_count import ImageCount
 from app.views.generate_image import VaryImageButton, RetryImageButton
-from app.views.generate_video import VaryVideoButton
 from app.views.view_helpers import (
-    create_image,
     create_animation,
     idler_message,
     ItemSelect,
@@ -44,7 +42,7 @@ class GenerateAnimationPreviewView(discord.ui.View):
         self.sd_api = sd_api
         self._logger = logger
 
-        # row 1: variation buttons
+        # row 0: variation buttons
         labels = (
             ["Variation L", "Variation R"]
             if len(images) == 2
@@ -63,7 +61,7 @@ class GenerateAnimationPreviewView(discord.ui.View):
                 )
             )
 
-        # row 2: retry buttons
+        # row 1: retry buttons
         # some may be repeats (same prompt)
         n_images = len(set([img.prompt for img in images]))
         labels = (
@@ -138,13 +136,13 @@ class ToAnimationButton(discord.ui.Button):
                 animation.image.image_object,
                 os.path.basename(animation.image.image_filename),
             ),
-            view=GenerateAnimationView(
+            view=GenerateAnimationView2step(
                 animation, sd_api=self.sd_api, logger=self._logger
             ),
         )
 
 
-class GenerateAnimationView(discord.ui.View):
+class GenerateAnimationView2step(discord.ui.View):
     def __init__(
         self,
         image: VideoContainer,
@@ -324,10 +322,10 @@ class VaryAnimationButton(discord.ui.Button):
             task_owner=interaction.user.id,
         )
         if task is None:
-            self._logger.error(f"Failed to create task for image, queue full.")
+            self._logger.error("Failed to create task for image, queue full.")
             itask.cancel()
             await interaction.edit_original_response(
-                content=f"Failed to create task for image, queue full.", delete_after=4
+                content="Failed to create task for image, queue full.", delete_after=4
             )
             return
 
@@ -352,12 +350,12 @@ class VaryAnimationButton(discord.ui.Button):
         )
 
         await interaction.followup.send(
-            f"Varied this generation:",
+            "Varied this generation:",
             file=discord.File(
                 var_image.image.image_object,
                 os.path.basename(var_image.image.image_filename),
             ),
-            view=GenerateAnimationView(
+            view=GenerateAnimationView2step(
                 image=var_image, sd_api=self.sd_api, logger=self._logger
             ),
             embed=embed,
@@ -403,10 +401,10 @@ class RetryAnimationButton(discord.ui.Button):
 
         #task = "ok"
         if task is None:
-            self._logger.error(f"Failed to create task for image, queue full.")
+            self._logger.error("Failed to create task for image, queue full.")
             itask.cancel()
             await interaction.edit_original_response(
-                content=f"Failed to create task for image, queue full.", delete_after=4
+                content="Failed to create task for image, queue full.", delete_after=4
             )
             return
 
@@ -431,12 +429,12 @@ class RetryAnimationButton(discord.ui.Button):
         )
 
         await interaction.followup.send(
-            f"Retried this Generation:",
+            "Retried this Generation:",
             file=discord.File(
                 var_image.image.image_object,
                 os.path.basename(var_image.image.image_filename),
             ),
-            view=GenerateAnimationView(
+            view=GenerateAnimationView2step(
                 image=var_image, sd_api=self.sd_api, logger=self._logger
             ),
             embed=embed,
