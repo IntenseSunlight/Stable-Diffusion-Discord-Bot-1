@@ -1,7 +1,7 @@
 import os
 import discord
 import asyncio
-from typing import List, Tuple, cast
+from typing import List, Tuple, Optional, cast
 from app.sd_apis.api_handler import Sd
 from app.utils.async_task_queue import AsyncTaskQueue, Task
 from app.utils.helpers import random_seed, load_workflow_and_map, CARDINALS
@@ -149,7 +149,7 @@ class TxtCommandsMixin(AbstractCommand):
         model_def: Txt2Vid1StepSingleModel | Txt2Vid2StepSingleModel,
         workflow_api_file: str,
         workflow_api_map_file: str,
-        orientation: str,
+        orientation: Optional[str] = None,
     ) -> Tuple[List[ImageContainer], List[str], discord.ApplicationContext]:
 
         response = await ctx.respond(
@@ -179,7 +179,7 @@ class TxtCommandsMixin(AbstractCommand):
                 GeneratePrompt().make_random_prompt()
             )
 
-            if model_def.width == model_def.height:
+            if model_def.width == model_def.height or orientation is not None:
                 in_animation.width, in_animation.height = Orientation.make_orientation(
                     orientation, model_def.width
                 )
@@ -370,6 +370,8 @@ class TxtCommandsMixin(AbstractCommand):
                 variation_strength=Settings.txt2img.variation_strength,
                 prompt=final_prompt.prompt,
                 negative_prompt=final_prompt.negativeprompt,
+                style=style,
+                orientation=orientation,
                 width=width,
                 height=height,
                 workflow=workflow,

@@ -142,6 +142,8 @@ class ImageContainer:
     prompt: str = None
     negative_prompt: str = None
     final_prompt: str = None
+    style: str = None
+    orientation: str = None
     width: int = None
     height: int = None
     workflow: str = None

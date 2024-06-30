@@ -4,10 +4,8 @@ from app.sd_apis.api_handler import Sd
 from app.utils.helpers import CARDINALS
 from app.utils import Orientation, ImageCount, PromptConstants
 from app.settings import Settings, GroupCommands
-from app.views.generate_animation_2step import (
-    GenerateAnimationView,
-    GenerateAnimationPreviewView,
-)
+from app.views.generate_animation_1step import GenerateAnimationView1Step
+from app.views.generate_animation_2step import GenerateAnimationPreviewView
 from .txt_base_cmds import TxtCommandsMixin
 
 
@@ -97,7 +95,7 @@ class Txt2Video1StepCommands(TxtCommandsMixin):
         message = await ctx.respond(
             f"<@{ctx.author.id}>'s Random Generations:",
             files=[discord.File(img.image.image_filename) for img in images],
-            view=GenerateAnimationView(
+            view=GenerateAnimationView1Step(
                 images=images,
                 sd_api=Sd.api,
             ),
@@ -139,7 +137,7 @@ class Txt2Video1StepCommands(TxtCommandsMixin):
             await ctx.respond("This command cannot be used in direct messages.")
             return
 
-        model_def = Settings.txt2img.models[model]
+        model_def = Settings.txt2vid1step.models[model]
         images, response = await self._generate_animation(
             ctx=ctx,
             prompt=prompt,
@@ -168,7 +166,7 @@ class Txt2Video1StepCommands(TxtCommandsMixin):
         message = await ctx.respond(
             f"<@{ctx.author.id}>'s Generations:",
             files=[discord.File(img.image.image_filename) for img in images],
-            view=GenerateAnimationView(
+            view=GenerateAnimationView1Step(
                 images=images,
                 sd_api=Sd.api,
             ),
