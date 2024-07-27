@@ -126,8 +126,8 @@ class ToAnimationButton(discord.ui.Button):
         animation.workflow_map = workflow_map 
         animation.animation_model = model_def.animation_model
         animation.video_format = Settings.files.default_video_type 
-        animation.frame_rate = Settings.txt2vid.default_model().frame_rate
-        animation.video_frames = Settings.txt2vid.default_model().frame_count
+        animation.frame_rate = Settings.txt2vid2step.default_model().frame_rate
+        animation.video_frames = Settings.txt2vid2step.default_model().frame_count
         animation.ping_pong = False
         animation.image_in = self.image.image.copy()
 
