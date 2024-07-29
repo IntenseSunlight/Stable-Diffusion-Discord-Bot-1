@@ -342,12 +342,12 @@ class _Settings(BaseModel):
 
                 for name, model in self.__dict__[k].models.items():
                     model: Type_SingleModel = cast(Type_SingleModel, model)
-                    if not model.sd_model in check_list:
+                    if model.sd_model not in check_list:
                         messages[(k, name)] = (
                             f"Model {k}.{model.display_name} has no sd_model: '{model.sd_model}'"
                         )
                     if hasattr(model, "upscaler_model"):
-                        if not model.upscaler_model in valid_upscalers:
+                        if model.upscaler_model not in valid_upscalers:
                             messages[(k, name)] = (
                                 f"Model {k}.{model.display_name} has no upscaler_model: '{model.upscaler_model}'"
                             )

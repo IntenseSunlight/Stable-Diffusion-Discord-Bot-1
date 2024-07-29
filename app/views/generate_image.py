@@ -127,7 +127,7 @@ class UpscaleButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.send_message(
-            f"Upscaling the image...", ephemeral=True, delete_after=1800
+            "Upscaling the image...", ephemeral=True, delete_after=1800
         )
         itask = asyncio.create_task(idler_message("Upscaling the image...", interaction))
 
@@ -142,12 +142,10 @@ class UpscaleButton(discord.ui.Button):
             task_owner=interaction.user.id,
         )
         if task is None:
-            self._logger.error(
-                f"Failed to create task for image, queue full." 
-            )
+            self._logger.error("Failed to create task for image, queue full.")
             itask.cancel()
             await interaction.edit_original_response(
-                content=f"Failed to create task for image, queue full.", delete_after=4
+                content="Failed to create task for image, queue full.", delete_after=4
             )
             return
 
@@ -158,7 +156,7 @@ class UpscaleButton(discord.ui.Button):
         )
 
         await interaction.followup.send(
-            f"Upscaled This Generation:",
+            "Upscaled This Generation:",
             file=discord.File(
                 upscaled_image.image_object,
                 os.path.basename(upscaled_image.image_filename),
@@ -184,8 +182,8 @@ class VaryImageButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.send_message(
-            f"Creating a variation of the image...", 
-            ephemeral=True, 
+            "Creating a variation of the image...",
+            ephemeral=True,
             delete_after=1800,
         )
         itask = asyncio.create_task(idler_message("Creating a variation of the image...", interaction))
@@ -202,12 +200,10 @@ class VaryImageButton(discord.ui.Button):
             task_owner=interaction.user.id,
         )
         if task is None:
-            self._logger.error(
-                f"Failed to create task for image, queue full." 
-            )
+            self._logger.error("Failed to create task for image, queue full.")
             itask.cancel()
             await interaction.edit_original_response(
-                content=f"Failed to create task for image, queue full.", delete_after=4
+                content="Failed to create task for image, queue full.", delete_after=4
             )
             return
 
@@ -218,7 +214,7 @@ class VaryImageButton(discord.ui.Button):
         )
 
         await interaction.followup.send(
-            f"Varied This Generation:",
+            "Varied This Generation:",
             file=discord.File(
                 var_image.image.image_object,
                 os.path.basename(var_image.image.image_filename).split(".")[0]
@@ -247,7 +243,7 @@ class RetryImageButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.send_message(
-            f"Regenerating the image using the same settings...waiting to start",
+            "Regenerating the image using the same settings...waiting to start",
             ephemeral=True,
             delete_after=1800,
         )
@@ -292,7 +288,6 @@ class RetryImageButton(discord.ui.Button):
                     content=f"Failed to create task for image {i+1}, queue full.", delete_after=4
                 )
                 return
-
 
         # wait for all tasks to complete
         new_images: List[ImageContainer] = []

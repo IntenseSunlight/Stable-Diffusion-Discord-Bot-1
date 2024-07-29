@@ -186,10 +186,10 @@ class VaryVideoButton(discord.ui.Button):
             task_owner=interaction.user.id,
         )
         if task is None:
-            self._logger.error(f"Failed to create task for image, queue full.")
+            self._logger.error("Failed to create task for image, queue full.")
             itask.cancel()
             await interaction.edit_original_response(
-                content=f"Failed to create task for image, queue full.", delete_after=4
+                content="Failed to create task for image, queue full.", delete_after=4
             )
             return
 
@@ -214,7 +214,7 @@ class VaryVideoButton(discord.ui.Button):
         )
 
         await interaction.followup.send(
-            f"Varied This Generation:",
+            "Varied This Generation:",
             file=discord.File(
                 var_image.image.image_object,
                 os.path.basename(var_image.image.image_filename),
@@ -262,10 +262,10 @@ class RetryVideoButton(discord.ui.Button):
             task_owner=interaction.user.id,
         )
         if task is None:
-            self._logger.error(f"Failed to create task for image, queue full.")
+            self._logger.error("Failed to create task for image, queue full.")
             itask.cancel()
             await interaction.edit_original_response(
-                content=f"Failed to create task for image, queue full.", delete_after=4
+                content="Failed to create task for image, queue full.", delete_after=4
             )
             return
 
@@ -290,7 +290,7 @@ class RetryVideoButton(discord.ui.Button):
         )
 
         await interaction.followup.send(
-            f"Retried this Generation:",
+            "Retried this Generation:",
             file=discord.File(
                 var_image.image.image_object,
                 os.path.basename(var_image.image.image_filename),
