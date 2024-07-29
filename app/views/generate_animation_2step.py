@@ -155,7 +155,9 @@ class GenerateAnimationView2step(discord.ui.View):
         image: VideoContainer,
         sd_api: AbstractAPI = None,
         logger: logging.Logger = logger,
-        timeout: int = Settings.server.view_timeout,
+        timeout: int = (
+            Settings.server.view_timeout if Settings.server.view_timeout > 0 else None
+        ),
         **kwargs,
     ):
         super().__init__(timeout=timeout, **kwargs)

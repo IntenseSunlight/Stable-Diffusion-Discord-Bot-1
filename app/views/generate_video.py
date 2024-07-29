@@ -3,11 +3,10 @@ import random
 import discord
 import asyncio
 import logging
-from typing import Callable, List, cast
 
 from app.settings import Settings
 from app.utils.logger import logger
-from app.utils.async_task_queue import AsyncTaskQueue, Task
+from app.utils.async_task_queue import AsyncTaskQueue
 from app.utils.image_file import ImageFile, VideoContainer
 from app.utils.image_count import ImageCount
 from app.utils.helpers import random_seed
