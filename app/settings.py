@@ -40,6 +40,7 @@ class ServerModel(BaseModel):
     discord_bot_key: Optional[str] = "fake"  # must be supplied in .env file
     bot_command: Optional[str] = "generate"
     interaction_timeout: Optional[int] = 3600
+    view_timeout: Optional[int] = 3600
     allow_dm: Optional[bool] = False
     max_jobs: Optional[int] = 50
 

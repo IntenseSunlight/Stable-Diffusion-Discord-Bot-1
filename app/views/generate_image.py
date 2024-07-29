@@ -23,15 +23,19 @@ from app.sd_apis.abstract_api import AbstractAPI
 # The main view
 # ----------------------------------------------
 class GenerateImageView(discord.ui.View):
+
     def __init__(
         self,
         *,
         images: List[ImageContainer],
         sd_api: AbstractAPI = None,
         logger: logging.Logger = logger,
+        timeout: int = (
+            Settings.server.view_timeout if Settings.server.view_timeout > 0 else None
+        ),
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(timeout=timeout, **kwargs)
         self.images = images
         self.sd_api = sd_api
         self._logger = logger
@@ -43,6 +47,7 @@ class GenerateImageView(discord.ui.View):
             else [f"U{i+1}" for i in range(len(images))]
         )
         for label, image in zip(labels, self.images):
+            # fmt: off
             self.add_item(
                 UpscaleButton(
                     image=image,
@@ -51,9 +56,10 @@ class GenerateImageView(discord.ui.View):
                     logger=self._logger,
                     row=0,
                     style=discord.ButtonStyle.primary,
-                    emoji="🖼️" if len(images) == 2 else None,  # fmt: skip
+                    emoji="🖼️" if len(images) == 2 else None,
                 )
             )
+            # fmt: on
 
         # row 1: variation buttons
         labels = (
@@ -62,6 +68,7 @@ class GenerateImageView(discord.ui.View):
             else [f"V{i+1}" for i in range(len(images))]
         )
         for label, image in zip(labels, self.images):
+            # fmt: off
             self.add_item(
                 VaryImageButton(
                     image=image,
@@ -70,9 +77,10 @@ class GenerateImageView(discord.ui.View):
                     logger=self._logger,
                     row=1,
                     style=discord.ButtonStyle.primary,
-                    emoji="🌱" if len(images) == 2 else None,  # fmt: skip
+                    emoji="🌱" if len(images) == 2 else None,
                 )
             )
+            # fmt: on
 
         # row 2: retry buttons
         # some may be repeats (same prompt)
@@ -318,14 +326,18 @@ class RetryImageButton(discord.ui.Button):
 # Upscale only view
 # ----------------------------------------------:
 class UpscaleOnlyView(discord.ui.View):
+
     def __init__(
-            self, 
-            image: ImageContainer, 
-            sd_api: AbstractAPI, 
-            logger: logging.Logger, 
-            **kwargs
-        ):
-        super().__init__(**kwargs)
+        self,
+        image: ImageContainer,
+        sd_api: AbstractAPI,
+        logger: logging.Logger,
+        timeout: int = (
+            Settings.server.view_timeout if Settings.server.view_timeout > 0 else None
+        ),
+        **kwargs,
+    ):
+        super().__init__(timeout=timeout, **kwargs)
         self.image = image
         self.sd_api = sd_api
         self._logger = logger
@@ -333,8 +345,8 @@ class UpscaleOnlyView(discord.ui.View):
     @discord.ui.button(label="Upscale", style=discord.ButtonStyle.primary, emoji="🖼️")
     async def button_upscale(self, button, interaction: discord.Interaction):
         await interaction.response.send_message(
-            f"Upscaling the image...", 
-            ephemeral=True, 
+            "Upscaling the image...",
+            ephemeral=True,
             delete_after=1800,
         )
         itask = asyncio.create_task(idler_message("Upscaling the image...", interaction))
@@ -350,12 +362,10 @@ class UpscaleOnlyView(discord.ui.View):
             task_owner=interaction.user.id,
         )
         if task is None:
-            self._logger.error(
-                f"Failed to create task for image, queue full." 
-            )
+            self._logger.error("Failed to create task for image, queue full.")
             itask.cancel()
             await interaction.edit_original_response(
-                content=f"Failed to create task for image, queue full.", delete_after=4
+                content="Failed to create task for image, queue full.", delete_after=4
             )
             return
 
@@ -366,10 +376,11 @@ class UpscaleOnlyView(discord.ui.View):
         )
 
         await interaction.followup.send(
-            f"Upscaled This Generation:",
+            "Upscaled This Generation:",
             file=discord.File(
-                upscaled_image.image_object, 
-                os.path.basename(upscaled_image.image_filename).split(".")[0] + "-upscaled.png"
+                upscaled_image.image_object,
+                os.path.basename(upscaled_image.image_filename).split(".")[0]
+                + "-upscaled.png",
             ),
         )
         await interaction.delete_original_response()

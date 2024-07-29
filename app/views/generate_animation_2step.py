@@ -28,16 +28,20 @@ from app.sd_apis.abstract_api import AbstractAPI
 # The main view
 # ----------------------------------------------
 class GenerateAnimationPreviewView(discord.ui.View):
+
     def __init__(
         self,
         *,
         images: List[ImageContainer],
         sd_api: AbstractAPI = None,
         logger: logging.Logger = logger,
+        timeout: int = (
+            Settings.server.view_timeout if Settings.server.view_timeout > 0 else None
+        ),
         **kwargs,
     ):
 
-        super().__init__(**kwargs)
+        super().__init__(timeout=timeout, **kwargs)
         self.images = images
         self.sd_api = sd_api
         self._logger = logger
@@ -49,6 +53,7 @@ class GenerateAnimationPreviewView(discord.ui.View):
             else [f"V{i+1}" for i in range(len(images))]
         )
         for label, image in zip(labels, self.images):
+            # fmt: off
             self.add_item(
                 VaryImageButton(
                     image=image,
@@ -57,9 +62,10 @@ class GenerateAnimationPreviewView(discord.ui.View):
                     logger=self._logger,
                     row=0,
                     style=discord.ButtonStyle.primary,  
-                    emoji="🌱" if len(images) == 2 else None,  # fmt: skip
+                    emoji="🌱" if len(images) == 2 else None,  
                 )
             )
+            # fmt: on
 
         # row 1: retry buttons
         # some may be repeats (same prompt)
@@ -143,19 +149,21 @@ class ToAnimationButton(discord.ui.Button):
 
 
 class GenerateAnimationView2step(discord.ui.View):
+
     def __init__(
         self,
         image: VideoContainer,
         sd_api: AbstractAPI = None,
         logger: logging.Logger = logger,
+        timeout: int = Settings.server.view_timeout,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(timeout=timeout, **kwargs)
         self.image = image
         self.sd_api = sd_api
         self._logger = logger
 
-        # row 0: select video format type 
+        # row 0: select video format type
         def set_format_type(value: str):
             self.image.video_format = value
 

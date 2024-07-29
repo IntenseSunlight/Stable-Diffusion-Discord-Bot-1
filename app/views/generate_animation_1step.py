@@ -2,6 +2,7 @@ import discord
 import logging
 from typing import List
 
+from app.settings import Settings
 from app.utils.logger import logger
 from app.utils.image_file import VideoContainer
 from app.views.generate_animation_2step import VaryAnimationButton, RetryAnimationButton
@@ -15,15 +16,19 @@ from app.sd_apis.abstract_api import AbstractAPI
 # The main view
 # ----------------------------------------------
 class GenerateAnimationView1Step(discord.ui.View):
+
     def __init__(
         self,
         *,
         images: List[VideoContainer],
         sd_api: AbstractAPI = None,
         logger: logging.Logger = logger,
+        timeout: int = (
+            Settings.server.view_timeout if Settings.server.view_timeout > 0 else None
+        ),
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(timeout=timeout, **kwargs)
         self.images = images
         self.sd_api = sd_api
         self._logger = logger

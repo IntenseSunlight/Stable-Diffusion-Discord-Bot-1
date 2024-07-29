@@ -2,7 +2,6 @@ import os
 import re
 import json
 import unittest
-from typing import Any
 from app.settings import Settings, _Settings
 
 ENV_TEST = """

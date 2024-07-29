@@ -23,15 +23,19 @@ from app.sd_apis.abstract_api import AbstractAPI
 # The main view
 # ----------------------------------------------
 class GenerateVideoView(discord.ui.View):
+
     def __init__(
         self,
         *,
         image: VideoContainer,
         sd_api: AbstractAPI = None,
         logger: logging.Logger = logger,
+        timeout: int = (
+            Settings.server.view_timeout if Settings.server.view_timeout > 0 else None
+        ),
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(timeout=timeout, **kwargs)
         self.image = image
         self.sd_api = sd_api
         self._logger = logger
