@@ -1,0 +1,13 @@
+{
+    "seed":   [ "25", "inputs", "noise_seed"], 
+	"subseed":   [ "25", "inputs", "noise_seed"], 
+    "prompt": [ "6", "inputs", "text"],
+    "width":  [
+	    [ "27", "inputs", "width"],
+		[ "30", "inputs", "width"]
+	],
+    "height": [
+	    [ "27", "inputs", "height"],
+		[ "30", "inputs", "height"]
+	]
+}
