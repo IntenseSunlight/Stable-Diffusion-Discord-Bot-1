@@ -1,0 +1,231 @@
+{
+    "server": {
+        "host": "127.0.0.1",
+        "port": 8188,
+        "sd_api_type": "comfyUI",
+        "discord_bot_key": "********",
+        "bot_command": "generate",
+        "allow_dm": true,
+        "view_timeout": 3600,
+        "interaction_timeout": 3600
+    },
+    "files": {
+        "image_folder": "./GeneratedImages",
+        "workflows_folder": "./app/sd_apis/comfyUI_workflows",
+        "image_types": [
+            "jpg",
+            "png",
+            "jpeg"
+        ],
+        "default_image_type": "png",
+        "video_types": [
+            "mp4",
+            "gif"
+        ],
+        "default_video_type": "mp4"
+    },
+    "txt2img": {
+        "group_command": "txt2img",
+        "variation_strength": 0.065,
+        "models": {
+			"Flux1.dev": {
+				"display_name": "Flux1.dev",
+                "upscaler_model": "RealESRGAN_x2plus.pth",
+                "width": 1024,
+                "height": 1024,
+                "n_images": 4,
+                "workflow_api": "flux_dev_fp16_workflow_api.json",
+                "workflow_api_map": "flux_dev_fp16_workflow_api_map.json"
+			},
+            "DreamShaperXL": {
+                "display_name": "DreamShaperXL",
+                "sd_model": "dreamshaperXL10_alpha2Xl10.safetensors",
+                "upscaler_model": "RealESRGAN_x2plus.pth",
+                "width": 1024,
+                "height": 1024,
+                "n_images": 4,
+                "workflow_api": "default_A1111_api.json",
+                "workflow_api_map": "default_A1111_api_map.json"
+            },
+            "default_v1.5": {
+                "display_name": "default_v1.5",
+                "sd_model": "v1-5-pruned-emaonly.ckpt",
+                "upscaler_model": "4x_NMKD-Siax_200k.pth",
+                "width": 512,
+                "height": 512,
+                "n_images": 4,
+                "workflow_api": "default_A1111_api.json",
+                "workflow_api_map": "default_A1111_api_map.json"
+            },
+            "runDiffusionXL": {
+                "display_name": "runDiffusionXL",
+                "sd_model": "rundiffusionXL_beta.safetensors",
+                "upscaler_model": "RealESRGAN_x2plus.pth",
+                "width": 1024,
+                "height": 1024,
+                "n_images": 4,
+                "workflow_api": "default_A1111_api.json",
+                "workflow_api_map": "default_A1111_api_map.json"
+            },
+            "cardosAnime": {
+                "display_name": "cardosAnime",
+                "sd_model": "cardosAnime_v20.safetensors",
+                "upscaler_model": "4x_NMKD-Siax_200k.pth",
+                "width": 512,
+                "height": 512,
+                "n_images": 4,
+                "workflow_api": "default_A1111_api.json",
+                "workflow_api_map": "default_A1111_api_map.json"
+            },
+            "westMix_photorealistic": {
+                "display_name": "westMix_photorealistic",
+                "sd_model": "westmixV1PhotoRealistic_v10.safetensors",
+                "upscaler_model": "4x_NMKD-Siax_200k.pth",
+                "width": 512,
+                "height": 512,
+                "n_images": 4,
+                "workflow_api": "default_A1111_api.json",
+                "workflow_api_map": "default_A1111_api_map.json"
+            },
+            "juggernaut": {
+                "display_name": "juggernaut",
+                "sd_model": "juggernaut_final.safetensors",
+                "upscaler_model": "4x_NMKD-Siax_200k.pth",
+                "width": 512,
+                "height": 512,
+                "n_images": 4,
+                "workflow_api": "default_A1111_api.json",
+                "workflow_api_map": "default_A1111_api_map.json"
+            }
+        }
+    },
+    "upscaler": {
+        "group_command": "upscaler",
+        "models": {
+            "upscaler_4x": {
+                "display_name": "upscaler_4x",
+                "sd_model": "4x_NMKD-Siax_200k.pth",
+                "width": 512,
+                "height": 512,
+                "max_width": 712,
+                "max_height": 712,
+                "workflow_api": "default_upscaler_api.json",
+                "workflow_api_map": "default_upscaler_api_map.json"
+            },
+            "upscaler_2x": {
+                "display_name": "upscaler_2x",
+                "sd_model": "RealESRGAN_x2plus.pth",
+                "width": 512,
+                "height": 512,
+                "max_width": 1200,
+                "max_height": 1200,
+                "workflow_api": "default_upscaler_api.json",
+                "workflow_api_map": "default_upscaler_api_map.json"
+            }
+        }
+    },
+	"img2vid": {
+        "group_command": "img2vid",
+        "variation_strength": 0.065,
+        "models": {
+            "svd_debug": {
+                "display_name": "svd_debug",
+                "sd_model": "svd.safetensors",
+                "frame_rate": 12,
+                "loop_count": 0,
+                "workflow_api": "debug_svd_workflow_api.json",
+                "workflow_api_map": "svd_workflow_api_map.json"
+            },
+			"svd": {
+                "display_name": "svd",
+                "sd_model": "svd.safetensors",
+                "frame_rate": 12,
+                "loop_count": 0,
+                "workflow_api": "svd_workflow_api.json",
+                "workflow_api_map": "svd_workflow_api_map.json"
+            },
+            "svd_xt": {
+                "display_name": "svd_xt",
+                "sd_model": "svd_xt.safetensors",
+                "frame_rate": 12,
+                "loop_count": 0,
+                "workflow_api": "svd_workflow_api.json",
+                "workflow_api_map": "svd_workflow_api_map.json"
+            },
+            "svd_1.1": {
+                "display_name": "svd 1.1",
+                "sd_model": "svd_xt_1_1.safetensors",
+                "frame_rate": 12,
+                "loop_count": 0,
+                "workflow_api": "svd_workflow_api.json",
+                "workflow_api_map": "svd_workflow_api_map.json"
+            },
+            "svd_xt_lowres": {
+                "display_name": "svd_xt lowres",
+                "sd_model": "svd_xt-fp16.safetensors",
+                "frame_rate": 12,
+                "loop_count": 0,
+                "workflow_api": "svd_lowres_workflow_api.json",
+                "workflow_api_map": "svd_lowres_workflow_api_map.json"
+            }
+        }
+    },
+    "txt2vid1step": {
+        "group_command": "txt2vid1step",
+        "variation_strength": 0.065,
+        "models": {
+            "cardosAnime": {
+                "display_name": "cardosAnime",
+                "sd_model": "cardosAnime_v20.safetensors",
+                "animation_model": "animatediff_lightning_4step_comfyui.safetensors",
+                "workflow_api": "animated_diff_lightning_api.json",
+                "workflow_api_map": "animated_diff_lightning_api_map.json"
+            },
+            "ToonYou": {
+                "display_name": "ToonYou",
+                "sd_model": "toonyou_beta6.safetensors",
+                "animation_model": "animatediff_lightning_4step_comfyui.safetensors",
+                "workflow_api": "animated_diff_lightning_api.json",
+                "workflow_api_map": "animated_diff_lightning_api_map.json"
+            }
+        }
+    },
+    "txt2vid2step": {
+        "group_command": "txt2vid2step",
+        "variation_strength": 0.065,
+        "models": {
+            "cardosAnime": {
+                "display_name": "cardosAnime",
+                "sd_model": "cardosAnime_v20.safetensors",
+                "animation_model": "mm_sd_v15_v2.ckpt",
+                "motion_lora_model": "v2_lora_PanRight.ckpt",
+                "preview_workflow_api": "default_A1111_api.json",
+                "preview_workflow_api_map": "default_A1111_api_map.json",
+                "workflow_api": "animated_diff_txt2vid_api.json",
+                "workflow_api_map": "animated_diff_txt2vid_api_map.json"
+            },
+            "ToonYou": {
+                "display_name": "ToonYou",
+                "sd_model": "toonyou_beta6.safetensors",
+                "animation_model": "mm_sd_v15_v2.ckpt",
+                "motion_lora_model": "v2_lora_PanRight.ckpt",
+                "preview_workflow_api": "default_A1111_api.json",
+                "preview_workflow_api_map": "default_A1111_api_map.json",
+                "workflow_api": "animated_diff_txt2vid_api.json",
+                "workflow_api_map": "animated_diff_txt2vid_api_map.json"
+            },
+            "cardosAnime image": {
+                "display_name": "cardosAnime",
+                "sd_model": "cardosAnime_v20.safetensors",
+                "animation_model": "mm_sd_v15_v2.ckpt",
+                "motion_lora_model": "v2_lora_PanRight.ckpt",
+                "frame_count": 10,
+                "frame_count_choices": [ 10, 15, 20, 25, 30, 35, 40, 50, 60 ],
+                "preview_workflow_api": "default_A1111_api.json",
+                "preview_workflow_api_map": "default_A1111_api_map.json",
+                "workflow_api": "animated_diff_image_input_api.json",
+                "workflow_api_map": "animated_diff_image_input_api_map.json"
+            }
+        }
+    }
+}
